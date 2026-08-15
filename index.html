@@ -1,2 +1,792 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lab Wash V3 OpenCV</title><script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script><style>:root{--bg:#1e1e2e;--card:#292941;--card2:#343452;--text:#f1f3f9;--muted:#bac1d6;--blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--border:#555577}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,'Noto Sans JP',sans-serif}header{padding:22px 28px;border-bottom:2px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:20px}h1{font-size:28px;margin:0}h2{font-size:20px;margin:0 0 16px}button,input,textarea{font:inherit}button{padding:11px 15px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);cursor:pointer;font-weight:700}button:hover{border-color:var(--blue)}button.primary{background:var(--blue);color:#11111b}button.success{background:var(--green);color:#11111b}label{display:block;color:var(--muted);font-size:14px;margin-top:9px}input,textarea{width:100%;padding:10px;margin-top:4px;border:1px solid var(--border);border-radius:7px;background:#181825;color:var(--text)}.layout{max-width:1900px;margin:auto;padding:20px;display:grid;grid-template-columns:330px minmax(500px,1fr) 440px;gap:18px}.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:18px}.tabs,.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.drop{margin-top:14px;padding:25px 12px;text-align:center;border:2px dashed var(--blue);border-radius:10px;cursor:pointer}.drop input{margin-top:12px}.hint{color:var(--muted);font-size:13px}.canvasbox{background:#11111b;border-radius:10px;min-height:450px;display:flex;align-items:center;justify-content:center;overflow:hidden}.canvasbox canvas{max-width:100%;height:auto;touch-action:none}.toolbar{display:flex;flex-wrap:wrap;gap:8px}.status{font-size:15px;color:var(--green);font-weight:700}.metric{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}.metric strong{color:var(--green);font-size:18px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 5px;border-bottom:1px solid var(--border);text-align:right}th:first-child,td:first-child{text-align:left}.hidden{display:none}@media(max-width:1250px){.layout{grid-template-columns:300px 1fr}.layout>section:nth-child(2){grid-column:2;grid-row:1}.layout>section:nth-child(3){grid-column:1/-1}}@media(max-width:800px){header{padding:16px;display:block}.layout{display:block;padding:10px}h1{font-size:23px}.canvasbox{min-height:300px}}
-</style></head><body><header><div><h1>洗浄評価 <span style="color:var(--blue)">Lab-Wash V3</span></h1><div class="hint">OpenCV.js必須・研究用画像解析ツール</div></div><div id="status" class="status">OpenCV.js 読み込み中…</div></header><main class="layout"><section><div class="card"><h2>実験条件</h2><label>EXP-ID<input id="expId"></label><div class="grid2"><label>試料<input id="sample"></label><label>実施者<input id="operator"></label></div><label>洗浄条件<input id="condition"></label><div class="grid2"><label>温度<input id="temp"></label><label>時間<input id="time"></label></div><label>メモ<textarea id="memo" rows="3"></textarea></label></div><div class="card"><h2>画像入力</h2><div class="tabs"><button class="tab primary" data-tab="fabric">原布</button><button class="tab" data-tab="before">洗浄前</button><button class="tab" data-tab="after">洗浄後</button></div><div id="drop" class="drop">画像を選択 / ドロップ / Ctrl+V<input id="file" type="file" accept="image/*"></div><label>重量 (g)<input id="weight" type="number" step="0.001"></label><p class="hint">現在のタブが画像の貼り付け先になります。</p></div><div class="card"><h2>ROI・閾値</h2><label>ROI X<input id="rx" type="range" min="0" max=".8" step=".01" value=".2"></label><label>ROI Y<input id="ry" type="range" min="0" max=".8" step=".01" value=".2"></label><label>ROIサイズ<input id="rs" type="range" min=".05" max=".9" step=".01" value=".6"></label><label>汚れ判定 L*閾値<input id="threshold" type="number" min="0" max="100" value="45"></label><div class="toolbar"><button id="center">中央ROI</button><button id="max">最大ROI</button><button id="preset" class="success">設定JSON保存</button><button id="load">設定JSON読込</button><input id="presetFile" class="hidden" type="file" accept="application/json"></div></div></section><section><div class="card"><div class="toolbar" style="justify-content:space-between"><h2>ROIエディタ</h2><button id="analyze" class="primary">解析実行</button></div><div id="canvasbox" class="canvasbox"><canvas id="main"></canvas></div><p class="hint">ROI枠内をドラッグすると直接移動できます。</p></div><div class="card"><h2>比較画像</h2><div class="grid3"><div><b>原布</b><canvas id="cf"></canvas></div><div><b>洗浄前</b><canvas id="cb"></canvas></div><div><b>洗浄後</b><canvas id="ca"></canvas></div></div></div><div class="card"><h2>L*推移</h2><canvas id="chart"></canvas></div></section><section><div class="card"><h2>解析結果</h2><div id="results"><p class="hint">画像を読み込み、解析実行してください。</p></div></div><div class="card"><h2>出力</h2><div class="toolbar"><button id="csv" class="success">CSV保存</button><button id="copy">Excel用コピー</button><button id="json">JSON保存</button></div></div><div class="card"><h2>OpenCV.jsについて</h2><p class="hint">この版はOpenCV.jsが利用可能になるまで解析を実行できません。色変換、ROI処理、二値化、統計量の算出をOpenCV.jsで行います。</p></div></section></main><script>"use strict";const $=id=>document.getElementById(id),keys=['fabric','before','after'],names={fabric:'原布',before:'洗浄前',after:'洗浄後'};const st={tab:'fabric',images:{fabric:null,before:null,after:null},weights:{fabric:'',before:'',after:''},results:{}};let chart=null,drag=null;function clamp(v,a,b){return Math.max(a,Math.min(b,v))}function f(v){return Number.isFinite(v)?v.toFixed(2):'-'}function cvReady(){return window.cv&&cv.Mat&&cv.imread&&cv.cvtColor&&cv.meanStdDev&&cv.threshold}function waitCv(){if(cvReady()){$('status').textContent='● OpenCV.js Ready';return}setTimeout(waitCv,300)}waitCv();function imageFile(file){return new Promise((ok,no)=>{if(!file||!file.type.startsWith('image/'))return no(Error('画像ファイルを選択してください'));let u=URL.createObjectURL(file),im=new Image;im.onload=()=>{let c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;c.getContext('2d').drawImage(im,0,0);URL.revokeObjectURL(u);ok(c)};im.onerror=()=>no(Error('画像を読み込めません'));im.src=u})}async function setImage(file){try{st.images[st.tab]=await imageFile(file);draw();compare()}catch(e){alert(e.message)}}$('file').onchange=e=>setImage(e.target.files[0]);$('drop').onclick=e=>{if(e.target!==$('file'))$('file').click()};$('drop').ondragover=e=>e.preventDefault();$('drop').ondrop=e=>{e.preventDefault();setImage(e.dataTransfer.files[0])};document.addEventListener('paste',e=>{let x=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));if(x)setImage(x.getAsFile())});document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{st.tab=b.dataset.tab;document.querySelectorAll('.tab').forEach(x=>x.className=x===b?'tab primary':'tab');$('weight').value=st.weights[st.tab];draw()});$('weight').oninput=e=>st.weights[st.tab]=e.target.value;['rx','ry','rs','threshold'].forEach(id=>$(id).oninput=draw);$('center').onclick=()=>{$('rx').value=.25;$('ry').value=.25;$('rs').value=.5;draw()};$('max').onclick=()=>{$('rx').value=.05;$('ry').value=.05;$('rs').value=.9;draw()};function draw(){let c=$('main'),x=c.getContext('2d'),im=st.images[st.tab];if(!im){c.width=$('canvasbox').clientWidth;c.height=300;x.fillStyle='#11111b';x.fillRect(0,0,c.width,c.height);x.fillStyle='#bac1d6';x.font='16px system-ui';x.fillText('画像を入力してください',20,32);return}let w=$('canvasbox').clientWidth,h=w*im.height/im.width;c.width=w;c.height=h;x.drawImage(im,0,0,w,h);let rx=+$('rx').value,ry=+$('ry').value,s=+$('rs').value,px=rx*w,py=ry*h,ps=s*w;x.fillStyle='rgba(0,0,0,.5)';x.fillRect(0,0,w,h);x.clearRect(px,py,ps,ps);x.drawImage(im,rx*im.width,ry*im.height,s*im.width,s*im.height,px,py,ps,ps);x.strokeStyle='#89b4fa';x.lineWidth=4;x.strokeRect(px,py,ps,ps)}$('main').onpointerdown=e=>{let c=$('main'),r=c.getBoundingClientRect(),s=+$('rs').value,w=c.width,h=c.height,x=+$('rx').value*w,y=+$('ry').value*h,px=e.clientX-r.left,py=e.clientY-r.top;if(px>=x&&px<=x+s*w&&py>=y&&py<=y+s*h){drag={px,py,rx:+$('rx').value,ry:+$('ry').value};c.setPointerCapture(e.pointerId)}};$('main').onpointermove=e=>{if(!drag)return;let c=$('main'),r=c.getBoundingClientRect(),s=+$('rs').value;$('rx').value=clamp(drag.rx+(e.clientX-r.left-drag.px)/c.width,0,1-s);$('ry').value=clamp(drag.ry+(e.clientY-r.top-drag.py)/c.height,0,1-s);draw()};$('main').onpointerup=()=>drag=null;function compare(){keys.forEach(k=>{let c=$('c'+k[0]),im=st.images[k],x=c.getContext('2d');c.width=220;c.height=160;x.fillStyle='#11111b';x.fillRect(0,0,220,160);if(im)x.drawImage(im,0,0,220,160);else{x.fillStyle='#bac1d6';x.font='14px system-ui';x.fillText('未入力',12,25)}})}function analyze(k){if(!cvReady())throw Error('OpenCV.jsの読み込みが完了していません');let im=st.images[k],rx=+$('rx').value,ry=+$('ry').value,s=+$('rs').value;if(!im)return null;let c=document.createElement('canvas');c.width=Math.max(1,Math.floor(s*im.width));c.height=Math.max(1,Math.floor(s*im.height));c.getContext('2d').drawImage(im,rx*im.width,ry*im.height,s*im.width,s*im.height,0,0,c.width,c.height);let src=cv.imread(c),lab=new cv.Mat(),gray=new cv.Mat(),mean=new cv.Mat(),sd=new cv.Mat(),bin=new cv.Mat();try{cv.cvtColor(src,lab,cv.COLOR_RGBA2Lab);cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);cv.meanStdDev(lab,mean,sd);let l=mean.doubleAt(0,0)*100/255,a=mean.doubleAt(1,0)-128,b=mean.doubleAt(2,0)-128;let threshold=+$('threshold').value*255/100,otsu=cv.threshold(gray,bin,threshold,255,cv.THRESH_BINARY_INV);let dark=cv.countNonZero(bin)/(gray.rows*gray.cols)*100;return{key:L=k,L:l,a,b,sd:sd.doubleAt(0,0)*100/255,dark,weight:+st.weights[k]||null}}finally{src.delete();lab.delete();gray.delete();mean.delete();sd.delete();bin.delete()}}function de(a,b){return a&&b?Math.sqrt((a.L-b.L)**2+(a.a-b.a)**2+(a.b-b.b)**2):null}function rate(v,b){return b?100*v/b:null}function run(){if(!cvReady())return alert('OpenCV.jsがまだ読み込まれていません');keys.forEach(k=>{if(st.images[k])st.results[k]=analyze(k)});let r=st.results,h='<table><tr><th>試料</th><th>L*</th><th>a*</th><th>b*</th><th>汚れ%</th><th>ΔE原布</th></tr>';keys.forEach(k=>{let q=r[k];if(q)h+=`<tr><td>${names[k]}</td><td>${f(q.L)}</td><td>${f(q.a)}</td><td>${f(q.b)}</td><td>${f(q.dark)}</td><td>${f(de(q,r.fabric))}</td></tr>`});h+='</table>';if(r.fabric&&r.before&&r.after){let lr=rate(r.after.L-r.before.L,r.fabric.L-r.before.L);h+=`<div class="metric"><span>L*洗浄率</span><strong>${f(lr)}%</strong></div><div class="metric"><span>ΔE*ab 前後</span><strong>${f(de(r.before,r.after))}</strong></div>`}$('results').innerHTML=h;compare();if(chart)chart.destroy();chart=new Chart($('chart'),{type:'line',data:{labels:['原布','洗浄前','洗浄後'],datasets:[{label:'L*',data:keys.map(k=>r[k]?.L??null),borderColor:'#89b4fa',backgroundColor:'#89b4fa44',fill:true}]},options:{scales:{y:{min:0,max:100}}}})}$('analyze').onclick=run;function rec(){return{meta:{expId:$('expId').value,sample:$('sample').value,operator:$('operator').value,condition:$('condition').value,temp:$('temp').value,time:$('time').value,memo:$('memo').value},roi:{x:+$('rx').value,y:+$('ry').value,size:+$('rs').value},threshold:+$('threshold').value,weights:st.weights,results:st.results}}function dl(n,t,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type}));a.download=n;a.click()}$('json').onclick=()=>dl('wash-result.json',JSON.stringify(rec(),null,2),'application/json');$('csv').onclick=()=>{let r=rec(),h=['試料','L*','a*','b*','汚れ面積率','ΔE原布'],rows=keys.map(k=>{let q=r.results[k]||{};return[names[k],q.L??'',q.a??'',q.b??'',q.dark??'',de(q,r.results.fabric)??'']});dl('wash-result.csv','\ufeff'+[h,...rows].map(x=>x.join(',')).join('\n'),'text/csv')};$('copy').onclick=async()=>{let r=rec(),t=[['項目','原布','洗浄前','洗浄後'],['L*',...keys.map(k=>r.results[k]?.L??'')],['a*',...keys.map(k=>r.results[k]?.a??'')],['b*',...keys.map(k=>r.results[k]?.b??'')]].map(x=>x.join('\t')).join('\n');await navigator.clipboard.writeText(t);alert('コピーしました')};$('preset').onclick=()=>dl('Lab-Wash-preset.json',JSON.stringify({rx:+$('rx').value,ry:+$('ry').value,rs:+$('rs').value,threshold:+$('threshold').value},null,2),'application/json');$('load').onclick=()=>$('presetFile').click();$('presetFile').onchange=async e=>{let p=JSON.parse(await e.target.files[0].text());$('rx').value=p.rx??.2;$('ry').value=p.ry??.2;$('rs').value=p.rs??.6;$('threshold').value=p.threshold??45;draw()};window.addEventListener('resize',draw);window.addEventListener('load',()=>{draw();compare()})</script></body></html>
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab Wash V3.1 - 洗浄評価研究ツール / Fixed</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+window.Module = {
+  onRuntimeInitialized(){
+    console.log("[OpenCV] Runtime initialized");
+    if(window.__opencvRuntimeReady) window.__opencvRuntimeReady();
+  }
+};
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script>
+<style>
+:root{
+  --bg:#1e1e2e; --mantle:#181825; --crust:#11111b;
+  --surface0:#313244; --surface1:#45475a; --surface2:#585b70;
+  --overlay:#6c7086; --text:#cdd6f4; --sub:#a6adc8;
+  --blue:#89b4fa; --green:#a6e3a1; --yellow:#f9e2af; --peach:#fab387;
+  --red:#f38ba8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',system-ui,sans-serif;min-height:100vh}
+.mono{font-family:'JetBrains Mono',monospace}
+button,input,textarea{font-family:inherit}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--surface1);border-radius:4px}
+::-webkit-scrollbar-track{background:var(--mantle)}
+.header{position:sticky;top:0;z-index:50;background:rgba(24,24,37,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--surface0)}
+.header-top{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:12px}
+.logo{width:36px;height:36px;border-radius:10px;background:var(--text);color:var(--crust);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid var(--surface1);background:var(--surface0);color:var(--sub)}
+.badge-blue{background:rgba(137,180,250,.14);border-color:rgba(137,180,250,.4);color:var(--blue)}
+.badge-green{background:rgba(166,227,161,.14);border-color:rgba(166,227,161,.4);color:var(--green)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--yellow);box-shadow:0 0 0 3px rgba(249,226,175,.2);animation:pulse 1.5s infinite}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.header-bottom{height:38px;display:flex;align-items:center;gap:8px;padding:0 16px;border-top:1px solid var(--surface0);background:var(--crust);overflow:auto;white-space:nowrap}
+.btn{border:1px solid var(--surface1);background:var(--surface0);color:var(--text);border-radius:10px;padding:7px 12px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:.15s}
+.btn:hover{background:var(--surface1);transform:translateY(-1px);border-color:var(--surface2)}
+.btn-primary{background:var(--blue);color:var(--crust);border-color:var(--blue)}
+.btn-green{background:var(--green);color:var(--crust);border-color:var(--green)}
+.btn-active{background:var(--text);color:var(--crust);border-color:var(--text)}
+.btn:disabled{opacity:.5;pointer-events:none}
+.input{background:var(--surface0);border:1px solid var(--surface1);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--text);width:100%;outline:none;transition:.15s}
+.input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(137,180,250,.18)}
+.label{font-size:10.5px;font-weight:600;color:var(--sub);display:flex;align-items:center;gap:5px;margin-bottom:5px}
+.card{background:var(--mantle);border:1px solid var(--surface0);border-radius:16px;padding:14px}
+.card-surface{background:var(--surface0);border:1px solid var(--surface1);border-radius:12px;padding:10px}
+.tooltip{position:relative}
+.tooltip:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%);background:var(--crust);color:var(--text);border:1px solid var(--surface1);padding:8px 11px;border-radius:10px;font-size:11px;line-height:1.5;white-space:pre-wrap;width:max-content;max-width:300px;z-index:200;box-shadow:0 10px 30px rgba(0,0,0,.45);pointer-events:none}
+.main{max-width:1920px;margin:0 auto;padding:12px;display:grid;grid-template-columns:300px minmax(0,1.6fr) 380px;gap:12px;align-items:start}
+@media(max-width:1280px){.main{grid-template-columns:300px minmax(0,1fr);}.right{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px}} 
+@media(max-width:860px){.main{grid-template-columns:1fr}.right{grid-template-columns:1fr}}
+.left{display:flex;flex-direction:column;gap:12px;position:sticky;top:106px}
+.center{display:flex;flex-direction:column;gap:12px;min-width:0}
+.right{display:flex;flex-direction:column;gap:12px;position:sticky;top:106px}
+.section-title{font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:8px;margin:0 0 10px 0}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tab{flex:1;padding:8px 6px;border-radius:10px;border:1px solid var(--surface1);background:var(--surface0);color:var(--sub);font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
+.tab.active{background:var(--text);color:var(--crust);border-color:var(--text);box-shadow:0 4px 12px rgba(205,214,244,.15)}
+.tab.has{border-color:var(--green);color:var(--green)}
+.drop{border:1.5px dashed var(--surface1);border-radius:12px;padding:12px;text-align:center;cursor:pointer;transition:.15s;background:linear-gradient(180deg,rgba(49,50,68,.5),rgba(24,24,37,.5))}
+.drop:hover{border-color:var(--blue);background:rgba(137,180,250,.07)}
+.drop.active{border-color:var(--blue);background:rgba(137,180,250,.12);box-shadow:0 0 0 3px rgba(137,180,250,.15)}
+.canvas-wrap{position:relative;border-radius:14px;overflow:hidden;background:var(--crust);border:1px solid var(--surface0);min-height:520px;display:flex;align-items:center;justify-content:center}
+.canvas-wrap canvas{max-width:100%;max-height:78vh;display:block}
+.roi{position:absolute;border:2px solid var(--blue);box-shadow:0 0 0 9999px rgba(0,0,0,.38),0 0 0 1px rgba(137,180,250,.6) inset;cursor:move;touch-action:none}
+.handle{position:absolute;width:12px;height:12px;background:var(--blue);border:2px solid var(--crust);border-radius:50%;transform:translate(-50%,-50%);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px}
+.mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mini{border-radius:10px;overflow:hidden;background:var(--crust);border:1px solid var(--surface0)}
+.mini canvas{width:100%;height:92px;object-fit:cover;display:block;background:var(--mantle)}
+.compare{position:relative;height:220px;border-radius:12px;overflow:hidden;background:var(--crust);border:1px solid var(--surface0)}
+.compare input[type=range]{position:absolute;left:5%;right:5%;bottom:10px;width:90%;accent-color:var(--blue)}
+.rate-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rate{border-radius:12px;padding:10px;text-align:center;background:var(--surface0);border:1px solid var(--surface1)}
+.rate strong{font-size:18px;display:block;margin-top:2px}
+.kbd{font-family:'JetBrains Mono',monospace;background:var(--surface1);border:1px solid var(--surface2);border-bottom-width:2px;border-radius:6px;padding:1px 6px;font-size:10px}
+#pasteOverlay{position:fixed;inset:0;background:rgba(17,17,27,.78);backdrop-filter:blur(8px);border:3px dashed var(--blue);display:none;align-items:center;justify-content:center;z-index:9999}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--text);color:var(--crust);padding:9px 18px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.range{accent-color:var(--blue);width:100%}
+</style>
+</head>
+<body>
+<div id="pasteOverlay"><div style="text-align:center"><div style="font-size:48px;margin-bottom:12px">📋</div><div class="mono" style="font-size:20px;font-weight:700;color:var(--blue)">Ctrl + V で貼り付け</div><div style="font-size:12px;margin-top:8px;color:var(--sub)">アクティブ: <span id="overlayTab" class="mono" style="color:var(--text);font-weight:700">原布</span></div></div></div>
+<div id="toast">toast</div>
+<header class="header">
+  <div class="header-top">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="logo">LAB</div>
+      <div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="font-weight:800;font-size:14px;line-height:1">Lab Wash V3.1</div><span class="badge badge-blue mono">RESEARCH EDITION / FIXED</span></div>
+        <div class="mono" style="font-size:10px;color:var(--sub);margin-top:3px">L*a*b* / ΔE / ΔL* Wash Rate / OpenCV 4.x + Canvas Fallback</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div id="opencvStatus" class="badge" style="gap:8px;padding:6px 12px"><span class="status-dot" id="statusDot"></span><span id="statusText" class="mono" style="font-size:10px">⏳ OpenCV 読込中...</span></div>
+      <button id="btnCopyTSVTop" class="btn btn-green tooltip" data-tip="解析結果をExcel用TSVでコピー">📋 Excelコピー</button>
+      <button id="btnPresetSaveFile" class="btn tooltip" data-tip="ROI・補正・パラメータをJSONで保存">💾 プリセット保存</button>
+      <label class="btn tooltip" data-tip="JSONプリセット読込" style="cursor:pointer">📂 読込<input id="presetFileInput" type="file" accept=".json" style="display:none"></label>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <span class="mono" style="font-size:10px;color:var(--sub)">PRESET</span>
+    <button id="btnSaveLocal" class="btn" style="padding:4px 9px;font-size:10px">ローカル保存</button>
+    <button id="btnLoadLocal" class="btn" style="padding:4px 9px;font-size:10px">復元</button>
+    <button id="btnClearLocal" class="btn" style="padding:4px 9px;font-size:10px">クリア</button>
+    <div style="width:1px;height:16px;background:var(--surface0);margin:0 4px"></div>
+    <span id="presetInfo" class="mono" style="font-size:10px;color:var(--overlay)">未保存</span>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <span class="mono" style="font-size:10px;color:var(--sub)">PASTE TARGET →</span>
+      <span id="pasteTargetLabel" class="badge badge-green mono">原布 FABRIC <span class="kbd">1</span></span>
+      <span class="mono" style="font-size:10px;color:var(--sub)">| <span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> / <span class="kbd">Ctrl</span>+<span class="kbd">V</span></span>
+    </div>
+  </div>
+</header>
+<div class="main">
+  <div class="left">
+    <div class="card">
+      <div class="section-title"><span class="dot" style="background:var(--blue)"></span> 実験条件 <span class="badge mono">META</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div><div class="label tooltip" data-tip="レポートやファイル名に使用">EXP-ID</div><input id="metaExpId" class="input mono" placeholder="EXP-2025-001"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><div class="label">試料名</div><input id="metaSample" class="input" placeholder="綿・油汚れ"></div>
+          <div><div class="label">実施者</div><input id="metaOperator" class="input" placeholder="山田"></div>
+        </div>
+        <div><div class="label">洗浄条件</div><input id="metaWash" class="input" placeholder="中性洗剤 0.2% / 40℃ 10分"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+          <input id="metaTemp" class="input mono" style="text-align:center" placeholder="40℃">
+          <input id="metaTime" class="input mono" style="text-align:center" placeholder="10min">
+          <input id="metaDate" type="date" class="input">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title"><span class="dot" style="background:var(--green)"></span> 画像読込 <span class="badge mono">CLIPBOARD + DRAG</span></div>
+      <div class="tabs">
+        <button data-tab="fabric" class="tab active" id="tabFabric">原布 <span class="mono" style="font-size:9px">1</span></button>
+        <button data-tab="before" class="tab" id="tabBefore">洗浄前 <span class="mono" style="font-size:9px">2</span></button>
+        <button data-tab="after" class="tab" id="tabAfter">洗浄後 <span class="mono" style="font-size:9px">3</span></button>
+      </div>
+      <div id="dropZone" class="drop tooltip" data-tip="クリックで選択 / ドラッグ&ドロップ / 画面全体でCtrl+V">
+        <div style="font-size:11px;font-weight:700">📋 クリップボード対応ドロップエリア</div>
+        <div class="mono" style="font-size:10px;color:var(--sub);margin-top:4px"><span id="dropTabName" style="color:var(--blue);font-weight:700">原布</span> に貼り付け</div>
+        <input id="imgInput" type="file" accept="image/*" style="display:none">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;font-size:9px"><div style="background:var(--mantle);padding:6px;border-radius:8px">JPEG/PNG</div><div style="background:var(--mantle);padding:6px;border-radius:8px">スクショ可</div><div style="background:var(--mantle);padding:6px;border-radius:8px">一括貼付</div></div>
+      </div>
+      <div style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><div class="label tooltip" style="margin:0" data-tip="重量から洗浄率も計算">⚖️ 重量(g)</div><button id="btnClearWeights" class="mono" style="background:none;border:none;color:var(--sub);font-size:10px;cursor:pointer">クリア</button></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px">
+          <input id="weightFabric" type="number" step="0.001" class="input mono" style="text-align:center;font-size:11px" placeholder="原布">
+          <input id="weightBefore" type="number" step="0.001" class="input mono" style="text-align:center;font-size:11px" placeholder="前">
+          <input id="weightAfter" type="number" step="0.001" class="input mono" style="text-align:center;font-size:11px" placeholder="後">
+        </div>
+      </div>
+      <div id="thumbList" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><span class="dot" style="background:var(--peach)"></span> ROI & 補正 <span class="badge mono">CALIBRATION</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div class="label tooltip" style="margin:0" data-tip="解析に使う矩形。布の中央が推奨">🎯 ROI 解析領域</div><div style="display:flex;gap:4px"><button id="btnRoiFull" class="btn" style="padding:3px 8px;font-size:10px">全画面</button><button id="btnRoiCenter" class="btn" style="padding:3px 8px;font-size:10px">中央70%</button></div></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+            <div><div class="label" style="font-size:9px">X%</div><input id="roiX" type="number" class="input mono" style="padding:6px;text-align:center;font-size:11px"></div>
+            <div><div class="label" style="font-size:9px">Y%</div><input id="roiY" type="number" class="input mono" style="padding:6px;text-align:center;font-size:11px"></div>
+            <div><div class="label" style="font-size:9px">W%</div><input id="roiW" type="number" class="input mono" style="padding:6px;text-align:center;font-size:11px"></div>
+            <div><div class="label" style="font-size:9px">H%</div><input id="roiH" type="number" class="input mono" style="padding:6px;text-align:center;font-size:11px"></div>
+          </div>
+          <input id="roiSlider" type="range" min="20" max="95" value="70" class="range" style="margin-top:8px">
+        </div>
+        <div style="border-top:1px solid var(--surface0);padding-top:10px">
+          <div class="label tooltip" data-tip="黒点・白点を画像クリックで取得。照明ムラを補正">🌓 黒白補正</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <button id="modeBlack" class="btn tooltip" data-tip="黒基準を画像から取得">⬛ 黒点</button>
+            <button id="modeWhite" class="btn tooltip" data-tip="白基準を画像から取得">⬜ 白点</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px" class="mono">
+            <div class="card-surface" style="font-size:10px">黒: <span id="calBlackVal">未設定</span></div>
+            <div class="card-surface" style="font-size:10px">白: <span id="calWhiteVal">未設定</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:8px;font-size:11px"><label style="display:flex;align-items:center;gap:6px"><input id="chkUseCal" type="checkbox" checked> 補正適用</label><button id="btnClearCal" class="btn" style="margin-left:auto;padding:3px 8px;font-size:10px">クリア</button></div>
+        </div>
+        <div style="border-top:1px solid var(--surface0);padding-top:10px;display:flex;flex-direction:column;gap:8px">
+          <div class="label">解析パラメータ</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><div class="label" style="font-size:9px">Gamma γ</div><input id="paramGamma" type="range" min="0.6" max="2.2" step="0.05" value="1.0" class="range"><div id="gammaLabel" class="mono" style="text-align:center;font-size:10px;margin-top:2px">1.00</div></div>
+            <div><div class="label" style="font-size:9px">しきい値</div><input id="paramThresh" type="range" min="0" max="100" value="30" class="range"><div id="threshLabel" class="mono" style="text-align:center;font-size:10px;margin-top:2px">30</div></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="tooltip" data-tip="ONでOpenCVノイズ除去。OFFでCanvasのみ"><input id="chkOpenCV" type="checkbox" checked> OpenCV前処理</label>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button id="btnAnalyze" class="btn btn-primary" style="flex:1;padding:12px;font-size:12px">▶ 解析実行 L*a*b* / ΔE</button>
+      <button id="btnDownloadPreset" class="btn" style="font-size:11px">💾 JSON</button>
+    </div>
+  </div>
+  <div class="center">
+    <div class="card" style="padding:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px"><div style="font-weight:700;font-size:12px">🖼️ プレビュー</div><span id="centerTabBadge" class="badge badge-blue mono">原布</span><span id="imageInfo" class="mono" style="font-size:10px;color:var(--sub)"></span></div>
+        <div style="display:flex;gap:6px"><button data-view="original" class="btn btn-active view-btn" style="padding:4px 10px;font-size:10px">原画像</button><button data-view="corrected" class="btn view-btn" style="padding:4px 10px;font-size:10px">補正後</button><button data-view="mask" class="btn view-btn" style="padding:4px 10px;font-size:10px">マスク</button></div>
+      </div>
+      <div id="canvasWrapper" class="canvas-wrap">
+        <canvas id="mainCanvas" width="1200" height="800"></canvas>
+        <div id="roiOverlay" class="roi" style="left:15%;top:15%;width:70%;height:70%;display:none">
+          <div class="handle" data-handle="nw" style="left:0;top:0"></div>
+          <div class="handle" data-handle="ne" style="left:100%;top:0"></div>
+          <div class="handle" data-handle="sw" style="left:0;top:100%"></div>
+          <div class="handle" data-handle="se" style="left:100%;top:100%"></div>
+          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--blue);color:var(--crust);padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;pointer-events:none" class="mono">ROI</div>
+        </div>
+        <div id="emptyHint" class="empty">
+          <div style="width:72px;height:72px;border-radius:18px;background:var(--surface0);display:flex;align-items:center;justify-content:center;font-size:28px;border:1px dashed var(--surface1)">📋</div>
+          <div style="font-weight:700;font-size:13px">画像を貼り付けまたはドロップ</div>
+          <div class="mono" style="font-size:11px;color:var(--sub);line-height:1.6">画面のどこでも <span class="kbd">Ctrl</span>+<span class="kbd">V</span> で即時割当<br>原布 → 洗浄前 → 洗浄後の順で自動でタブが進みます<br><span style="color:var(--overlay)">1,2,3キーでタブ切替</span></div>
+          <div style="display:flex;gap:6px"><span class="badge mono">FABRIC</span><span class="badge mono">BEFORE</span><span class="badge mono">AFTER</span></div>
+        </div>
+      </div>
+      <div class="mini-grid" style="margin-top:10px">
+        <div class="mini"><div style="display:flex;justify-content:space-between;padding:6px 8px;font-size:10px;font-weight:700"><span>原布</span><span id="dotFabric" style="width:8px;height:8px;border-radius:50%;background:var(--surface1)"></span></div><canvas id="miniFabric" width="200" height="120"></canvas><div id="miniFabricLab" class="mono" style="font-size:9px;padding:4px 6px;color:var(--sub)">-</div></div>
+        <div class="mini"><div style="display:flex;justify-content:space-between;padding:6px 8px;font-size:10px;font-weight:700"><span>洗浄前</span><span id="dotBefore" style="width:8px;height:8px;border-radius:50%;background:var(--surface1)"></span></div><canvas id="miniBefore" width="200" height="120"></canvas><div id="miniBeforeLab" class="mono" style="font-size:9px;padding:4px 6px;color:var(--sub)">-</div></div>
+        <div class="mini"><div style="display:flex;justify-content:space-between;padding:6px 8px;font-size:10px;font-weight:700"><span>洗浄後</span><span id="dotAfter" style="width:8px;height:8px;border-radius:50%;background:var(--surface1)"></span></div><canvas id="miniAfter" width="200" height="120"></canvas><div id="miniAfterLab" class="mono" style="font-size:9px;padding:4px 6px;color:var(--sub)">-</div></div>
+      </div>
+    </div>
+    <div class="card" style="padding:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-weight:700;font-size:11px">📊 比較スライダー</div><span class="badge mono">BEFORE / AFTER</span></div>
+      <div class="compare" id="compareWrapper"><canvas id="compareCanvas" width="1200" height="240" style="width:100%;height:100%"></canvas><input id="compareSlider" type="range" min="0" max="100" value="50"></div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="section-title" style="margin:0"><span class="dot" style="background:var(--green)"></span> 解析結果 <span class="badge mono">L*a*b* / ΔE</span></div><span id="resultStatus" class="badge mono">未解析</span></div>
+      <div id="resultTable" style="display:flex;flex-direction:column;gap:8px"><div class="card-surface mono" style="text-align:center;font-size:11px;color:var(--sub)">解析を実行すると L*a*b* と洗浄率が表示されます</div></div>
+      <div class="rate-grid" style="margin-top:12px">
+        <div class="rate"><div style="font-size:9px;font-weight:700;color:var(--sub)">洗浄率 ΔL*</div><strong id="rateL" class="mono">-</strong><div class="mono" style="font-size:8px;color:var(--overlay)">(La-Lb)/(Lf-Lb)</div><div style="height:4px;background:var(--surface1);border-radius:999px;margin-top:6px;overflow:hidden"><div id="barL" style="height:100%;width:0%;background:var(--blue);transition:.5s"></div></div></div>
+        <div class="rate" style="border-color:var(--green)"><div style="font-size:9px;font-weight:700;color:var(--green)">洗浄率 ΔE</div><strong id="rateE" class="mono" style="color:var(--green)">-</strong><div class="mono" style="font-size:8px;color:var(--overlay)">1-ΔEf_a/ΔEf_b</div><div style="height:4px;background:var(--surface1);border-radius:999px;margin-top:6px;overflow:hidden"><div id="barE" style="height:100%;width:0%;background:var(--green);transition:.5s"></div></div></div>
+        <div class="rate"><div style="font-size:9px;font-weight:700;color:var(--sub)">重量洗浄率</div><strong id="rateW" class="mono">-</strong><div class="mono" style="font-size:8px;color:var(--overlay)">(Wb-Wa)/(Wb-Wf)</div><div style="height:4px;background:var(--surface1);border-radius:999px;margin-top:6px;overflow:hidden"><div id="barW" style="height:100%;width:0%;background:var(--yellow);transition:.5s"></div></div></div>
+      </div>
+      <div class="card-surface mono" style="margin-top:10px;font-size:10px;color:var(--sub);line-height:1.5"><div style="font-weight:700;color:var(--text);margin-bottom:4px">式 / Formula</div>L* = 116·f(Y/Yn)-16, a* = 500·(fX-fY), b* = 200·(fY-fZ)<br>ΔE*ab = √[(ΔL*)²+(Δa*)²+(Δb*)²]<br>ΔL*洗浄率 = (L*a-L*b)/(L*f-L*b)×100</div>
+    </div>
+    <div class="card">
+      <div style="font-weight:700;font-size:11px;margin-bottom:10px">📈 グラフ</div>
+      <div style="display:flex;flex-direction:column;gap:14px"><div><canvas id="chartLab" height="190"></canvas></div><div><canvas id="chartDeltaE" height="150"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-weight:700;font-size:11px">💾 研究用エクスポート</div><span class="badge badge-green mono">CSV / TSV / JSON</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button id="downloadCsv" class="btn">📄 CSV 一括DL</button><button id="btnCopyTSV2" class="btn">📋 TSV コピー</button><button id="downloadJson" class="btn">🧾 JSON DL</button><button id="btnDownloadReport" class="btn">📊 HTMLレポート</button></div>
+      <div style="margin-top:10px"><div class="label tooltip" data-tip="Excelに貼ると表になります">Excel貼付用プレビュー (TSV)</div><textarea id="tsvPreview" rows="5" class="input mono" style="font-size:10px" readonly placeholder="解析後にTSV表示"></textarea></div>
+      <div id="saveLog" class="mono" style="font-size:10px;color:var(--sub);margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+<script>
+const $ = (id)=>document.getElementById(id);
+const app = {
+  images:{fabric:null,before:null,after:null},
+  imgEl:{fabric:null,before:null,after:null},
+  weights:{fabric:null,before:null,after:null},
+  roi:{x:15,y:15,w:70,h:70},
+  cal:{black:null,white:null,blackRGB:null,whiteRGB:null},
+  params:{gamma:1.0,thresh:30,useCal:true,useOpenCV:true},
+  results:{fabric:null,before:null,after:null},
+  activeTab:'fabric',
+  viewMode:'original',
+  opencvReady:false,
+  picking:null,
+  charts:{lab:null,deltaE:null}
+};
+const els = {
+  mainCanvas:$('mainCanvas'),
+  roiOverlay:$('roiOverlay'),
+  wrapper:$('canvasWrapper'),
+  emptyHint:$('emptyHint')
+};
+const ctxMain = els.mainCanvas.getContext('2d',{willReadFrequently:true});
+function toast(m){const t=$('toast');t.textContent=m;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',2400);}
+function log(m){$('saveLog').textContent=new Date().toLocaleTimeString()+' '+m}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function fmt(v,d=2){return (v==null||isNaN(v))?'-':Number(v).toFixed(d)}
+function tabLabel(k){return k==='fabric'?'原布':k==='before'?'洗浄前':'洗浄後'}
+function safeRate(n,d){if(d==null||n==null||Math.abs(d)<1e-9)return null;return n/d*100}
+function rgbToXyz(r,g,b){
+  r/=255; g/=255; b/=255;
+  r = r<=0.04045 ? r/12.92 : Math.pow((r+0.055)/1.055,2.4);
+  g = g<=0.04045 ? g/12.92 : Math.pow((g+0.055)/1.055,2.4);
+  b = b<=0.04045 ? b/12.92 : Math.pow((b+0.055)/1.055,2.4);
+  r*=100; g*=100; b*=100;
+  return {X:r*0.4124+g*0.3576+b*0.1805, Y:r*0.2126+g*0.7152+b*0.0722, Z:r*0.0193+g*0.1192+b*0.9505}
+}
+function xyzToLab(X,Y,Z){
+  const Xn=95.047,Yn=100,Zn=108.883;
+  const f=t=>t>0.008856?Math.cbrt(t):(7.787*t+16/116);
+  const fx=f(X/Xn), fy=f(Y/Yn), fz=f(Z/Zn);
+  return {L:116*fy-16, a:500*(fx-fy), b:200*(fy-fz)}
+}
+function rgbToLab(r,g,b){const {X,Y,Z}=rgbToXyz(r,g,b);return xyzToLab(X,Y,Z)}
+function deltaE(l1,l2){if(!l1||!l2)return null;const dL=l1.L-l2.L,da=l1.a-l2.a,db=l1.b-l2.b;return Math.sqrt(dL*dL+da*da+db*db)}
+function setActiveTab(k){
+  app.activeTab=k;
+  document.querySelectorAll('.tab').forEach(b=>{
+    const is=b.dataset.tab===k;
+    b.className = is ? 'tab active' : 'tab'+(app.images[b.dataset.tab]?' has':'');
+    if(app.images[b.dataset.tab] && !is) b.className='tab has';
+  });
+  $('dropTabName').textContent=tabLabel(k);
+  $('centerTabBadge').textContent=tabLabel(k);
+  $('overlayTab').textContent=tabLabel(k);
+  $('pasteTargetLabel').innerHTML=`${tabLabel(k)} ${k.toUpperCase()} <span class="kbd">${k==='fabric'?'1':k==='before'?'2':'3'}</span>`;
+  ['weightFabric','weightBefore','weightAfter'].forEach(id=>{
+    const el=$(id); if(!el) return;
+    const mk=id==='weightFabric'?'fabric':id==='weightBefore'?'before':'after';
+    el.style.borderColor = mk===k ? 'var(--blue)' : 'var(--surface1)';
+  });
+  drawMain();
+}
+function updateThumb(){
+  const list=$('thumbList'); if(!list) return;
+  list.innerHTML='';
+  ['fabric','before','after'].forEach(k=>{
+    const has=!!app.images[k];
+    const d=document.createElement('div');
+    d.className='card-surface'; d.style.cssText='padding:8px;text-align:center;cursor:pointer;font-size:10px;border-color:'+(app.activeTab===k?'var(--blue)':'var(--surface1)');
+    d.innerHTML=`<div style="font-weight:700">${tabLabel(k)}</div><div class="mono" style="margin-top:4px;color:${has?'var(--green)':'var(--overlay)'}">${has?'●読込済':'○未読込'}</div>`;
+    d.onclick=()=>setActiveTab(k);
+    list.appendChild(d);
+    const dot=$('dot'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(dot) dot.style.background=has?'var(--green)':'var(--surface1)';
+  });
+}
+function handleImageFile(file,target){
+  if(!file || !file.type || !file.type.startsWith('image/')){toast('画像ファイルではありません');return;}
+  const tab=target||app.activeTab;
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+  img.onload=()=>{
+    try{
+      app.imgEl[tab]=img;
+      const c=document.createElement('canvas');
+      c.width=img.naturalWidth; c.height=img.naturalHeight;
+      const ctx=c.getContext('2d',{willReadFrequently:true});
+      ctx.drawImage(img,0,0);
+      app.images[tab]=c;
+      updateThumb();
+      drawMain();
+      drawMinis();
+      drawCompare();
+      if(els.emptyHint) els.emptyHint.style.display='none';
+      if(els.roiOverlay) els.roiOverlay.style.display='block';
+      toast(`${tabLabel(tab)} に ${file.name||'貼付画像'} 読込 ${img.naturalWidth}×${img.naturalHeight}`);
+      if(file._fromPaste){
+        const order=['fabric','before','after'];
+        const idx=order.indexOf(tab);
+        if(idx>=0 && idx<2 && !app.images[order[idx+1]]){
+          setActiveTab(order[idx+1]);
+        }
+      }
+    }catch(e){console.error(e);toast('読込エラー: '+e.message)}
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+  };
+  img.onerror=()=>{toast('画像の読込に失敗'); URL.revokeObjectURL(url);}
+  img.src=url;
+}
+const imgInput=$('imgInput'), dropZone=$('dropZone');
+if(imgInput){imgInput.addEventListener('change',e=>{const f=e.target.files&&e.target.files[0]; if(f) handleImageFile(f,app.activeTab); e.target.value='';});}
+if(dropZone){
+  dropZone.addEventListener('click',()=>{if(imgInput) imgInput.click();});
+  dropZone.addEventListener('dragover',e=>{e.preventDefault(); dropZone.classList.add('active'); $('pasteOverlay').style.display='flex';});
+  dropZone.addEventListener('dragleave',()=>{dropZone.classList.remove('active');});
+  dropZone.addEventListener('drop',e=>{e.preventDefault(); dropZone.classList.remove('active'); $('pasteOverlay').style.display='none'; const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f) handleImageFile(f,app.activeTab);});
+}
+window.addEventListener('dragover',e=>{e.preventDefault(); $('pasteOverlay').style.display='flex';});
+window.addEventListener('dragleave',e=>{if(e.clientX===0&&e.clientY===0){$('pasteOverlay').style.display='none';}});
+window.addEventListener('drop',e=>{e.preventDefault(); $('pasteOverlay').style.display='none'; const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f && f.type.startsWith('image/')) handleImageFile(f,app.activeTab);});
+window.addEventListener('paste',e=>{
+  const items=e.clipboardData&&e.clipboardData.items; if(!items) return;
+  let found=false;
+  for(const it of items){ if(it.type && it.type.startsWith('image/')){ const file=it.getAsFile(); if(file){file._fromPaste=true; handleImageFile(file,app.activeTab); found=true; } } }
+  if(found){e.preventDefault(); $('pasteOverlay').style.display='none';}
+});
+window.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='v'){ $('pasteOverlay').style.display='flex'; setTimeout(()=>{$('pasteOverlay').style.display='none';},700); }
+  if(e.key==='1') setActiveTab('fabric');
+  if(e.key==='2') setActiveTab('before');
+  if(e.key==='3') setActiveTab('after');
+});
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>setActiveTab(b.dataset.tab)));
+function getActiveImg(){return app.imgEl[app.activeTab]||null}
+function drawMain(){
+  const img=getActiveImg();
+  const c=els.mainCanvas, ctx=ctxMain, wrap=els.wrapper;
+  if(!img){
+    const w=wrap.clientWidth||800; c.width=w; c.height=Math.round(w*0.66);
+    ctx.fillStyle='#11111b'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle='#313244'; ctx.font='12px JetBrains Mono'; ctx.fillText('No Image - Paste with Ctrl+V (1:原布 2:洗浄前 3:洗浄後)',20,30);
+    if(els.roiOverlay) els.roiOverlay.style.display='none';
+    if($('imageInfo')) $('imageInfo').textContent='No image';
+    return;
+  }
+  const maxW = Math.min(wrap.clientWidth||1200, 1200);
+  const scale = Math.min(1, maxW / img.naturalWidth);
+  c.width = Math.round(img.naturalWidth*scale);
+  c.height = Math.round(img.naturalHeight*scale);
+  ctx.clearRect(0,0,c.width,c.height);
+  if(app.viewMode==='corrected' && app.params.useCal && (app.cal.blackRGB||app.cal.whiteRGB)){
+    const tmp=document.createElement('canvas'); tmp.width=img.naturalWidth; tmp.height=img.naturalHeight;
+    const tctx=tmp.getContext('2d',{willReadFrequently:true}); tctx.drawImage(img,0,0);
+    const id=tctx.getImageData(0,0,tmp.width,tmp.height); applyCorrectionToImageData(id); tctx.putImageData(id,0,0);
+    ctx.drawImage(tmp,0,0,c.width,c.height);
+  }else{
+    ctx.drawImage(img,0,0,c.width,c.height);
+  }
+  if(app.viewMode==='mask'){
+    ctx.fillStyle='rgba(137,180,250,.18)'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.strokeStyle='rgba(137,180,250,.4)'; ctx.setLineDash([6,6]); ctx.strokeRect(c.width*app.roi.x/100,c.height*app.roi.y/100,c.width*app.roi.w/100,c.height*app.roi.h/100); ctx.setLineDash([]);
+  }
+  if($('imageInfo')) $('imageInfo').textContent=`${img.naturalWidth}×${img.naturalHeight} | ${app.viewMode} | ROI ${app.roi.w.toFixed(0)}%×${app.roi.h.toFixed(0)}%`;
+  positionRoiOverlay();
+  if(els.roiOverlay) els.roiOverlay.style.display='block';
+  if(els.emptyHint) els.emptyHint.style.display='none';
+}
+function positionRoiOverlay(){
+  const c=els.mainCanvas, o=els.roiOverlay; if(!c||!o) return;
+  const x = app.roi.x/100*c.width, y=app.roi.y/100*c.height, w=app.roi.w/100*c.width, h=app.roi.h/100*c.height;
+  o.style.left=x+'px'; o.style.top=y+'px'; o.style.width=w+'px'; o.style.height=h+'px';
+}
+function setRoiFromOverlay(){
+  const c=els.mainCanvas, o=els.roiOverlay; if(!c||!o) return;
+  const left=parseFloat(o.style.left)||0, top=parseFloat(o.style.top)||0, width=parseFloat(o.style.width)||100, height=parseFloat(o.style.height)||100;
+  const x = left / c.width *100, y = top / c.height *100, w = width / c.width *100, h = height / c.height *100;
+  app.roi={x:clamp(x,0,90),y:clamp(y,0,90),w:clamp(w,5,100),h:clamp(h,5,100)};
+  syncRoiInputs();
+}
+function syncRoiInputs(){
+  const set=(id,v)=>{const el=$(id); if(el) el.value=v.toFixed(1);};
+  set('roiX',app.roi.x); set('roiY',app.roi.y); set('roiW',app.roi.w); set('roiH',app.roi.h);
+  const sl=$('roiSlider'); if(sl) sl.value=((app.roi.w+app.roi.h)/2).toFixed(0);
+  positionRoiOverlay(); drawMinis(); drawCompare();
+}
+let drag=null;
+if(els.roiOverlay){
+  els.roiOverlay.addEventListener('pointerdown',e=>{
+    if(e.target.classList.contains('handle')) return;
+    drag={type:'move',sx:e.clientX,sy:e.clientY,sl:parseFloat(els.roiOverlay.style.left)||0,st:parseFloat(els.roiOverlay.style.top)||0};
+    try{els.roiOverlay.setPointerCapture(e.pointerId);}catch{}
+  });
+  els.roiOverlay.querySelectorAll('.handle').forEach(h=>{
+    h.addEventListener('pointerdown',e=>{
+      e.stopPropagation();
+      drag={type:'resize',handle:h.dataset.handle,sx:e.clientX,sy:e.clientY,sl:parseFloat(els.roiOverlay.style.left)||0,st:parseFloat(els.roiOverlay.style.top)||0,sw:parseFloat(els.roiOverlay.style.width)||100,sh:parseFloat(els.roiOverlay.style.height)||100};
+      try{h.setPointerCapture(e.pointerId);}catch{}
+    });
+  });
+}
+window.addEventListener('pointermove',e=>{
+  if(!drag) return;
+  const c=els.mainCanvas, o=els.roiOverlay; if(!c||!o) return;
+  if(drag.type==='move'){
+    let nl=drag.sl+(e.clientX-drag.sx), nt=drag.st+(e.clientY-drag.sy);
+    nl=clamp(nl,0,c.width-parseFloat(o.style.width)); nt=clamp(nt,0,c.height-parseFloat(o.style.height));
+    o.style.left=nl+'px'; o.style.top=nt+'px';
+  }else{
+    let dx=e.clientX-drag.sx, dy=e.clientY-drag.sy;
+    let {sl,st,sw,sh,handle}=drag; let l=sl,t=st,w=sw,h=sh;
+    if(handle.includes('e')) w=clamp(sw+dx,30,c.width-sl);
+    if(handle.includes('s')) h=clamp(sh+dy,30,c.height-st);
+    if(handle.includes('w')){ const nw=clamp(sw-dx,30,sl+sw); l=sl+sw-nw; w=nw; }
+    if(handle.includes('n')){ const nh=clamp(sh-dy,30,st+sh); t=st+sh-nh; h=nh; }
+    o.style.left=l+'px'; o.style.top=t+'px'; o.style.width=w+'px'; o.style.height=h+'px';
+  }
+});
+window.addEventListener('pointerup',e=>{ if(drag){ setRoiFromOverlay(); drag=null; } });
+['roiX','roiY','roiW','roiH'].forEach(id=>{
+  const el=$(id); if(!el) return;
+  el.addEventListener('change',()=>{
+    const x=parseFloat($('roiX').value)||15, y=parseFloat($('roiY').value)||15, w=parseFloat($('roiW').value)||70, h=parseFloat($('roiH').value)||70;
+    app.roi={x:clamp(x,0,95),y:clamp(y,0,95),w:clamp(w,5,100),h:clamp(h,5,100)}; positionRoiOverlay(); drawMinis(); drawCompare();
+  });
+});
+const roiSlider=$('roiSlider'); if(roiSlider) roiSlider.addEventListener('input',e=>{const v=parseFloat(e.target.value); const cx=app.roi.x+app.roi.w/2, cy=app.roi.y+app.roi.h/2; app.roi.w=v; app.roi.h=v; app.roi.x=clamp(cx-v/2,0,100-v); app.roi.y=clamp(cy-v/2,0,100-v); syncRoiInputs();});
+const btnRoiFull=$('btnRoiFull'); if(btnRoiFull) btnRoiFull.onclick=()=>{app.roi={x:0,y:0,w:100,h:100};syncRoiInputs();};
+const btnRoiCenter=$('btnRoiCenter'); if(btnRoiCenter) btnRoiCenter.onclick=()=>{app.roi={x:15,y:15,w:70,h:70};syncRoiInputs();};
+document.querySelectorAll('.view-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.view-btn').forEach(x=>{x.className='btn view-btn';});
+    b.className='btn btn-active view-btn';
+    app.viewMode=b.dataset.view; drawMain();
+  });
+});
+function applyCorrectionToImageData(id){
+  const d=id.data, gamma=app.params.gamma, black=app.cal.blackRGB, white=app.cal.whiteRGB;
+  const useCal=app.params.useCal && black && white;
+  for(let i=0;i<d.length;i+=4){
+    let r=d[i], g=d[i+1], b=d[i+2];
+    if(useCal){
+      r=(r-black.r)/((white.r-black.r)||1)*255;
+      g=(g-black.g)/((white.g-black.g)||1)*255;
+      b=(b-black.b)/((white.b-black.b)||1)*255;
+    }
+    if(gamma!==1.0){
+      r=255*Math.pow(clamp(r/255,0,1),gamma);
+      g=255*Math.pow(clamp(g/255,0,1),gamma);
+      b=255*Math.pow(clamp(b/255,0,1),gamma);
+    }
+    d[i]=clamp(r,0,255); d[i+1]=clamp(g,0,255); d[i+2]=clamp(b,0,255);
+  }
+}
+function sampleAt(imgEl,rx,ry){
+  try{
+    const s=12;
+    const canvas=document.createElement('canvas'); canvas.width=s; canvas.height=s;
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+    const px=Math.floor(rx*imgEl.naturalWidth), py=Math.floor(ry*imgEl.naturalHeight);
+    const sx=clamp(px-Math.floor(s/2),0,imgEl.naturalWidth-s), sy=clamp(py-Math.floor(s/2),0,imgEl.naturalHeight-s);
+    const srcCanvas=app.images[app.activeTab];
+    if(srcCanvas){
+      ctx.drawImage(srcCanvas,sx,sy,s,s,0,0,s,s);
+    }else{
+      ctx.drawImage(imgEl,-sx,-sy);
+    }
+    const data=ctx.getImageData(0,0,s,s).data;
+    let r=0,g=0,b=0; for(let i=0;i<data.length;i+=4){r+=data[i];g+=data[i+1];b+=data[i+2];}
+    const n=data.length/4; return {r:r/n,g:g/n,b:b/n};
+  }catch(e){console.warn(e); return {r:0,g:0,b:0}}
+}
+if(els.mainCanvas){
+  els.mainCanvas.addEventListener('click',e=>{
+    if(!app.picking) return;
+    const rect=els.mainCanvas.getBoundingClientRect();
+    const x=(e.clientX-rect.left)/rect.width, y=(e.clientY-rect.top)/rect.height;
+    const img=getActiveImg(); if(!img) return;
+    const rgb=sampleAt(img,x,y);
+    if(app.picking==='black'){
+      app.cal.black={x,y}; app.cal.blackRGB=rgb;
+      const el=$('calBlackVal'); if(el) el.textContent=`${rgb.r.toFixed(0)},${rgb.g.toFixed(0)},${rgb.b.toFixed(0)}`;
+      toast('黒点を登録');
+    }else{
+      app.cal.white={x,y}; app.cal.whiteRGB=rgb;
+      const el=$('calWhiteVal'); if(el) el.textContent=`${rgb.r.toFixed(0)},${rgb.g.toFixed(0)},${rgb.b.toFixed(0)}`;
+      toast('白点を登録');
+    }
+    app.picking=null;
+    const mb=$('modeBlack'), mw=$('modeWhite');
+    if(mb) mb.className='btn tooltip'; if(mw) mw.className='btn tooltip';
+    drawMain();
+  });
+}
+const modeBlack=$('modeBlack'), modeWhite=$('modeWhite');
+if(modeBlack) modeBlack.addEventListener('click',()=>{
+  app.picking=app.picking==='black'?null:'black';
+  modeBlack.className = app.picking==='black'?'btn btn-active tooltip':'btn tooltip';
+  if(modeWhite) modeWhite.className='btn tooltip';
+  if(app.picking) toast('画像上の黒い基準点をクリックしてください');
+});
+if(modeWhite) modeWhite.addEventListener('click',()=>{
+  app.picking=app.picking==='white'?null:'white';
+  modeWhite.className = app.picking==='white'?'btn btn-active tooltip':'btn tooltip';
+  if(modeBlack) modeBlack.className='btn tooltip';
+  if(app.picking) toast('画像上の白い基準点をクリックしてください');
+});
+const btnClearCal=$('btnClearCal'); if(btnClearCal) btnClearCal.addEventListener('click',()=>{app.cal={black:null,white:null,blackRGB:null,whiteRGB:null}; const b=$('calBlackVal'), w=$('calWhiteVal'); if(b) b.textContent='未設定'; if(w) w.textContent='未設定'; drawMain();});
+const chkUseCal=$('chkUseCal'); if(chkUseCal) chkUseCal.addEventListener('change',e=>{app.params.useCal=e.target.checked; drawMain();});
+const paramGamma=$('paramGamma'); if(paramGamma) paramGamma.addEventListener('input',e=>{app.params.gamma=parseFloat(e.target.value); const l=$('gammaLabel'); if(l) l.textContent=app.params.gamma.toFixed(2); drawMain();});
+const paramThresh=$('paramThresh'); if(paramThresh) paramThresh.addEventListener('input',e=>{app.params.thresh=parseInt(e.target.value); const l=$('threshLabel'); if(l) l.textContent=e.target.value;});
+const chkOpenCV=$('chkOpenCV'); if(chkOpenCV) chkOpenCV.addEventListener('change',e=>{app.params.useOpenCV=e.target.checked;});
+['weightFabric','weightBefore','weightAfter'].forEach(id=>{
+  const el=$(id); if(!el) return;
+  el.addEventListener('input',e=>{
+    const k=id==='weightFabric'?'fabric':id==='weightBefore'?'before':'after';
+    app.weights[k]=parseFloat(e.target.value)||null;
+  });
+});
+const btnClearWeights=$('btnClearWeights'); if(btnClearWeights) btnClearWeights.addEventListener('click',()=>{['weightFabric','weightBefore','weightAfter'].forEach(id=>{const el=$(id); if(el) el.value='';}); app.weights={fabric:null,before:null,after:null};});
+function getRoiImageData(tab){
+  const srcCanvas=app.images[tab]; if(!srcCanvas) return null;
+  const {x,y,w,h}=app.roi;
+  const sx=Math.floor(x/100*srcCanvas.width), sy=Math.floor(y/100*srcCanvas.height), sw=Math.max(1,Math.floor(w/100*srcCanvas.width)), sh=Math.max(1,Math.floor(h/100*srcCanvas.height));
+  if(sw<=0||sh<=0) return null;
+  const tmp=document.createElement('canvas'); tmp.width=sw; tmp.height=sh;
+  const ctx=tmp.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(srcCanvas,sx,sy,sw,sh,0,0,sw,sh);
+  let imageData=ctx.getImageData(0,0,sw,sh);
+  if(app.params.useCal) applyCorrectionToImageData(imageData);
+  if(app.params.useOpenCV && app.opencvReady && window.cv && typeof cv.Mat!=='undefined'){
+    try{
+      if(typeof cv.matFromImageData==='function'){
+        let src=cv.matFromImageData(imageData);
+        let dst=new cv.Mat();
+        cv.medianBlur(src,dst,3);
+        const out=document.createElement('canvas'); out.width=sw; out.height=sh;
+        cv.imshow(out,dst);
+        const octx=out.getContext('2d'); imageData=octx.getImageData(0,0,sw,sh);
+        src.delete(); dst.delete();
+      }
+    }catch(e){console.warn('OpenCV fallback',e)}
+  }
+  return imageData;
+}
+function analyzeTab(tab){
+  const imageData=getRoiImageData(tab); if(!imageData) return null;
+  const d=imageData.data; let rSum=0,gSum=0,bSum=0; const count=d.length/4; if(count===0) return null;
+  for(let i=0;i<d.length;i+=4){rSum+=d[i];gSum+=d[i+1];bSum+=d[i+2];}
+  const rAvg=rSum/count, gAvg=gSum/count, bAvg=bSum/count;
+  const lab=rgbToLab(rAvg,gAvg,bAvg);
+  let lVar=0, samples=0;
+  for(let i=0;i<d.length;i+=40){ const ll=rgbToLab(d[i],d[i+1],d[i+2]).L; lVar+=(ll-lab.L)*(ll-lab.L); samples++; }
+  const lStd=Math.sqrt(lVar/Math.max(1,samples));
+  return {tab,count,rgb:{r:rAvg,g:gAvg,b:bAvg},Lab:lab,lStd,imageData};
+}
+function analyzeAll(){
+  try{
+    for(const k of ['fabric','before','after']){ if(app.images[k]) app.results[k]=analyzeTab(k); }
+    renderResults(); renderCharts(); buildTsv(); drawMinis();
+  }catch(e){console.error(e); toast('解析エラー: '+e.message)}
+}
+const btnAnalyze=$('btnAnalyze');
+if(btnAnalyze) btnAnalyze.addEventListener('click',()=>{
+  if(!app.images.fabric && !app.images.before && !app.images.after){toast('画像がありません - Ctrl+Vで貼り付け');return;}
+  btnAnalyze.disabled=true; btnAnalyze.textContent='⏳ 解析中...';
+  setTimeout(()=>{
+    try{
+      analyzeAll();
+      const rs=$('resultStatus'); if(rs){rs.textContent='解析完了'; rs.className='badge badge-green mono';}
+      log(app.opencvReady?'解析完了 (OpenCV)':'解析完了 (Canvas)');
+      toast('解析完了 L*a*b* / ΔE');
+    }catch(e){console.error(e); toast('解析エラー');}
+    btnAnalyze.disabled=false; btnAnalyze.textContent='▶ 解析実行 L*a*b* / ΔE';
+  },50);
+});
+function renderResults(){
+  const f=app.results.fabric, b=app.results.before, a=app.results.after;
+  const table=$('resultTable'); if(!table) return;
+  const row=(label,res)=>{
+    if(!res) return `<div class="card-surface" style="display:flex;justify-content:space-between"><span style="font-size:10px;font-weight:700">${label}</span><span class="mono" style="font-size:10px;color:var(--overlay)">未解析</span></div>`;
+    return `<div class="card-surface"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;font-weight:700">${label}</span><span class="mono" style="font-size:10px;color:var(--sub)">${res.count.toLocaleString()}px</span></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px" class="mono"><div><div style="font-size:9px;color:var(--sub)">L*</div><div style="font-weight:700;font-size:12px">${fmt(res.Lab.L)}</div></div><div><div style="font-size:9px;color:var(--sub)">a*</div><div style="font-weight:700;font-size:12px">${fmt(res.Lab.a)}</div></div><div><div style="font-size:9px;color:var(--sub)">b*</div><div style="font-weight:700;font-size:12px">${fmt(res.Lab.b)}</div></div></div><div class="mono" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px;font-size:9px;color:var(--overlay)"><div>R ${fmt(res.rgb.r,0)}</div><div>G ${fmt(res.rgb.g,0)}</div><div>B ${fmt(res.rgb.b,0)}</div></div><div class="mono" style="font-size:9px;color:var(--sub);margin-top:4px">σL* ${fmt(res.lStd,2)}</div></div>`;
+  };
+  let html=row('原布 FABRIC',f)+row('洗浄前 BEFORE',b)+row('洗浄後 AFTER',a);
+  if(f&&b){
+    const de_fb=deltaE(f.Lab,b.Lab), de_fa=f&&a?deltaE(f.Lab,a.Lab):null, de_ba=b&&a?deltaE(b.Lab,a.Lab):null;
+    html+=`<div class="card-surface"><div style="font-size:10px;font-weight:700;margin-bottom:6px">ΔE*ab 色差</div><div class="mono" style="font-size:11px;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between"><span>ΔE 原布-洗浄前</span><strong>${fmt(de_fb)}</strong></div><div style="display:flex;justify-content:space-between"><span>ΔE 原布-洗浄後</span><strong>${fmt(de_fa)}</strong></div><div style="display:flex;justify-content:space-between;color:var(--green)"><span>ΔE 洗浄前-後</span><strong>${fmt(de_ba)}</strong></div></div></div>`;
+  }
+  table.innerHTML=html;
+  let rateL='-',rateE='-',rateW='-'; let pL=0,pE=0,pW=0;
+  if(f&&b&&a){
+    const rL=safeRate(a.Lab.L-b.Lab.L,f.Lab.L-b.Lab.L); if(rL!=null){rateL=fmt(rL,1)+'%'; pL=clamp(rL,0,100);}
+    const de_fb=deltaE(f.Lab,b.Lab), de_fa=deltaE(f.Lab,a.Lab); if(de_fb&&de_fb>1e-6){const rE=(1-de_fa/de_fb)*100; rateE=fmt(rE,1)+'%'; pE=clamp(rE,0,100);}
+  }
+  if(app.weights.fabric!=null&&app.weights.before!=null&&app.weights.after!=null){
+    const rW=safeRate(app.weights.before-app.weights.after,app.weights.before-app.weights.fabric); if(rW!=null){rateW=fmt(rW,1)+'%'; pW=clamp(rW,0,100);}
+  }
+  const setRate=(idL,barId,val,p)=>{const el=$(idL); if(el) el.textContent=val; const bar=$(barId); if(bar) bar.style.width=p+'%';};
+  setRate('rateL','barL',rateL,pL); setRate('rateE','barE',rateE,pE); setRate('rateW','barW',rateW,pW);
+}
+function drawMinis(){
+  ['fabric','before','after'].forEach(k=>{
+    const c=$('mini'+k.charAt(0).toUpperCase()+k.slice(1)); if(!c) return; const ctx=c.getContext('2d');
+    ctx.fillStyle='#11111b'; ctx.fillRect(0,0,c.width,c.height);
+    const src=app.images[k]; if(!src){ctx.fillStyle='#313244';ctx.fillRect(0,0,c.width,c.height);return;}
+    const {x,y,w,h}=app.roi; const sx=x/100*src.width, sy=y/100*src.height, sw=w/100*src.width, sh=h/100*src.height;
+    ctx.drawImage(src,sx,sy,sw,sh,0,0,c.width,c.height);
+    const res=app.results[k]; const labEl=$('mini'+k.charAt(0).toUpperCase()+k.slice(1)+'Lab'); if(res&&labEl) labEl.textContent=`L*${fmt(res.Lab.L,1)} a*${fmt(res.Lab.a,1)} b*${fmt(res.Lab.b,1)}`;
+  });
+}
+function drawCompare(){
+  const c=$('compareCanvas'); if(!c) return; const ctx=c.getContext('2d');
+  const before=app.images.before, after=app.images.after;
+  ctx.fillStyle='#11111b'; ctx.fillRect(0,0,c.width,c.height);
+  if(!before||!after){ctx.fillStyle='#a6adc8';ctx.font='12px JetBrains Mono';ctx.fillText('BEFORE と AFTER を読込んで比較',20,120);return;}
+  const split=parseInt(($('compareSlider')&&$('compareSlider').value)||50)/100;
+  const {x,y,w,h}=app.roi;
+  ctx.drawImage(before, x/100*before.width, y/100*before.height, w/100*before.width, h/100*before.height, 0,0,c.width,c.height);
+  ctx.save(); ctx.beginPath(); ctx.rect(c.width*split,0,c.width*(1-split),c.height); ctx.clip();
+  ctx.drawImage(after, x/100*after.width, y/100*after.height, w/100*after.width, h/100*after.height, 0,0,c.width,c.height);
+  ctx.restore(); ctx.strokeStyle='#89b4fa'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(c.width*split,0); ctx.lineTo(c.width*split,c.height); ctx.stroke();
+}
+const compareSlider=$('compareSlider'); if(compareSlider) compareSlider.addEventListener('input',drawCompare);
+function renderCharts(){
+  const f=app.results.fabric, b=app.results.before, a=app.results.after;
+  if(!f&&!b&&!a) return;
+  if(typeof Chart==='undefined'){console.warn('Chart.js not loaded');return;}
+  const ctxLab=$('chartLab'); if(ctxLab){
+    const cctx=ctxLab.getContext('2d'); if(app.charts.lab) try{app.charts.lab.destroy();}catch{}
+    try{
+      app.charts.lab=new Chart(cctx,{
+        type:'bar',
+        data:{
+          labels:['L*','a*','b*'],
+          datasets:[
+            f?{label:'原布',data:[f.Lab.L,f.Lab.a,f.Lab.b],backgroundColor:'#cdd6f4'}:null,
+            b?{label:'洗浄前',data:[b.Lab.L,b.Lab.a,b.Lab.b],backgroundColor:'#f38ba8'}:null,
+            a?{label:'洗浄後',data:[a.Lab.L,a.Lab.a,a.Lab.b],backgroundColor:'#a6e3a1'}:null
+          ].filter(Boolean)
+        },
+        options:{responsive:true,plugins:{legend:{labels:{color:'#cdd6f4',font:{size:10}}}},scales:{x:{ticks:{color:'#a6adc8'}},y:{ticks:{color:'#a6adc8'}}}}
+      });
+    }catch(e){console.warn(e)}
+  }
+  const ctxE=$('chartDeltaE'); if(ctxE && f && b){
+    const cctx=ctxE.getContext('2d'); if(app.charts.deltaE) try{app.charts.deltaE.destroy();}catch{}
+    try{
+      const de_fb=deltaE(f.Lab,b.Lab)||0, de_fa=a?deltaE(f.Lab,a.Lab)||0:0, de_ba=(b&&a)?deltaE(b.Lab,a.Lab)||0:0;
+      app.charts.deltaE=new Chart(cctx,{
+        type:'bar',
+        data:{labels:['ΔE 原布-前','ΔE 原布-後','ΔE 前-後'],datasets:[{label:'ΔE*ab',data:[de_fb,de_fa,de_ba],backgroundColor:['#89b4fa','#a6e3a1','#f9e2af']}]},
+        options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#a6adc8',font:{size:10}}},y:{ticks:{color:'#a6adc8'}}}}
+      });
+    }catch(e){console.warn(e)}
+  }
+}
+function buildRecord(){
+  const f=app.results.fabric,b=app.results.before,a=app.results.after;
+  return {
+    meta:{experimentId:$('metaExpId').value,sampleName:$('metaSample').value,operator:$('metaOperator').value,washCondition:$('metaWash').value,temperature:$('metaTemp').value,time:$('metaTime').value,date:$('metaDate').value,timestamp:new Date().toISOString()},
+    weights:app.weights, roi:app.roi, cal:app.cal, params:app.params,
+    results:{
+      fabric:f?{L:f.Lab.L,a:f.Lab.a,b:f.Lab.b,R:f.rgb.r,G:f.rgb.g,B:f.rgb.b,stdL:f.lStd}:null,
+      before:b?{L:b.Lab.L,a:b.Lab.a,b:b.Lab.b,R:b.rgb.r,G:b.rgb.g,B:b.rgb.b,stdL:b.lStd}:null,
+      after:a?{L:a.Lab.L,a:a.Lab.a,b:a.Lab.b,R:a.rgb.r,G:a.rgb.g,B:a.rgb.b,stdL:a.lStd}:null
+    },
+    deltaE:{fabric_before:f&&b?deltaE(f.Lab,b.Lab):null,fabric_after:f&&a?deltaE(f.Lab,a.Lab):null,before_after:b&&a?deltaE(b.Lab,a.Lab):null},
+    rates:{L_based:f&&b&&a?safeRate(a.Lab.L-b.Lab.L,f.Lab.L-b.Lab.L):null,E_based:(()=>{if(!f||!b) return null; const de_fb=deltaE(f.Lab,b.Lab),de_fa=a?deltaE(f.Lab,a.Lab):null; if(!de_fb) return null; return (1-de_fa/de_fb)*100})(),weight_based:app.weights.fabric!=null&&app.weights.before!=null&&app.weights.after!=null?safeRate(app.weights.before-app.weights.after,app.weights.before-app.weights.fabric):null}
+  };
+}
+function downloadText(name,text,type){const blob=new Blob([text],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function buildTsv(){
+  try{
+    const rec=buildRecord();
+    const headers=['項目','原布','洗浄前','洗浄後','ΔE原布-前','ΔE原布-後','ΔE前-後','洗浄率L%','洗浄率E%','重量率%','EXP-ID','試料','実施者','条件'];
+    const row=[['L*',rec.results.fabric?.L,rec.results.before?.L,rec.results.after?.L],['a*',rec.results.fabric?.a,rec.results.before?.a,rec.results.after?.a],['b*',rec.results.fabric?.b,rec.results.before?.b,rec.results.after?.b],['R',rec.results.fabric?.R,rec.results.before?.R,rec.results.after?.R],['G',rec.results.fabric?.G,rec.results.before?.G,rec.results.after?.G],['B',rec.results.fabric?.B,rec.results.before?.B,rec.results.after?.B]].map(r=>r.join('\t')).join('\n');
+    const summary=[headers.join('\t'),['Summary',rec.results.fabric?.L,rec.results.before?.L,rec.results.after?.L,rec.deltaE.fabric_before,rec.deltaE.fabric_after,rec.deltaE.before_after,rec.rates.L_based,rec.rates.E_based,rec.rates.weight_based,rec.meta.experimentId,rec.meta.sampleName,rec.meta.operator,rec.meta.washCondition].join('\t')].join('\n');
+    const full=row+'\n'+summary;
+    const ta=$('tsvPreview'); if(ta) ta.value=full;
+    return full;
+  }catch(e){console.warn(e); return '';}
+}
+const downloadCsvBtn=$('downloadCsv');
+if(downloadCsvBtn) downloadCsvBtn.addEventListener('click',()=>{
+  const rec=buildRecord();
+  const header=['expId','sample','operator','condition','fabric_L','fabric_a','fabric_b','before_L','before_a','before_b','after_L','after_a','after_b','deltaE_fab_before','deltaE_fab_after','deltaE_before_after','washRate_L','washRate_E','washRate_weight','weight_fabric','weight_before','weight_after'];
+  const values=[rec.meta.experimentId,rec.meta.sampleName,rec.meta.operator,rec.meta.washCondition,rec.results.fabric?.L,rec.results.fabric?.a,rec.results.fabric?.b,rec.results.before?.L,rec.results.before?.a,rec.results.before?.b,rec.results.after?.L,rec.results.after?.a,rec.results.after?.b,rec.deltaE.fabric_before,rec.deltaE.fabric_after,rec.deltaE.before_after,rec.rates.L_based,rec.rates.E_based,rec.rates.weight_based,rec.weights.fabric,rec.weights.before,rec.weights.after].map(v=>`"${(v??'').toString().replace(/"/g,'""')}"`).join(',');
+  downloadText(`wash_${rec.meta.experimentId||'exp'}.csv`, header.join(',')+'\n'+values,'text/csv'); toast('CSV DL');
+});
+function copyTsv(){const tsv=buildTsv(); if(!tsv){toast('データなし');return;} navigator.clipboard.writeText(tsv).then(()=>toast('TSVコピー - Excel貼付可')).catch(()=>{const ta=$('tsvPreview'); if(ta){ta.select(); document.execCommand('copy'); toast('コピーしました');}});}
+const btnCopyTop=$('btnCopyTSVTop'), btnCopy2=$('btnCopyTSV2'); if(btnCopyTop) btnCopyTop.addEventListener('click',copyTsv); if(btnCopy2) btnCopy2.addEventListener('click',copyTsv);
+const downloadJsonBtn=$('downloadJson'); if(downloadJsonBtn) downloadJsonBtn.addEventListener('click',()=>{downloadText(`wash_${$('metaExpId').value||'exp'}.json`,JSON.stringify(buildRecord(),null,2),'application/json');});
+const btnDownloadReport=$('btnDownloadReport'); if(btnDownloadReport) btnDownloadReport.addEventListener('click',()=>{const rec=buildRecord(); const html=`<!doctype html><meta charset="utf-8"><title>Report ${rec.meta.experimentId}</title><body style="font-family:sans-serif;padding:20px"><h1>洗浄評価レポート ${rec.meta.experimentId}</h1><pre>${JSON.stringify(rec,null,2)}</pre></body>`; downloadText(`report_${rec.meta.experimentId||'exp'}.html`,html,'text/html');});
+function getPreset(){return {version:'3.1-fixed',roi:app.roi,cal:app.cal,params:app.params,meta:{expId:$('metaExpId').value,sample:$('metaSample').value,operator:$('metaOperator').value,wash:$('metaWash').value,temp:$('metaTemp').value,time:$('metaTime').value,date:$('metaDate').value}};}
+function applyPreset(p){try{if(p.roi){app.roi=p.roi; syncRoiInputs();} if(p.cal){app.cal=p.cal; const b=$('calBlackVal'),w=$('calWhiteVal'); if(b) b.textContent=p.cal.blackRGB?`${p.cal.blackRGB.r.toFixed(0)},${p.cal.blackRGB.g.toFixed(0)},${p.cal.blackRGB.b.toFixed(0)}`:'未設定'; if(w) w.textContent=p.cal.whiteRGB?`${p.cal.whiteRGB.r.toFixed(0)},${p.cal.whiteRGB.g.toFixed(0)},${p.cal.whiteRGB.b.toFixed(0)}`:'未設定';} if(p.params){app.params={...app.params,...p.params}; const g=$('paramGamma'),gl=$('gammaLabel'),t=$('paramThresh'),tl=$('threshLabel'),uc=$('chkUseCal'),uo=$('chkOpenCV'); if(g) g.value=app.params.gamma; if(gl) gl.textContent=app.params.gamma.toFixed(2); if(t) t.value=app.params.thresh; if(tl) tl.textContent=app.params.thresh; if(uc) uc.checked=app.params.useCal; if(uo) uo.checked=app.params.useOpenCV;} if(p.meta){const map={metaExpId:'expId',metaSample:'sample',metaOperator:'operator',metaWash:'wash',metaTemp:'temp',metaTime:'time',metaDate:'date'}; Object.entries(map).forEach(([id,k])=>{const el=$(id); if(el&&p.meta[k]!=null) el.value=p.meta[k];});} const pi=$('presetInfo'); if(pi) pi.textContent=`v${p.version||'?'} ${new Date().toLocaleString()}`; toast('プリセット適用'); drawMain();}catch(e){console.error(e); toast('プリセットエラー');}}
+const btnPresetSave=$('btnPresetSaveFile'), btnDownloadPreset=$('btnDownloadPreset');
+if(btnPresetSave) btnPresetSave.addEventListener('click',()=>{downloadText(`preset_${$('metaExpId').value||'lab'}.json`,JSON.stringify(getPreset(),null,2),'application/json');});
+if(btnDownloadPreset) btnDownloadPreset.addEventListener('click',()=>{if(btnPresetSave) btnPresetSave.click();});
+const presetFileInput=$('presetFileInput'); if(presetFileInput) presetFileInput.addEventListener('change',e=>{const f=e.target.files&&e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{try{applyPreset(JSON.parse(r.result));}catch{toast('JSON解析エラー');}}; r.readAsText(f); e.target.value='';});
+const btnSaveLocal=$('btnSaveLocal'); if(btnSaveLocal) btnSaveLocal.addEventListener('click',()=>{localStorage.setItem('labwash_v3_preset',JSON.stringify(getPreset())); const pi=$('presetInfo'); if(pi) pi.textContent='ローカル保存 '+new Date().toLocaleTimeString(); toast('ローカル保存');});
+const btnLoadLocal=$('btnLoadLocal'); if(btnLoadLocal) btnLoadLocal.addEventListener('click',()=>{const s=localStorage.getItem('labwash_v3_preset'); if(!s){toast('保存なし');return;} try{applyPreset(JSON.parse(s));}catch{toast('読込エラー');}});
+const btnClearLocal=$('btnClearLocal'); if(btnClearLocal) btnClearLocal.addEventListener('click',()=>{localStorage.removeItem('labwash_v3_preset'); const pi=$('presetInfo'); if(pi) pi.textContent='未保存'; toast('クリア');});
+function isOpenCvUsable(){try{return window.cv && typeof cv.Mat!=='undefined' && (typeof cv.imread==='function' || typeof cv.matFromImageData==='function');}catch{return false}}
+function useJsFallback(msg){
+  const el=$('opencvStatus'), dot=$('statusDot'), txt=$('statusText');
+  if(el){el.style.background='rgba(249,226,175,.14)'; el.style.borderColor='rgba(249,226,175,.4)';}
+  if(dot){dot.style.background='var(--yellow)';}
+  if(txt){txt.textContent='⚙️ JSフォールバック: '+(msg||'Canvas');}
+}
+window.__opencvRuntimeReady=()=>{
+  if(isOpenCvUsable()){
+    app.opencvReady=true;
+    const el=$('opencvStatus'), dot=$('statusDot'), txt=$('statusText');
+    if(el){el.style.background='rgba(166,227,161,.14)'; el.style.borderColor='rgba(166,227,161,.4)';}
+    if(dot){dot.style.background='var(--green)'; dot.style.boxShadow='0 0 0 4px rgba(166,227,161,.25)'; dot.style.animation='none';}
+    if(txt){txt.textContent='✨ OpenCV Ready 4.x'; txt.style.color='var(--green)';}
+    log('OpenCV ready');
+  }
+};
+setTimeout(()=>{
+  if(isOpenCvUsable()){
+    window.__opencvRuntimeReady();
+  }else{
+    useJsFallback('読込待機 - Canvasで動作可');
+  }
+},1200);
+function init(){
+  updateThumb(); syncRoiInputs(); drawMain(); setActiveTab('fabric');
+  window.addEventListener('resize',()=>{drawMain();});
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
+</script>
+</body>
+</html>
