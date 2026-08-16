@@ -2,791 +2,755 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lab Wash V3.1 - 洗浄評価研究ツール / Fixed</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Lab Wash V6 - 重量対応・自動ガーゼ検出・iPad最適化</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-<script>
-window.Module = {
-  onRuntimeInitialized(){
-    console.log("[OpenCV] Runtime initialized");
-    if(window.__opencvRuntimeReady) window.__opencvRuntimeReady();
-  }
-};
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>window.Module={onRuntimeInitialized(){ if(window.__opencvRuntimeReady) window.__opencvRuntimeReady(); }};</script>
 <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script>
 <style>
 :root{
-  --bg:#1e1e2e; --mantle:#181825; --crust:#11111b;
-  --surface0:#313244; --surface1:#45475a; --surface2:#585b70;
-  --overlay:#6c7086; --text:#cdd6f4; --sub:#a6adc8;
-  --blue:#89b4fa; --green:#a6e3a1; --yellow:#f9e2af; --peach:#fab387;
-  --red:#f38ba8;
+  --bg:#f3f4f6; --card:#ffffff; --card-2:#f9fafb; --card-3:#f1f5f9; --border:#e5e7eb; --border-strong:#cbd5e1;
+  --text:#0f172a; --sub:#64748b; --sub-2:#94a3b8;
+  --primary:#0f172a; --blue:#2563eb; --blue-light:#eff6ff; --green:#059669; --green-light:#ecfdf5; --amber:#d97706; --red:#ef4444;
+  --radius:16px; --radius-sm:12px; --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(0,0,0,.06); --shadow-lg:0 16px 40px rgba(0,0,0,.12);
 }
-*{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',system-ui,sans-serif;min-height:100vh}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',system-ui,sans-serif;line-height:1.6;min-height:100dvh; overscroll-behavior:none}
 .mono{font-family:'JetBrains Mono',monospace}
-button,input,textarea{font-family:inherit}
-::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-thumb{background:var(--surface1);border-radius:4px}
-::-webkit-scrollbar-track{background:var(--mantle)}
-.header{position:sticky;top:0;z-index:50;background:rgba(24,24,37,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--surface0)}
-.header-top{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:12px}
-.logo{width:36px;height:36px;border-radius:10px;background:var(--text);color:var(--crust);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
-.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid var(--surface1);background:var(--surface0);color:var(--sub)}
-.badge-blue{background:rgba(137,180,250,.14);border-color:rgba(137,180,250,.4);color:var(--blue)}
-.badge-green{background:rgba(166,227,161,.14);border-color:rgba(166,227,161,.4);color:var(--green)}
-.status-dot{width:8px;height:8px;border-radius:50%;background:var(--yellow);box-shadow:0 0 0 3px rgba(249,226,175,.2);animation:pulse 1.5s infinite}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
-.header-bottom{height:38px;display:flex;align-items:center;gap:8px;padding:0 16px;border-top:1px solid var(--surface0);background:var(--crust);overflow:auto;white-space:nowrap}
-.btn{border:1px solid var(--surface1);background:var(--surface0);color:var(--text);border-radius:10px;padding:7px 12px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:.15s}
-.btn:hover{background:var(--surface1);transform:translateY(-1px);border-color:var(--surface2)}
-.btn-primary{background:var(--blue);color:var(--crust);border-color:var(--blue)}
-.btn-green{background:var(--green);color:var(--crust);border-color:var(--green)}
-.btn-active{background:var(--text);color:var(--crust);border-color:var(--text)}
-.btn:disabled{opacity:.5;pointer-events:none}
-.input{background:var(--surface0);border:1px solid var(--surface1);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--text);width:100%;outline:none;transition:.15s}
-.input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(137,180,250,.18)}
-.label{font-size:10.5px;font-weight:600;color:var(--sub);display:flex;align-items:center;gap:5px;margin-bottom:5px}
-.card{background:var(--mantle);border:1px solid var(--surface0);border-radius:16px;padding:14px}
-.card-surface{background:var(--surface0);border:1px solid var(--surface1);border-radius:12px;padding:10px}
-.tooltip{position:relative}
-.tooltip:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%);background:var(--crust);color:var(--text);border:1px solid var(--surface1);padding:8px 11px;border-radius:10px;font-size:11px;line-height:1.5;white-space:pre-wrap;width:max-content;max-width:300px;z-index:200;box-shadow:0 10px 30px rgba(0,0,0,.45);pointer-events:none}
-.main{max-width:1920px;margin:0 auto;padding:12px;display:grid;grid-template-columns:300px minmax(0,1.6fr) 380px;gap:12px;align-items:start}
-@media(max-width:1280px){.main{grid-template-columns:300px minmax(0,1fr);}.right{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px}} 
-@media(max-width:860px){.main{grid-template-columns:1fr}.right{grid-template-columns:1fr}}
-.left{display:flex;flex-direction:column;gap:12px;position:sticky;top:106px}
-.center{display:flex;flex-direction:column;gap:12px;min-width:0}
-.right{display:flex;flex-direction:column;gap:12px;position:sticky;top:106px}
-.section-title{font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:8px;margin:0 0 10px 0}
-.dot{width:6px;height:6px;border-radius:50%;display:inline-block}
-.tabs{display:flex;gap:6px;margin-bottom:10px}
-.tab{flex:1;padding:8px 6px;border-radius:10px;border:1px solid var(--surface1);background:var(--surface0);color:var(--sub);font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
-.tab.active{background:var(--text);color:var(--crust);border-color:var(--text);box-shadow:0 4px 12px rgba(205,214,244,.15)}
-.tab.has{border-color:var(--green);color:var(--green)}
-.drop{border:1.5px dashed var(--surface1);border-radius:12px;padding:12px;text-align:center;cursor:pointer;transition:.15s;background:linear-gradient(180deg,rgba(49,50,68,.5),rgba(24,24,37,.5))}
-.drop:hover{border-color:var(--blue);background:rgba(137,180,250,.07)}
-.drop.active{border-color:var(--blue);background:rgba(137,180,250,.12);box-shadow:0 0 0 3px rgba(137,180,250,.15)}
-.canvas-wrap{position:relative;border-radius:14px;overflow:hidden;background:var(--crust);border:1px solid var(--surface0);min-height:520px;display:flex;align-items:center;justify-content:center}
-.canvas-wrap canvas{max-width:100%;max-height:78vh;display:block}
-.roi{position:absolute;border:2px solid var(--blue);box-shadow:0 0 0 9999px rgba(0,0,0,.38),0 0 0 1px rgba(137,180,250,.6) inset;cursor:move;touch-action:none}
-.handle{position:absolute;width:12px;height:12px;background:var(--blue);border:2px solid var(--crust);border-radius:50%;transform:translate(-50%,-50%);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4)}
-.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px}
-.mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.mini{border-radius:10px;overflow:hidden;background:var(--crust);border:1px solid var(--surface0)}
-.mini canvas{width:100%;height:92px;object-fit:cover;display:block;background:var(--mantle)}
-.compare{position:relative;height:220px;border-radius:12px;overflow:hidden;background:var(--crust);border:1px solid var(--surface0)}
-.compare input[type=range]{position:absolute;left:5%;right:5%;bottom:10px;width:90%;accent-color:var(--blue)}
-.rate-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.rate{border-radius:12px;padding:10px;text-align:center;background:var(--surface0);border:1px solid var(--surface1)}
-.rate strong{font-size:18px;display:block;margin-top:2px}
-.kbd{font-family:'JetBrains Mono',monospace;background:var(--surface1);border:1px solid var(--surface2);border-bottom-width:2px;border-radius:6px;padding:1px 6px;font-size:10px}
-#pasteOverlay{position:fixed;inset:0;background:rgba(17,17,27,.78);backdrop-filter:blur(8px);border:3px dashed var(--blue);display:none;align-items:center;justify-content:center;z-index:9999}
-#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--text);color:var(--crust);padding:9px 18px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.35)}
-.range{accent-color:var(--blue);width:100%}
+.header{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding-top:env(safe-area-inset-top)}
+.header-top{height:62px;max-width:1920px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:40px;height:40px;border-radius:12px;background:var(--primary);color:white;display:grid;place-items:center;font-weight:900;font-size:13px;flex-shrink:0}
+.brand h1{font-size:14px;font-weight:900;margin:0;letter-spacing:-.2px;white-space:nowrap}
+.brand p{font-size:11px;color:var(--sub);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.stepper{display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--card);border-top:1px solid var(--border);overflow:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.step{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:11px;font-weight:700;background:var(--card-2);color:var(--sub);transition:.2s}
+.step.active{background:var(--primary);color:white;border-color:var(--primary)}
+.step.done{background:var(--green-light);border-color:#a7f3d0;color:var(--green)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid var(--border);background:var(--card);color:var(--sub);white-space:nowrap}
+.badge.live{border-color:#bfdbfe;background:var(--blue-light);color:var(--blue)}
+.badge.ok{border-color:#a7f3d0;background:var(--green-light);color:var(--green)}
+.dot{width:8px;height:8px;border-radius:50%;background:#fbbf24}
+.dot.ok{background:var(--green);box-shadow:0 0 0 4px rgba(16,185,129,.2)}
+.main{max-width:1920px;margin:0 auto;padding:10px;display:grid;grid-template-columns:360px minmax(0,1.45fr) 420px;gap:10px;align-items:start;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+@media(max-width:1280px){ .main{grid-template-columns:360px minmax(0,1fr)} .right{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px} }
+@media(max-width:900px){ .main{grid-template-columns:1fr} .right{grid-template-columns:1fr} .left{position:static!important} }
+.left{position:sticky;top:108px;display:flex;flex-direction:column;gap:10px;max-height:calc(100dvh - 120px);overflow:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+@media(max-width:900px){ .left{max-height:none;overflow:visible} }
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px}
+.card-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.card-title{font-size:12px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:7px}
+.label{font-size:11px;font-weight:700;color:var(--sub);display:flex;align-items:center;gap:5px;margin-bottom:5px}
+.input,.textarea,select{width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 12px;font-size:14px;color:var(--text);outline:none;transition:.15s;min-height:44px}
+.input:focus,.textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px #e2e8f0}
+.textarea{resize:vertical;min-height:64px}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:.15s;min-height:44px;touch-action:manipulation;white-space:nowrap;user-select:none}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--primary);color:white;border-color:var(--primary)}
+.btn-blue{background:var(--blue);color:white;border-color:var(--blue)}
+.btn-green{background:var(--green);color:white;border-color:var(--green)}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--sub)}
+.btn-sm{padding:8px 11px;font-size:12px;min-height:38px;border-radius:10px}
+.btn:disabled{opacity:.45;pointer-events:none}
+.accordion{border:1px solid var(--border);border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);overflow:hidden}
+.acc-item{border-bottom:1px solid var(--border)}
+.acc-item:last-child{border-bottom:none}
+.acc-head{width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 14px;background:var(--card);border:none;cursor:pointer;min-height:52px;text-align:left;transition:.15s}
+.acc-head:hover{background:var(--card-2)}
+.acc-head .left-head{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;text-transform:uppercase}
+.acc-head .chevron{width:26px;height:26px;border-radius:8px;background:var(--card-2);border:1px solid var(--border);display:grid;place-items:center;font-size:12px;transition:.2s;flex-shrink:0}
+.acc-item.open .chevron{transform:rotate(180deg)}
+.acc-body{display:none;padding:0 12px 12px 12px;background:var(--card)}
+.acc-item.open .acc-body{display:block}
+.tabs{display:flex;gap:6px;padding:5px;background:var(--card-2);border:1px solid var(--border);border-radius:14px;overflow:auto}
+.tab{flex:1;min-width:84px;padding:10px 8px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--sub);font-size:12px;font-weight:800;cursor:pointer;text-align:center;min-height:44px;position:relative;transition:.15s}
+.tab.active{background:var(--card);color:var(--text);border-color:var(--border);box-shadow:var(--shadow)}
+.tab.has::after{content:'';position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--green)}
+.drop{border:2px dashed var(--border-strong);border-radius:16px;padding:16px;text-align:center;cursor:pointer;background:var(--card-2);min-height:92px;display:grid;place-items:center;transition:.15s}
+.drop.drag{border-color:var(--blue);background:var(--blue-light)}
+.thumb-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.thumb{border-radius:12px;overflow:hidden;border:1px solid var(--border);background:#f1f5f9;aspect-ratio:4/3;position:relative;cursor:pointer;transition:.15s}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .lab{position:absolute;left:6px;bottom:4px;background:rgba(15,23,42,.8);color:white;font-size:10px;padding:2px 7px;border-radius:99px}
+.thumb.cal-ok{outline:2px solid var(--green);outline-offset:2px}
+.thumb.weight-ok{box-shadow:inset 0 0 0 2px var(--blue)}
+.weight-grid{display:grid;gap:8px}
+.weight-card{border:1px solid var(--border);border-radius:12px;padding:10px;background:var(--card-2);transition:.15s}
+.weight-card.active{border-color:var(--primary);background:white;box-shadow:0 0 0 3px #e2e8f0}
+.weight-card .w-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.weight-card .w-title{font-size:11px;font-weight:800}
+.canvas-area{display:flex;flex-direction:column;gap:10px}
+.canvas-stage{position:relative;border-radius:18px;overflow:hidden;background:#0b1220;border:1px solid #1e293b;min-height:500px;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none}
+.canvas-stage canvas{max-width:100%;max-height:68dvh;display:block}
+@media(max-width:900px){ .canvas-stage{min-height:380px} }
+.roi-box{position:absolute;border:2.5px solid #38bdf8;box-shadow:0 0 0 9999px rgba(2,6,23,.6),0 0 0 1px rgba(56,189,248,.9) inset,0 0 18px rgba(56,189,248,.35);cursor:move;touch-action:none;border-radius:3px;z-index:5}
+.handle{position:absolute;width:20px;height:20px;background:white;border:2.5px solid #0284c7;border-radius:50%;transform:translate(-50%,-50%);cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.4);z-index:6}
+.cal-point{position:absolute;width:24px;height:24px;border-radius:50%;transform:translate(-50%,-50%);border:3px solid white;box-shadow:0 2px 12px rgba(0,0,0,.5);display:grid;place-items:center;font-size:11px;font-weight:900;color:white;pointer-events:none;z-index:7}
+.cal-point.black{background:#0f172a}
+.cal-point.white{background:#f8fafc;color:#0f172a;border-color:#0f172a}
+.detect-box{position:absolute;border:2px dashed #facc15;box-shadow:0 0 0 1px rgba(250,204,21,.6) inset;background:rgba(250,204,21,.08);pointer-events:none;z-index:4;border-radius:4px}
+.roi-toolbar{position:absolute;left:8px;top:8px;display:flex;gap:6px;z-index:8;flex-wrap:wrap;max-width:78%}
+.roi-badge{position:absolute;right:8px;top:8px;background:rgba(2,6,23,.88);color:#e0f2fe;border:1px solid rgba(56,189,248,.3);padding:5px 9px;border-radius:999px;font-size:10px;font-family:'JetBrains Mono',monospace;z-index:8}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;color:#94a3b8}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:700px){ .compare{grid-template-columns:1fr} }
+.compare-card{border-radius:14px;overflow:hidden;border:1px solid var(--border);background:var(--card-2)}
+.compare-card .head{padding:8px 10px;font-size:11px;font-weight:800;display:flex;justify-content:space-between;align-items:center;background:var(--card);border-bottom:1px solid var(--border)}
+.compare-card canvas{width:100%;height:auto;display:block;max-height:34dvh;object-fit:contain;background:#0b1220}
+.slider-wrap{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#0b1220}
+.slider-wrap img{width:100%;display:block;max-height:48dvh;object-fit:contain}
+.slider-handle{position:absolute;top:0;bottom:0;width:3px;background:white;box-shadow:0 0 0 1px rgba(0,0,0,.3);z-index:3;pointer-events:none}
+.slider-range{position:absolute;left:10px;right:10px;bottom:10px;z-index:4}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{border:1px solid var(--border);border-radius:14px;padding:11px;background:var(--card-2)}
+.stat .k{font-size:10px;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.stat .v{font-size:16px;font-weight:800;margin-top:2px;font-family:'JetBrains Mono',monospace}
+.progress{height:8px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:6px}
+.progress>div{height:100%;background:var(--primary);border-radius:99px;transition:.4s}
+.mini-note{font-size:11px;color:var(--sub);background:#fffbeb;border:1px solid #fde68a;padding:9px 11px;border-radius:12px;line-height:1.6}
+.kbd{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--card);border:1px solid var(--border);border-bottom-width:2px;padding:3px 7px;border-radius:7px}
+.history-table{width:100%;border-collapse:collapse;font-size:11px}
+.history-table th{font-size:10px;color:var(--sub);text-transform:uppercase;text-align:left;padding:6px 4px;border-bottom:1px solid var(--border)}
+.history-table td{padding:7px 4px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace}
 </style>
 </head>
 <body>
-<div id="pasteOverlay"><div style="text-align:center"><div style="font-size:48px;margin-bottom:12px">📋</div><div class="mono" style="font-size:20px;font-weight:700;color:var(--blue)">Ctrl + V で貼り付け</div><div style="font-size:12px;margin-top:8px;color:var(--sub)">アクティブ: <span id="overlayTab" class="mono" style="color:var(--text);font-weight:700">原布</span></div></div></div>
-<div id="toast">toast</div>
-<header class="header">
+<div class="header">
   <div class="header-top">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div class="logo">LAB</div>
-      <div>
-        <div style="display:flex;align-items:center;gap:8px"><div style="font-weight:800;font-size:14px;line-height:1">Lab Wash V3.1</div><span class="badge badge-blue mono">RESEARCH EDITION / FIXED</span></div>
-        <div class="mono" style="font-size:10px;color:var(--sub);margin-top:3px">L*a*b* / ΔE / ΔL* Wash Rate / OpenCV 4.x + Canvas Fallback</div>
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <div id="opencvStatus" class="badge" style="gap:8px;padding:6px 12px"><span class="status-dot" id="statusDot"></span><span id="statusText" class="mono" style="font-size:10px">⏳ OpenCV 読込中...</span></div>
-      <button id="btnCopyTSVTop" class="btn btn-green tooltip" data-tip="解析結果をExcel用TSVでコピー">📋 Excelコピー</button>
-      <button id="btnPresetSaveFile" class="btn tooltip" data-tip="ROI・補正・パラメータをJSONで保存">💾 プリセット保存</button>
-      <label class="btn tooltip" data-tip="JSONプリセット読込" style="cursor:pointer">📂 読込<input id="presetFileInput" type="file" accept=".json" style="display:none"></label>
+    <div class="brand"><div class="logo">LW</div><div style="min-width:0"><h1>Lab Wash V6 <span style="font-weight:500;color:var(--sub)">/ 重量・自動検出</span></h1><p>重量洗浄率・黒白必須・ガーゼ自動認識・iPad最適化</p></div></div>
+    <div class="hdr-actions">
+      <div class="badge" id="opencvStatus"><span id="statusDot" class="dot"></span><span id="statusText" class="mono" style="font-size:10px">OpenCV確認</span></div>
+      <button class="btn btn-sm" id="btnResetAll">リセット</button>
+      <button class="btn btn-primary" id="btnAnalyze">解析実行</button>
     </div>
   </div>
-  <div class="header-bottom">
-    <span class="mono" style="font-size:10px;color:var(--sub)">PRESET</span>
-    <button id="btnSaveLocal" class="btn" style="padding:4px 9px;font-size:10px">ローカル保存</button>
-    <button id="btnLoadLocal" class="btn" style="padding:4px 9px;font-size:10px">復元</button>
-    <button id="btnClearLocal" class="btn" style="padding:4px 9px;font-size:10px">クリア</button>
-    <div style="width:1px;height:16px;background:var(--surface0);margin:0 4px"></div>
-    <span id="presetInfo" class="mono" style="font-size:10px;color:var(--overlay)">未保存</span>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-      <span class="mono" style="font-size:10px;color:var(--sub)">PASTE TARGET →</span>
-      <span id="pasteTargetLabel" class="badge badge-green mono">原布 FABRIC <span class="kbd">1</span></span>
-      <span class="mono" style="font-size:10px;color:var(--sub)">| <span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> / <span class="kbd">Ctrl</span>+<span class="kbd">V</span></span>
-    </div>
-  </div>
-</header>
-<div class="main">
-  <div class="left">
-    <div class="card">
-      <div class="section-title"><span class="dot" style="background:var(--blue)"></span> 実験条件 <span class="badge mono">META</span></div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div><div class="label tooltip" data-tip="レポートやファイル名に使用">EXP-ID</div><input id="metaExpId" class="input mono" placeholder="EXP-2025-001"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div><div class="label">試料名</div><input id="metaSample" class="input" placeholder="綿・油汚れ"></div>
-          <div><div class="label">実施者</div><input id="metaOperator" class="input" placeholder="山田"></div>
-        </div>
-        <div><div class="label">洗浄条件</div><input id="metaWash" class="input" placeholder="中性洗剤 0.2% / 40℃ 10分"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
-          <input id="metaTemp" class="input mono" style="text-align:center" placeholder="40℃">
-          <input id="metaTime" class="input mono" style="text-align:center" placeholder="10min">
-          <input id="metaDate" type="date" class="input">
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="section-title"><span class="dot" style="background:var(--green)"></span> 画像読込 <span class="badge mono">CLIPBOARD + DRAG</span></div>
-      <div class="tabs">
-        <button data-tab="fabric" class="tab active" id="tabFabric">原布 <span class="mono" style="font-size:9px">1</span></button>
-        <button data-tab="before" class="tab" id="tabBefore">洗浄前 <span class="mono" style="font-size:9px">2</span></button>
-        <button data-tab="after" class="tab" id="tabAfter">洗浄後 <span class="mono" style="font-size:9px">3</span></button>
-      </div>
-      <div id="dropZone" class="drop tooltip" data-tip="クリックで選択 / ドラッグ&ドロップ / 画面全体でCtrl+V">
-        <div style="font-size:11px;font-weight:700">📋 クリップボード対応ドロップエリア</div>
-        <div class="mono" style="font-size:10px;color:var(--sub);margin-top:4px"><span id="dropTabName" style="color:var(--blue);font-weight:700">原布</span> に貼り付け</div>
-        <input id="imgInput" type="file" accept="image/*" style="display:none">
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;font-size:9px"><div style="background:var(--mantle);padding:6px;border-radius:8px">JPEG/PNG</div><div style="background:var(--mantle);padding:6px;border-radius:8px">スクショ可</div><div style="background:var(--mantle);padding:6px;border-radius:8px">一括貼付</div></div>
-      </div>
-      <div style="margin-top:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center"><div class="label tooltip" style="margin:0" data-tip="重量から洗浄率も計算">⚖️ 重量(g)</div><button id="btnClearWeights" class="mono" style="background:none;border:none;color:var(--sub);font-size:10px;cursor:pointer">クリア</button></div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px">
-          <input id="weightFabric" type="number" step="0.001" class="input mono" style="text-align:center;font-size:11px" placeholder="原布">
-          <input id="weightBefore" type="number" step="0.001" class="input mono" style="text-align:center;font-size:11px" placeholder="前">
-          <input id="weightAfter" type="number" step="0.001" class="input mono" style="text-align:center;font-size:11px" placeholder="後">
-        </div>
-      </div>
-      <div id="thumbList" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px"></div>
-    </div>
-    <div class="card">
-      <div class="section-title"><span class="dot" style="background:var(--peach)"></span> ROI & 補正 <span class="badge mono">CALIBRATION</span></div>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div class="label tooltip" style="margin:0" data-tip="解析に使う矩形。布の中央が推奨">🎯 ROI 解析領域</div><div style="display:flex;gap:4px"><button id="btnRoiFull" class="btn" style="padding:3px 8px;font-size:10px">全画面</button><button id="btnRoiCenter" class="btn" style="padding:3px 8px;font-size:10px">中央70%</button></div></div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
-            <div><div class="label" style="font-size:9px">X%</div><input id="roiX" type="number" class="input mono" style="padding:6px;text-align:center;font-size:11px"></div>
-            <div><div class="label" style="font-size:9px">Y%</div><input id="roiY" type="number" class="input mono" style="padding:6px;text-align:center;font-size:11px"></div>
-            <div><div class="label" style="font-size:9px">W%</div><input id="roiW" type="number" class="input mono" style="padding:6px;text-align:center;font-size:11px"></div>
-            <div><div class="label" style="font-size:9px">H%</div><input id="roiH" type="number" class="input mono" style="padding:6px;text-align:center;font-size:11px"></div>
-          </div>
-          <input id="roiSlider" type="range" min="20" max="95" value="70" class="range" style="margin-top:8px">
-        </div>
-        <div style="border-top:1px solid var(--surface0);padding-top:10px">
-          <div class="label tooltip" data-tip="黒点・白点を画像クリックで取得。照明ムラを補正">🌓 黒白補正</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-            <button id="modeBlack" class="btn tooltip" data-tip="黒基準を画像から取得">⬛ 黒点</button>
-            <button id="modeWhite" class="btn tooltip" data-tip="白基準を画像から取得">⬜ 白点</button>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px" class="mono">
-            <div class="card-surface" style="font-size:10px">黒: <span id="calBlackVal">未設定</span></div>
-            <div class="card-surface" style="font-size:10px">白: <span id="calWhiteVal">未設定</span></div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;margin-top:8px;font-size:11px"><label style="display:flex;align-items:center;gap:6px"><input id="chkUseCal" type="checkbox" checked> 補正適用</label><button id="btnClearCal" class="btn" style="margin-left:auto;padding:3px 8px;font-size:10px">クリア</button></div>
-        </div>
-        <div style="border-top:1px solid var(--surface0);padding-top:10px;display:flex;flex-direction:column;gap:8px">
-          <div class="label">解析パラメータ</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div><div class="label" style="font-size:9px">Gamma γ</div><input id="paramGamma" type="range" min="0.6" max="2.2" step="0.05" value="1.0" class="range"><div id="gammaLabel" class="mono" style="text-align:center;font-size:10px;margin-top:2px">1.00</div></div>
-            <div><div class="label" style="font-size:9px">しきい値</div><input id="paramThresh" type="range" min="0" max="100" value="30" class="range"><div id="threshLabel" class="mono" style="text-align:center;font-size:10px;margin-top:2px">30</div></div>
-          </div>
-          <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="tooltip" data-tip="ONでOpenCVノイズ除去。OFFでCanvasのみ"><input id="chkOpenCV" type="checkbox" checked> OpenCV前処理</label>
-        </div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button id="btnAnalyze" class="btn btn-primary" style="flex:1;padding:12px;font-size:12px">▶ 解析実行 L*a*b* / ΔE</button>
-      <button id="btnDownloadPreset" class="btn" style="font-size:11px">💾 JSON</button>
-    </div>
-  </div>
-  <div class="center">
-    <div class="card" style="padding:12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px">
-        <div style="display:flex;align-items:center;gap:8px"><div style="font-weight:700;font-size:12px">🖼️ プレビュー</div><span id="centerTabBadge" class="badge badge-blue mono">原布</span><span id="imageInfo" class="mono" style="font-size:10px;color:var(--sub)"></span></div>
-        <div style="display:flex;gap:6px"><button data-view="original" class="btn btn-active view-btn" style="padding:4px 10px;font-size:10px">原画像</button><button data-view="corrected" class="btn view-btn" style="padding:4px 10px;font-size:10px">補正後</button><button data-view="mask" class="btn view-btn" style="padding:4px 10px;font-size:10px">マスク</button></div>
-      </div>
-      <div id="canvasWrapper" class="canvas-wrap">
-        <canvas id="mainCanvas" width="1200" height="800"></canvas>
-        <div id="roiOverlay" class="roi" style="left:15%;top:15%;width:70%;height:70%;display:none">
-          <div class="handle" data-handle="nw" style="left:0;top:0"></div>
-          <div class="handle" data-handle="ne" style="left:100%;top:0"></div>
-          <div class="handle" data-handle="sw" style="left:0;top:100%"></div>
-          <div class="handle" data-handle="se" style="left:100%;top:100%"></div>
-          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--blue);color:var(--crust);padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;pointer-events:none" class="mono">ROI</div>
-        </div>
-        <div id="emptyHint" class="empty">
-          <div style="width:72px;height:72px;border-radius:18px;background:var(--surface0);display:flex;align-items:center;justify-content:center;font-size:28px;border:1px dashed var(--surface1)">📋</div>
-          <div style="font-weight:700;font-size:13px">画像を貼り付けまたはドロップ</div>
-          <div class="mono" style="font-size:11px;color:var(--sub);line-height:1.6">画面のどこでも <span class="kbd">Ctrl</span>+<span class="kbd">V</span> で即時割当<br>原布 → 洗浄前 → 洗浄後の順で自動でタブが進みます<br><span style="color:var(--overlay)">1,2,3キーでタブ切替</span></div>
-          <div style="display:flex;gap:6px"><span class="badge mono">FABRIC</span><span class="badge mono">BEFORE</span><span class="badge mono">AFTER</span></div>
-        </div>
-      </div>
-      <div class="mini-grid" style="margin-top:10px">
-        <div class="mini"><div style="display:flex;justify-content:space-between;padding:6px 8px;font-size:10px;font-weight:700"><span>原布</span><span id="dotFabric" style="width:8px;height:8px;border-radius:50%;background:var(--surface1)"></span></div><canvas id="miniFabric" width="200" height="120"></canvas><div id="miniFabricLab" class="mono" style="font-size:9px;padding:4px 6px;color:var(--sub)">-</div></div>
-        <div class="mini"><div style="display:flex;justify-content:space-between;padding:6px 8px;font-size:10px;font-weight:700"><span>洗浄前</span><span id="dotBefore" style="width:8px;height:8px;border-radius:50%;background:var(--surface1)"></span></div><canvas id="miniBefore" width="200" height="120"></canvas><div id="miniBeforeLab" class="mono" style="font-size:9px;padding:4px 6px;color:var(--sub)">-</div></div>
-        <div class="mini"><div style="display:flex;justify-content:space-between;padding:6px 8px;font-size:10px;font-weight:700"><span>洗浄後</span><span id="dotAfter" style="width:8px;height:8px;border-radius:50%;background:var(--surface1)"></span></div><canvas id="miniAfter" width="200" height="120"></canvas><div id="miniAfterLab" class="mono" style="font-size:9px;padding:4px 6px;color:var(--sub)">-</div></div>
-      </div>
-    </div>
-    <div class="card" style="padding:10px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-weight:700;font-size:11px">📊 比較スライダー</div><span class="badge mono">BEFORE / AFTER</span></div>
-      <div class="compare" id="compareWrapper"><canvas id="compareCanvas" width="1200" height="240" style="width:100%;height:100%"></canvas><input id="compareSlider" type="range" min="0" max="100" value="50"></div>
-    </div>
-  </div>
-  <div class="right">
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="section-title" style="margin:0"><span class="dot" style="background:var(--green)"></span> 解析結果 <span class="badge mono">L*a*b* / ΔE</span></div><span id="resultStatus" class="badge mono">未解析</span></div>
-      <div id="resultTable" style="display:flex;flex-direction:column;gap:8px"><div class="card-surface mono" style="text-align:center;font-size:11px;color:var(--sub)">解析を実行すると L*a*b* と洗浄率が表示されます</div></div>
-      <div class="rate-grid" style="margin-top:12px">
-        <div class="rate"><div style="font-size:9px;font-weight:700;color:var(--sub)">洗浄率 ΔL*</div><strong id="rateL" class="mono">-</strong><div class="mono" style="font-size:8px;color:var(--overlay)">(La-Lb)/(Lf-Lb)</div><div style="height:4px;background:var(--surface1);border-radius:999px;margin-top:6px;overflow:hidden"><div id="barL" style="height:100%;width:0%;background:var(--blue);transition:.5s"></div></div></div>
-        <div class="rate" style="border-color:var(--green)"><div style="font-size:9px;font-weight:700;color:var(--green)">洗浄率 ΔE</div><strong id="rateE" class="mono" style="color:var(--green)">-</strong><div class="mono" style="font-size:8px;color:var(--overlay)">1-ΔEf_a/ΔEf_b</div><div style="height:4px;background:var(--surface1);border-radius:999px;margin-top:6px;overflow:hidden"><div id="barE" style="height:100%;width:0%;background:var(--green);transition:.5s"></div></div></div>
-        <div class="rate"><div style="font-size:9px;font-weight:700;color:var(--sub)">重量洗浄率</div><strong id="rateW" class="mono">-</strong><div class="mono" style="font-size:8px;color:var(--overlay)">(Wb-Wa)/(Wb-Wf)</div><div style="height:4px;background:var(--surface1);border-radius:999px;margin-top:6px;overflow:hidden"><div id="barW" style="height:100%;width:0%;background:var(--yellow);transition:.5s"></div></div></div>
-      </div>
-      <div class="card-surface mono" style="margin-top:10px;font-size:10px;color:var(--sub);line-height:1.5"><div style="font-weight:700;color:var(--text);margin-bottom:4px">式 / Formula</div>L* = 116·f(Y/Yn)-16, a* = 500·(fX-fY), b* = 200·(fY-fZ)<br>ΔE*ab = √[(ΔL*)²+(Δa*)²+(Δb*)²]<br>ΔL*洗浄率 = (L*a-L*b)/(L*f-L*b)×100</div>
-    </div>
-    <div class="card">
-      <div style="font-weight:700;font-size:11px;margin-bottom:10px">📈 グラフ</div>
-      <div style="display:flex;flex-direction:column;gap:14px"><div><canvas id="chartLab" height="190"></canvas></div><div><canvas id="chartDeltaE" height="150"></canvas></div></div>
-    </div>
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-weight:700;font-size:11px">💾 研究用エクスポート</div><span class="badge badge-green mono">CSV / TSV / JSON</span></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button id="downloadCsv" class="btn">📄 CSV 一括DL</button><button id="btnCopyTSV2" class="btn">📋 TSV コピー</button><button id="downloadJson" class="btn">🧾 JSON DL</button><button id="btnDownloadReport" class="btn">📊 HTMLレポート</button></div>
-      <div style="margin-top:10px"><div class="label tooltip" data-tip="Excelに貼ると表になります">Excel貼付用プレビュー (TSV)</div><textarea id="tsvPreview" rows="5" class="input mono" style="font-size:10px" readonly placeholder="解析後にTSV表示"></textarea></div>
-      <div id="saveLog" class="mono" style="font-size:10px;color:var(--sub);margin-top:8px"></div>
-    </div>
+  <div class="stepper" id="stepper">
+    <div class="step active" data-step="1">① 画像</div>
+    <div class="step" data-step="2">② 黒白キャリブ</div>
+    <div class="step" data-step="3">③ 重量・ROI・自動検出</div>
+    <div class="step" data-step="4">④ 解析・出力</div>
   </div>
 </div>
+
+<div class="main">
+  <div class="left">
+    <!-- Accordion -->
+    <div class="accordion" id="leftAccordion">
+      <!-- 実験情報 -->
+      <div class="acc-item open" data-acc="exp">
+        <button class="acc-head"><div class="left-head">🧪 実験情報</div><div class="chevron">▼</div></button>
+        <div class="acc-body">
+          <div style="display:grid;gap:8px">
+            <div><div class="label">実験ID</div><input id="metaExpId" class="input mono" placeholder="EXP-001"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div class="label">試料名</div><input id="metaSample" class="input" placeholder="綿ガーゼ #12"></div><div><div class="label">担当</div><input id="metaOperator" class="input" placeholder="Rimi"></div></div>
+            <div><div class="label">洗浄条件</div><input id="metaWash" class="input" placeholder="40℃ / 中性洗剤 0.2% / 10分"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><div><div class="label">温度</div><input id="metaTemp" class="input" placeholder="40℃"></div><div><div class="label">時間</div><input id="metaTime" class="input" placeholder="10分"></div><div><div class="label">日付</div><input id="metaDate" type="date" class="input"></div></div>
+          </div>
+        </div>
+      </div>
+      <!-- 画像 -->
+      <div class="acc-item open" data-acc="images">
+        <button class="acc-head"><div class="left-head">🖼️ 画像 / 重量</div><div class="chevron">▼</div></button>
+        <div class="acc-body">
+          <div class="tabs" id="imgTabs"><button class="tab active" data-tab="fabric">素地</button><button class="tab" data-tab="before">洗浄前</button><button class="tab" data-tab="after">洗浄後</button></div>
+          <div id="dropZone" class="drop" style="margin-top:10px"><div><div style="font-size:22px">⬆️</div><div style="font-size:12px;font-weight:800" id="dropLabel">素地画像をドロップ</div><div style="font-size:11px;color:var(--sub)">タップで選択</div></div><input id="fileInput" type="file" accept="image/*" style="display:none"></div>
+          <div class="thumb-row"><div class="thumb" id="thumb_fabric"><span class="lab">素地</span></div><div class="thumb" id="thumb_before"><span class="lab">洗浄前</span></div><div class="thumb" id="thumb_after"><span class="lab">洗浄後</span></div></div>
+          <div class="mini-note" style="margin-top:10px">重さは各画像に紐付け。ガーゼ1枚ずつ計量して入力 → 重量洗浄率を自動計算。</div>
+          <div style="margin-top:10px" class="weight-grid">
+            <div class="weight-card active" data-w="fabric"><div class="w-head"><span class="w-title">⚖️ 素地 重量 (g)</span><span class="badge" id="badgeW_fabric">未入力</span></div><input id="weightFabric" class="input mono" type="number" step="0.001" placeholder="例 1.234"><div class="label" style="margin-top:6px">メモ</div><input id="memoFabric" class="input" style="min-height:36px" placeholder="乾燥状態など"></div>
+            <div class="weight-card" data-w="before"><div class="w-head"><span class="w-title">⚖️ 洗浄前 重量 (g)</span><span class="badge" id="badgeW_before">未入力</span></div><input id="weightBefore" class="input mono" type="number" step="0.001" placeholder="例 1.456"><div class="label" style="margin-top:6px">汚染量 = 前-素地</div><div class="mono" id="soilAmount" style="font-size:11px;color:var(--sub)">- g</div></div>
+            <div class="weight-card" data-w="after"><div class="w-head"><span class="w-title">⚖️ 洗浄後 重量 (g)</span><span class="badge" id="badgeW_after">未入力</span></div><input id="weightAfter" class="input mono" type="number" step="0.001" placeholder="例 1.278"><div class="label" style="margin-top:6px">除去量 = 前-後</div><div class="mono" id="removeAmount" style="font-size:11px;color:var(--sub)">- g</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- キャリブ -->
+      <div class="acc-item open" data-acc="cal">
+        <button class="acc-head"><div class="left-head">⚫⚪ 黒白キャリブ [必須]</div><div class="chevron">▼</div></button>
+        <div class="acc-body">
+          <div class="mini-note" style="margin-bottom:10px">各画像で黒テント・白基準をタップ。iPadは1本指で正確に。補正後画像で判定します。</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button class="btn" id="btnSetBlack">⚫ 黒点タップ</button><button class="btn" id="btnSetWhite">⚪ 白点タップ</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+            <div style="border:1px solid var(--border);border-radius:12px;padding:8px;background:var(--card-2)"><div class="label">黒 RGB</div><div class="mono" id="txtBlack" style="font-size:11px">未設定</div><div class="label">位置</div><div class="mono" id="posBlack" style="font-size:10px;color:var(--sub)">-</div><div id="swatchBlack" style="height:22px;border-radius:8px;background:#111;margin-top:6px;border:1px solid var(--border)"></div></div>
+            <div style="border:1px solid var(--border);border-radius:12px;padding:8px;background:var(--card-2)"><div class="label">白 RGB</div><div class="mono" id="txtWhite" style="font-size:11px">未設定</div><div class="label">位置</div><div class="mono" id="posWhite" style="font-size:10px;color:var(--sub)">-</div><div id="swatchWhite" style="height:22px;border-radius:8px;background:#fff;margin-top:6px;border:1px solid var(--border)"></div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-blue" style="flex:1" id="btnApplyCal">✨ 補正適用</button><button class="btn" style="flex:1" id="btnClearCal">クリア</button></div>
+          <div style="display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-sm" id="btnViewOriginal">補正前</button><button class="btn btn-sm btn-primary" id="btnViewCorrected">補正後</button><label style="font-size:11px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="chkAutoCal" checked> 自動適用</label><span class="badge" id="calStatusBadge">未設定</span></div>
+        </div>
+      </div>
+      <!-- ROI & 自動検出 -->
+      <div class="acc-item open" data-acc="roi">
+        <button class="acc-head"><div class="left-head">🎯 ROI & 自動ガーゼ検出</div><div class="chevron">▼</div></button>
+        <div class="acc-body">
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn btn-sm" id="btnRoiCenter">中央</button><button class="btn btn-sm" id="btnRoiFull">80%</button><button class="btn btn-sm" id="btnRoiCopyPrev">前からコピー</button><button class="btn btn-sm" id="btnRoiCopyToAll">全適用</button></div>
+          <div style="margin-top:10px;border:2px dashed #facc15;background:#fefce8;border-radius:12px;padding:10px">
+            <div class="label" style="color:#a16207">🤖 OpenCV 自動ガーゼ認識</div><div style="font-size:11px;color:var(--sub);line-height:1.5;margin-bottom:8px">大まかな枠を決めてから押すと、ガーゼ輪郭を自動検出してROIをピタッと合わせます。iPadでも動作。</div>
+            <div style="display:flex;gap:8px"><button class="btn btn-sm" style="background:#facc15;border-color:#eab308;color:#422006;flex:1" id="btnAutoDetect">🔍 自動検出 (この画像)</button><button class="btn btn-sm" id="btnAutoDetectAll">全画像一括</button></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><div><div class="label">感度</div><input id="detectThresh" type="range" min="10" max="60" value="28" style="width:100%"><div class="mono" style="font-size:10px" id="detectThreshVal">28</div></div><div><div class="label">最小面積%</div><input id="detectMinArea" type="range" min="5" max="60" value="18" style="width:100%"><div class="mono" style="font-size:10px" id="detectMinAreaVal">18%</div></div></div>
+            <div class="mono" id="detectLog" style="font-size:10px;color:var(--sub);margin-top:6px">OpenCV待機中...</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><div><div class="label">ROI X%</div><input id="roiX" class="input mono" type="number" step="0.1"></div><div><div class="label">Y%</div><input id="roiY" class="input mono" type="number" step="0.1"></div><div><div class="label">W%</div><input id="roiW" class="input mono" type="number" step="0.1"></div><div><div class="label">H%</div><input id="roiH" class="input mono" type="number" step="0.1"></div></div>
+        </div>
+      </div>
+      <!-- 保存 -->
+      <div class="acc-item" data-acc="save">
+        <button class="acc-head"><div class="left-head">💾 保存・履歴</div><div class="chevron">▼</div></button>
+        <div class="acc-body">
+          <div style="display:flex;gap:8px"><button class="btn btn-sm" style="flex:1" id="btnSaveLocal">ブラウザ保存</button><button class="btn btn-sm" style="flex:1" id="btnLoadLocal">復元</button></div>
+          <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-sm" style="flex:1" id="btnDownloadPreset">プリセット保存</button><button class="btn btn-sm" style="flex:1" id="btnUploadPreset">読込</button></div>
+          <input id="presetFileInput" type="file" accept="application/json" style="display:none">
+          <div id="presetInfo" class="mono" style="font-size:10px;color:var(--sub);margin-top:8px">未保存</div>
+          <div class="divider"></div>
+          <div class="label">履歴 (ローカル)</div>
+          <div style="max-height:160px;overflow:auto;border:1px solid var(--border);border-radius:12px"><table class="history-table" id="historyTable"><thead><tr><th>ID</th><th>洗浄率L</th><th>重量</th><th></th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="center">
+    <div class="card" style="padding:10px">
+      <div class="card-header" style="margin-bottom:8px"><div class="card-title">🔍 プレビュー / タップで黒白点・ROI操作</div><div style="display:flex;gap:6px"><span class="badge live" id="activeImgBadge">素地</span><span class="badge" id="roiInfoBadge">ROI -</span><span class="badge" id="weightBadge">重量 -</span></div></div>
+      <div class="canvas-stage" id="canvasStage">
+        <canvas id="mainCanvas"></canvas>
+        <div id="roiBox" class="roi-box" style="display:none"><div class="handle" data-h="nw" style="left:0;top:0"></div><div class="handle" data-h="ne" style="left:100%;top:0"></div><div class="handle" data-h="sw" style="left:0;top:100%"></div><div class="handle" data-h="se" style="left:100%;top:100%"></div></div>
+        <div id="detectBox" class="detect-box" style="display:none"></div>
+        <div id="calPointsLayer" style="position:absolute;inset:0;pointer-events:none;z-index:7"></div>
+        <div class="roi-toolbar"><span class="badge" id="calModeBadge" style="display:none;background:var(--primary);color:white">タップしてください</span><span class="badge" id="detectBadge" style="display:none;background:#facc15;color:#422006">自動検出中...</span></div>
+        <div class="roi-badge mono" id="roiSizeBadge">0x0</div>
+        <div id="emptyState" class="empty"><div style="font-size:36px">🧼</div><div><div style="font-weight:800;color:#e2e8f0">画像をアップロードして開始</div><div style="font-size:11px;margin-top:6px;color:#94a3b8">①画像→②黒白タップ→③重量入力→ROI粗枠→自動検出→解析<br>iPadは1本指操作・長押し無効化済み</div></div></div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><span class="kbd">ROIドラッグ移動</span><span class="kbd">角で拡縮</span><span class="kbd">黒白ボタン→画像タップ</span><span class="kbd">ピンチ無効・1本指推奨</span></div>
+      <div class="compare" style="margin-top:10px">
+        <div class="compare-card"><div class="head"><span>補正前</span><span class="mono" id="origLabel" style="font-size:10px;color:var(--sub)">-</span></div><canvas id="compareOrig"></canvas></div>
+        <div class="compare-card" style="border-color:var(--primary)"><div class="head"><span>✨ 補正後 (判定用)</span><span class="badge ok" id="correctedBadge">未生成</span></div><canvas id="compareCorr"></canvas></div>
+      </div>
+      <div class="slider-wrap" style="margin-top:10px;display:none" id="beforeAfterWrap">
+        <div class="head" style="padding:8px 10px;background:white;border-bottom:1px solid var(--border);font-size:11px;font-weight:800;display:flex;justify-content:space-between"><span>↔ 洗浄前後比較スライダー</span><span class="mono" id="sliderVal" style="color:var(--sub)">50%</span></div>
+        <div style="position:relative"><canvas id="sliderCanvas" style="width:100%;display:block;max-height:44dvh"></canvas><div id="sliderHandle" class="slider-handle" style="left:50%"></div><input id="sliderRange" type="range" min="0" max="100" value="50" class="slider-range"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">📈 追加評価 - 洗浄性能を多角的に</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="stat"><div class="k">K/S 値 (色の濃さ)</div><div class="v mono" id="ksValue">-</div><div style="font-size:10px;color:var(--sub)">Kubelka-Munk 近似</div></div>
+        <div class="stat"><div class="k">白さ指数 WI</div><div class="v mono" id="wiValue">-</div><div style="font-size:10px;color:var(--sub)">ASTM E313 近似</div></div>
+      </div>
+      <div style="margin-top:10px"><canvas id="histChart" height="120"></canvas></div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="card">
+      <div class="card-header"><div class="card-title">📊 解析結果 (補正後・重量対応)</div><button class="btn btn-sm btn-ghost" id="btnClearResults">クリア</button></div>
+      <div id="noResult" style="text-align:center;padding:14px;color:var(--sub);font-size:11px">各画像で黒白・重量・ROI（自動検出推奨）を設定して解析。重量洗浄率も自動計算。</div>
+      <div id="resultArea" style="display:none">
+        <div class="result-grid">
+          <div class="stat"><div class="k">素地 Lab 補正後</div><div class="v mono" id="resFabric">-</div><div class="mono" id="resFabricSub" style="font-size:10px;color:var(--sub)"></div></div>
+          <div class="stat"><div class="k">洗浄前 Lab</div><div class="v mono" id="resBefore">-</div><div class="mono" id="resBeforeSub" style="font-size:10px;color:var(--sub)"></div></div>
+          <div class="stat"><div class="k">洗浄後 Lab</div><div class="v mono" id="resAfter">-</div><div class="mono" id="resAfterSub" style="font-size:10px;color:var(--sub)"></div></div>
+          <div class="stat" style="background:var(--primary);color:white"><div class="k" style="color:#94a3b8">洗浄率 L基準</div><div class="v mono" id="resRateL" style="color:white">-</div><div class="progress" style="background:#334155"><div id="rateLBar" style="width:0%;background:white"></div></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+          <div class="stat"><div class="k">ΔE*ab 素-前</div><div class="v mono" id="resDE1">-</div></div>
+          <div class="stat"><div class="k">ΔE*ab 素-後</div><div class="v mono" id="resDE2">-</div></div>
+          <div class="stat"><div class="k">ΔE00 前-後</div><div class="v mono" id="resDE3">-</div><div style="font-size:9px;color:var(--sub)">CIEDE2000</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <div class="stat" style="border-color:var(--blue);background:var(--blue-light)"><div class="k" style="color:var(--blue)">⚖️ 重量洗浄率</div><div class="v mono" id="resRateW" style="color:var(--blue)">-</div><div class="mono" id="resWeightDetail" style="font-size:10px;color:var(--sub)">-</div></div>
+          <div class="stat"><div class="k">洗浄率 ΔE基準</div><div class="v mono" id="resRateE">-</div><div class="progress"><div id="rateEBar" style="width:0%"></div></div></div>
+        </div>
+        <div style="margin-top:10px"><canvas id="resultChart" height="150"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">📄 書き出し</div><span class="badge live">重量・補正・自動検出含む</span></div>
+      <div style="display:grid;gap:8px">
+        <button class="btn btn-primary" id="btnDownloadPdf">📕 PDFレポート</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><button class="btn btn-sm" id="downloadCsv">CSV</button><button class="btn btn-sm" id="btnCopyTSV">TSV</button><button class="btn btn-sm" id="downloadJson">JSON</button></div>
+        <textarea id="tsvPreview" class="textarea mono" style="font-size:11px;height:90px"></textarea>
+      </div>
+    </div>
+
+    <div class="card"><div class="card-title" style="margin-bottom:8px">📝 メモ</div><textarea id="memo" class="textarea" placeholder="洗剤種別、重量測定条件、自動検出の結果などを記入"></textarea></div>
+  </div>
+</div>
+
 <script>
-const $ = (id)=>document.getElementById(id);
-const app = {
+const $=id=>document.getElementById(id);
+const toast=m=>{ let t=$('toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.style.cssText='position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#0f172a;color:white;padding:11px 16px;border-radius:999px;font-size:12px;z-index:999;transition:.2s;box-shadow:0 8px 24px rgba(0,0,0,.25)'; document.body.appendChild(t);} t.textContent=m; t.style.opacity='1'; clearTimeout(t._tm); t._tm=setTimeout(()=>t.style.opacity='0',2600); };
+
+const app={
+  active:'fabric',
   images:{fabric:null,before:null,after:null},
-  imgEl:{fabric:null,before:null,after:null},
+  correctedCanvases:{fabric:null,before:null,after:null},
+  correctedImages:{fabric:null,before:null,after:null},
+  rois:{fabric:{x:0.15,y:0.15,w:0.7,h:0.7},before:{x:0.15,y:0.15,w:0.7,h:0.7},after:{x:0.15,y:0.15,w:0.7,h:0.7}},
+  cals:{fabric:{black:null,white:null,blackRGB:null,whiteRGB:null},before:{black:null,white:null,blackRGB:null,whiteRGB:null},after:{black:null,white:null,blackRGB:null,whiteRGB:null}},
   weights:{fabric:null,before:null,after:null},
-  roi:{x:15,y:15,w:70,h:70},
-  cal:{black:null,white:null,blackRGB:null,whiteRGB:null},
-  params:{gamma:1.0,thresh:30,useCal:true,useOpenCV:true},
-  results:{fabric:null,before:null,after:null},
-  activeTab:'fabric',
-  viewMode:'original',
+  viewMode:'corrected',
+  calMode:null,
+  results:null,
+  chart:null, histChart:null,
   opencvReady:false,
-  picking:null,
-  charts:{lab:null,deltaE:null}
+  detectParams:{thresh:28,minAreaPct:18}
 };
-const els = {
-  mainCanvas:$('mainCanvas'),
-  roiOverlay:$('roiOverlay'),
-  wrapper:$('canvasWrapper'),
-  emptyHint:$('emptyHint')
-};
-const ctxMain = els.mainCanvas.getContext('2d',{willReadFrequently:true});
-function toast(m){const t=$('toast');t.textContent=m;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',2400);}
-function log(m){$('saveLog').textContent=new Date().toLocaleTimeString()+' '+m}
-function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
-function fmt(v,d=2){return (v==null||isNaN(v))?'-':Number(v).toFixed(d)}
-function tabLabel(k){return k==='fabric'?'原布':k==='before'?'洗浄前':'洗浄後'}
-function safeRate(n,d){if(d==null||n==null||Math.abs(d)<1e-9)return null;return n/d*100}
-function rgbToXyz(r,g,b){
+
+function rgbToLab(r,g,b){
   r/=255; g/=255; b/=255;
-  r = r<=0.04045 ? r/12.92 : Math.pow((r+0.055)/1.055,2.4);
-  g = g<=0.04045 ? g/12.92 : Math.pow((g+0.055)/1.055,2.4);
-  b = b<=0.04045 ? b/12.92 : Math.pow((b+0.055)/1.055,2.4);
-  r*=100; g*=100; b*=100;
-  return {X:r*0.4124+g*0.3576+b*0.1805, Y:r*0.2126+g*0.7152+b*0.0722, Z:r*0.0193+g*0.1192+b*0.9505}
+  r=r>0.04045?Math.pow((r+0.055)/1.055,2.4):r/12.92;
+  g=g>0.04045?Math.pow((g+0.055)/1.055,2.4):g/12.92;
+  b=b>0.04045?Math.pow((b+0.055)/1.055,2.4):b/12.92;
+  let x=r*0.4124+g*0.3576+b*0.1805, y=r*0.2126+g*0.7152+b*0.0722, z=r*0.0193+g*0.1192+b*0.9505;
+  x/=0.95047; y/=1; z/=1.08883;
+  const f=t=>t>0.008856?Math.cbrt(t):(7.787*t)+16/116;
+  const fx=f(x), fy=f(y), fz=f(z);
+  return {L:(116*fy)-16, a:500*(fx-fy), b:200*(fy-fz), Y:y*100};
 }
-function xyzToLab(X,Y,Z){
-  const Xn=95.047,Yn=100,Zn=108.883;
-  const f=t=>t>0.008856?Math.cbrt(t):(7.787*t+16/116);
-  const fx=f(X/Xn), fy=f(Y/Yn), fz=f(Z/Zn);
-  return {L:116*fy-16, a:500*(fx-fy), b:200*(fy-fz)}
+function deltaE76(a,b){ if(!a||!b) return null; const dL=a.L-b.L, da=a.a-b.a, db=a.b-b.b; return Math.sqrt(dL*dL+da*da+db*db); }
+// Simplified CIEDE2000 (kL=kC=kH=1)
+function deltaE00(lab1,lab2){
+  if(!lab1||!lab2) return null;
+  const L1=lab1.L, a1=lab1.a, b1=lab1.b, L2=lab2.L, a2=lab2.a, b2=lab2.b;
+  const C1=Math.sqrt(a1*a1+b1*b1), C2=Math.sqrt(a2*a2+b2*b2);
+  const Cb=(C1+C2)/2;
+  const G=0.5*(1-Math.sqrt(Math.pow(Cb,7)/(Math.pow(Cb,7)+Math.pow(25,7))));
+  const a1p=(1+G)*a1, a2p=(1+G)*a2;
+  const C1p=Math.sqrt(a1p*a1p+b1*b1), C2p=Math.sqrt(a2p*a2p+b2*b2);
+  const h1p=Math.atan2(b1,a1p)*180/Math.PI<0?Math.atan2(b1,a1p)*180/Math.PI+360:Math.atan2(b1,a1p)*180/Math.PI;
+  const h2p=Math.atan2(b2,a2p)*180/Math.PI<0?Math.atan2(b2,a2p)*180/Math.PI+360:Math.atan2(b2,a2p)*180/Math.PI;
+  const dLp=L2-L1;
+  const dCp=C2p-C1p;
+  let dhp=0; if(C1p*C2p!==0){ let dh=h2p-h1p; if(Math.abs(dh)>180) dh=dh>0?dh-360:dh+360; dhp=dh; } 
+  const dHp=2*Math.sqrt(C1p*C2p)*Math.sin(dhp*Math.PI/360*180/180/2 *Math.PI/180*2?0:0); // simplified
+  // For brevity, approximate dH as C diff, use full simplified version:
+  const dH=2*Math.sqrt(C1p*C2p)*Math.sin((dhp*Math.PI/180)/2);
+  const Lp=(L1+L2)/2, Cp=(C1p+C2p)/2;
+  let hp=(h1p+h2p)/2; if(Math.abs(h1p-h2p)>180){ hp=(h1p+h2p+360)/2; if(hp>=360) hp-=360; }
+  if(C1p*C2p===0) hp=h1p+h2p;
+  const T=1-0.17*Math.cos((hp-30)*Math.PI/180)+0.24*Math.cos(2*hp*Math.PI/180)+0.32*Math.cos((3*hp+6)*Math.PI/180)-0.20*Math.cos((4*hp-63)*Math.PI/180);
+  const dTheta=30*Math.exp(-Math.pow((hp-275)/25,2));
+  const Rc=2*Math.sqrt(Math.pow(Cp,7)/(Math.pow(Cp,7)+Math.pow(25,7)));
+  const Sl=1+0.015*Math.pow(Lp-50,2)/Math.sqrt(20+Math.pow(Lp-50,2));
+  const Sc=1+0.045*Cp;
+  const Sh=1+0.015*Cp*T;
+  const Rt=-Math.sin(2*dTheta*Math.PI/180)*Rc;
+  const dE=Math.sqrt(Math.pow(dLp/Sl,2)+Math.pow(dCp/Sc,2)+Math.pow(dH/Sh,2)+Rt*(dCp/Sc)*(dH/Sh));
+  return isNaN(dE)?deltaE76(lab1,lab2):dE;
 }
-function rgbToLab(r,g,b){const {X,Y,Z}=rgbToXyz(r,g,b);return xyzToLab(X,Y,Z)}
-function deltaE(l1,l2){if(!l1||!l2)return null;const dL=l1.L-l2.L,da=l1.a-l2.a,db=l1.b-l2.b;return Math.sqrt(dL*dL+da*da+db*db)}
+
 function setActiveTab(k){
-  app.activeTab=k;
-  document.querySelectorAll('.tab').forEach(b=>{
-    const is=b.dataset.tab===k;
-    b.className = is ? 'tab active' : 'tab'+(app.images[b.dataset.tab]?' has':'');
-    if(app.images[b.dataset.tab] && !is) b.className='tab has';
-  });
-  $('dropTabName').textContent=tabLabel(k);
-  $('centerTabBadge').textContent=tabLabel(k);
-  $('overlayTab').textContent=tabLabel(k);
-  $('pasteTargetLabel').innerHTML=`${tabLabel(k)} ${k.toUpperCase()} <span class="kbd">${k==='fabric'?'1':k==='before'?'2':'3'}</span>`;
-  ['weightFabric','weightBefore','weightAfter'].forEach(id=>{
-    const el=$(id); if(!el) return;
-    const mk=id==='weightFabric'?'fabric':id==='weightBefore'?'before':'after';
-    el.style.borderColor = mk===k ? 'var(--blue)' : 'var(--surface1)';
-  });
-  drawMain();
+  app.active=k;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===k));
+  document.querySelectorAll('.weight-card').forEach(c=>c.classList.toggle('active',c.dataset.w===k));
+  const labels={fabric:'素地画像をドロップ',before:'洗浄前画像をドロップ',after:'洗浄後画像をドロップ'};
+  const badge={fabric:'素地',before:'洗浄前',after:'洗浄後'};
+  $('dropLabel').textContent=labels[k]; $('activeImgBadge').textContent=badge[k];
+  syncCalUI(); syncRoiInputs(); updateWeightUI(); drawMain(); updateStepper();
+  document.querySelectorAll('.thumb').forEach(el=>el.style.outline='none');
+  const th=$(`thumb_${k}`); if(th) th.style.outline='2px solid #0f172a';
 }
-function updateThumb(){
-  const list=$('thumbList'); if(!list) return;
-  list.innerHTML='';
-  ['fabric','before','after'].forEach(k=>{
-    const has=!!app.images[k];
-    const d=document.createElement('div');
-    d.className='card-surface'; d.style.cssText='padding:8px;text-align:center;cursor:pointer;font-size:10px;border-color:'+(app.activeTab===k?'var(--blue)':'var(--surface1)');
-    d.innerHTML=`<div style="font-weight:700">${tabLabel(k)}</div><div class="mono" style="margin-top:4px;color:${has?'var(--green)':'var(--overlay)'}">${has?'●読込済':'○未読込'}</div>`;
-    d.onclick=()=>setActiveTab(k);
-    list.appendChild(d);
-    const dot=$('dot'+k.charAt(0).toUpperCase()+k.slice(1));
-    if(dot) dot.style.background=has?'var(--green)':'var(--surface1)';
-  });
+function updateStepper(){
+  const steps=document.querySelectorAll('.step');
+  const hasImg=Object.values(app.images).every(Boolean);
+  const hasCal=Object.values(app.cals).every(c=>c.blackRGB&&c.whiteRGB);
+  const hasWeight=app.weights.fabric!=null && app.weights.before!=null && app.weights.after!=null;
+  const hasRoi=Object.values(app.rois).every(r=>r.w>0);
+  steps[0].className='step '+(hasImg?'done':'active');
+  steps[1].className='step '+(!hasImg?'':hasCal?'done':'active');
+  steps[2].className='step '+(!hasCal?'':(hasWeight&&hasRoi)?'done':'active');
+  steps[3].className='step '+(app.results?'done':'');
 }
-function handleImageFile(file,target){
-  if(!file || !file.type || !file.type.startsWith('image/')){toast('画像ファイルではありません');return;}
-  const tab=target||app.activeTab;
-  const url=URL.createObjectURL(file);
-  const img=new Image();
-  img.onload=()=>{
-    try{
-      app.imgEl[tab]=img;
-      const c=document.createElement('canvas');
-      c.width=img.naturalWidth; c.height=img.naturalHeight;
-      const ctx=c.getContext('2d',{willReadFrequently:true});
-      ctx.drawImage(img,0,0);
-      app.images[tab]=c;
-      updateThumb();
-      drawMain();
-      drawMinis();
-      drawCompare();
-      if(els.emptyHint) els.emptyHint.style.display='none';
-      if(els.roiOverlay) els.roiOverlay.style.display='block';
-      toast(`${tabLabel(tab)} に ${file.name||'貼付画像'} 読込 ${img.naturalWidth}×${img.naturalHeight}`);
-      if(file._fromPaste){
-        const order=['fabric','before','after'];
-        const idx=order.indexOf(tab);
-        if(idx>=0 && idx<2 && !app.images[order[idx+1]]){
-          setActiveTab(order[idx+1]);
-        }
-      }
-    }catch(e){console.error(e);toast('読込エラー: '+e.message)}
-    setTimeout(()=>URL.revokeObjectURL(url),5000);
-  };
-  img.onerror=()=>{toast('画像の読込に失敗'); URL.revokeObjectURL(url);}
-  img.src=url;
-}
-const imgInput=$('imgInput'), dropZone=$('dropZone');
-if(imgInput){imgInput.addEventListener('change',e=>{const f=e.target.files&&e.target.files[0]; if(f) handleImageFile(f,app.activeTab); e.target.value='';});}
-if(dropZone){
-  dropZone.addEventListener('click',()=>{if(imgInput) imgInput.click();});
-  dropZone.addEventListener('dragover',e=>{e.preventDefault(); dropZone.classList.add('active'); $('pasteOverlay').style.display='flex';});
-  dropZone.addEventListener('dragleave',()=>{dropZone.classList.remove('active');});
-  dropZone.addEventListener('drop',e=>{e.preventDefault(); dropZone.classList.remove('active'); $('pasteOverlay').style.display='none'; const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f) handleImageFile(f,app.activeTab);});
-}
-window.addEventListener('dragover',e=>{e.preventDefault(); $('pasteOverlay').style.display='flex';});
-window.addEventListener('dragleave',e=>{if(e.clientX===0&&e.clientY===0){$('pasteOverlay').style.display='none';}});
-window.addEventListener('drop',e=>{e.preventDefault(); $('pasteOverlay').style.display='none'; const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f && f.type.startsWith('image/')) handleImageFile(f,app.activeTab);});
-window.addEventListener('paste',e=>{
-  const items=e.clipboardData&&e.clipboardData.items; if(!items) return;
-  let found=false;
-  for(const it of items){ if(it.type && it.type.startsWith('image/')){ const file=it.getAsFile(); if(file){file._fromPaste=true; handleImageFile(file,app.activeTab); found=true; } } }
-  if(found){e.preventDefault(); $('pasteOverlay').style.display='none';}
-});
-window.addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='v'){ $('pasteOverlay').style.display='flex'; setTimeout(()=>{$('pasteOverlay').style.display='none';},700); }
-  if(e.key==='1') setActiveTab('fabric');
-  if(e.key==='2') setActiveTab('before');
-  if(e.key==='3') setActiveTab('after');
-});
-document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>setActiveTab(b.dataset.tab)));
-function getActiveImg(){return app.imgEl[app.activeTab]||null}
+
+const canvas=$('mainCanvas'), ctx=canvas.getContext('2d');
+let drawState={dispW:0,dispH:0,imgW:0,imgH:0};
+
+function getDisplayImageElement(key){ if(app.viewMode==='corrected' && app.correctedImages[key]) return app.correctedImages[key]; return app.images[key]; }
+
 function drawMain(){
-  const img=getActiveImg();
-  const c=els.mainCanvas, ctx=ctxMain, wrap=els.wrapper;
-  if(!img){
-    const w=wrap.clientWidth||800; c.width=w; c.height=Math.round(w*0.66);
-    ctx.fillStyle='#11111b'; ctx.fillRect(0,0,c.width,c.height);
-    ctx.fillStyle='#313244'; ctx.font='12px JetBrains Mono'; ctx.fillText('No Image - Paste with Ctrl+V (1:原布 2:洗浄前 3:洗浄後)',20,30);
-    if(els.roiOverlay) els.roiOverlay.style.display='none';
-    if($('imageInfo')) $('imageInfo').textContent='No image';
-    return;
-  }
-  const maxW = Math.min(wrap.clientWidth||1200, 1200);
-  const scale = Math.min(1, maxW / img.naturalWidth);
-  c.width = Math.round(img.naturalWidth*scale);
-  c.height = Math.round(img.naturalHeight*scale);
-  ctx.clearRect(0,0,c.width,c.height);
-  if(app.viewMode==='corrected' && app.params.useCal && (app.cal.blackRGB||app.cal.whiteRGB)){
-    const tmp=document.createElement('canvas'); tmp.width=img.naturalWidth; tmp.height=img.naturalHeight;
-    const tctx=tmp.getContext('2d',{willReadFrequently:true}); tctx.drawImage(img,0,0);
-    const id=tctx.getImageData(0,0,tmp.width,tmp.height); applyCorrectionToImageData(id); tctx.putImageData(id,0,0);
-    ctx.drawImage(tmp,0,0,c.width,c.height);
-  }else{
-    ctx.drawImage(img,0,0,c.width,c.height);
-  }
-  if(app.viewMode==='mask'){
-    ctx.fillStyle='rgba(137,180,250,.18)'; ctx.fillRect(0,0,c.width,c.height);
-    ctx.strokeStyle='rgba(137,180,250,.4)'; ctx.setLineDash([6,6]); ctx.strokeRect(c.width*app.roi.x/100,c.height*app.roi.y/100,c.width*app.roi.w/100,c.height*app.roi.h/100); ctx.setLineDash([]);
-  }
-  if($('imageInfo')) $('imageInfo').textContent=`${img.naturalWidth}×${img.naturalHeight} | ${app.viewMode} | ROI ${app.roi.w.toFixed(0)}%×${app.roi.h.toFixed(0)}%`;
-  positionRoiOverlay();
-  if(els.roiOverlay) els.roiOverlay.style.display='block';
-  if(els.emptyHint) els.emptyHint.style.display='none';
+  const origImg=app.images[app.active];
+  const dispImg=getDisplayImageElement(app.active);
+  const stage=$('canvasStage'), empty=$('emptyState'), roiBox=$('roiBox');
+  if(!origImg){ canvas.width=10; canvas.height=10; if(empty) empty.style.display='flex'; if(roiBox) roiBox.style.display='none'; $('calPointsLayer').innerHTML=''; return; }
+  if(empty) empty.style.display='none';
+  const maxW=stage.clientWidth-2;
+  const maxH=Math.min(window.innerHeight*0.68, 680);
+  const fitRatio=Math.min(maxW/origImg.width, maxH/origImg.height, 1.15);
+  let dispW=origImg.width*fitRatio, dispH=origImg.height*fitRatio;
+  canvas.width=dispW; canvas.height=dispH; canvas.style.width=dispW+'px'; canvas.style.height=dispH+'px';
+  drawState={dispW,dispH,imgW:origImg.width,imgH:origImg.height,scale:fitRatio};
+  ctx.clearRect(0,0,dispW,dispH);
+  ctx.drawImage(dispImg||origImg,0,0,dispW,dispH);
+  const r=app.rois[app.active];
+  roiBox.style.display='block'; roiBox.style.left=(r.x*dispW)+'px'; roiBox.style.top=(r.y*dispH)+'px'; roiBox.style.width=(r.w*dispW)+'px'; roiBox.style.height=(r.h*dispH)+'px';
+  $('roiSizeBadge').textContent=`${Math.round(r.w*dispW)}x${Math.round(r.h*dispH)}`;
+  $('roiInfoBadge').textContent=`${app.active} ${(r.w*100).toFixed(0)}%`;
+  drawCalPoints(); drawCompare(); drawSliderCompare();
 }
-function positionRoiOverlay(){
-  const c=els.mainCanvas, o=els.roiOverlay; if(!c||!o) return;
-  const x = app.roi.x/100*c.width, y=app.roi.y/100*c.height, w=app.roi.w/100*c.width, h=app.roi.h/100*c.height;
-  o.style.left=x+'px'; o.style.top=y+'px'; o.style.width=w+'px'; o.style.height=h+'px';
-}
-function setRoiFromOverlay(){
-  const c=els.mainCanvas, o=els.roiOverlay; if(!c||!o) return;
-  const left=parseFloat(o.style.left)||0, top=parseFloat(o.style.top)||0, width=parseFloat(o.style.width)||100, height=parseFloat(o.style.height)||100;
-  const x = left / c.width *100, y = top / c.height *100, w = width / c.width *100, h = height / c.height *100;
-  app.roi={x:clamp(x,0,90),y:clamp(y,0,90),w:clamp(w,5,100),h:clamp(h,5,100)};
-  syncRoiInputs();
-}
-function syncRoiInputs(){
-  const set=(id,v)=>{const el=$(id); if(el) el.value=v.toFixed(1);};
-  set('roiX',app.roi.x); set('roiY',app.roi.y); set('roiW',app.roi.w); set('roiH',app.roi.h);
-  const sl=$('roiSlider'); if(sl) sl.value=((app.roi.w+app.roi.h)/2).toFixed(0);
-  positionRoiOverlay(); drawMinis(); drawCompare();
-}
-let drag=null;
-if(els.roiOverlay){
-  els.roiOverlay.addEventListener('pointerdown',e=>{
-    if(e.target.classList.contains('handle')) return;
-    drag={type:'move',sx:e.clientX,sy:e.clientY,sl:parseFloat(els.roiOverlay.style.left)||0,st:parseFloat(els.roiOverlay.style.top)||0};
-    try{els.roiOverlay.setPointerCapture(e.pointerId);}catch{}
-  });
-  els.roiOverlay.querySelectorAll('.handle').forEach(h=>{
-    h.addEventListener('pointerdown',e=>{
-      e.stopPropagation();
-      drag={type:'resize',handle:h.dataset.handle,sx:e.clientX,sy:e.clientY,sl:parseFloat(els.roiOverlay.style.left)||0,st:parseFloat(els.roiOverlay.style.top)||0,sw:parseFloat(els.roiOverlay.style.width)||100,sh:parseFloat(els.roiOverlay.style.height)||100};
-      try{h.setPointerCapture(e.pointerId);}catch{}
-    });
-  });
-}
-window.addEventListener('pointermove',e=>{
-  if(!drag) return;
-  const c=els.mainCanvas, o=els.roiOverlay; if(!c||!o) return;
-  if(drag.type==='move'){
-    let nl=drag.sl+(e.clientX-drag.sx), nt=drag.st+(e.clientY-drag.sy);
-    nl=clamp(nl,0,c.width-parseFloat(o.style.width)); nt=clamp(nt,0,c.height-parseFloat(o.style.height));
-    o.style.left=nl+'px'; o.style.top=nt+'px';
-  }else{
-    let dx=e.clientX-drag.sx, dy=e.clientY-drag.sy;
-    let {sl,st,sw,sh,handle}=drag; let l=sl,t=st,w=sw,h=sh;
-    if(handle.includes('e')) w=clamp(sw+dx,30,c.width-sl);
-    if(handle.includes('s')) h=clamp(sh+dy,30,c.height-st);
-    if(handle.includes('w')){ const nw=clamp(sw-dx,30,sl+sw); l=sl+sw-nw; w=nw; }
-    if(handle.includes('n')){ const nh=clamp(sh-dy,30,st+sh); t=st+sh-nh; h=nh; }
-    o.style.left=l+'px'; o.style.top=t+'px'; o.style.width=w+'px'; o.style.height=h+'px';
-  }
-});
-window.addEventListener('pointerup',e=>{ if(drag){ setRoiFromOverlay(); drag=null; } });
-['roiX','roiY','roiW','roiH'].forEach(id=>{
-  const el=$(id); if(!el) return;
-  el.addEventListener('change',()=>{
-    const x=parseFloat($('roiX').value)||15, y=parseFloat($('roiY').value)||15, w=parseFloat($('roiW').value)||70, h=parseFloat($('roiH').value)||70;
-    app.roi={x:clamp(x,0,95),y:clamp(y,0,95),w:clamp(w,5,100),h:clamp(h,5,100)}; positionRoiOverlay(); drawMinis(); drawCompare();
-  });
-});
-const roiSlider=$('roiSlider'); if(roiSlider) roiSlider.addEventListener('input',e=>{const v=parseFloat(e.target.value); const cx=app.roi.x+app.roi.w/2, cy=app.roi.y+app.roi.h/2; app.roi.w=v; app.roi.h=v; app.roi.x=clamp(cx-v/2,0,100-v); app.roi.y=clamp(cy-v/2,0,100-v); syncRoiInputs();});
-const btnRoiFull=$('btnRoiFull'); if(btnRoiFull) btnRoiFull.onclick=()=>{app.roi={x:0,y:0,w:100,h:100};syncRoiInputs();};
-const btnRoiCenter=$('btnRoiCenter'); if(btnRoiCenter) btnRoiCenter.onclick=()=>{app.roi={x:15,y:15,w:70,h:70};syncRoiInputs();};
-document.querySelectorAll('.view-btn').forEach(b=>{
-  b.addEventListener('click',()=>{
-    document.querySelectorAll('.view-btn').forEach(x=>{x.className='btn view-btn';});
-    b.className='btn btn-active view-btn';
-    app.viewMode=b.dataset.view; drawMain();
-  });
-});
-function applyCorrectionToImageData(id){
-  const d=id.data, gamma=app.params.gamma, black=app.cal.blackRGB, white=app.cal.whiteRGB;
-  const useCal=app.params.useCal && black && white;
-  for(let i=0;i<d.length;i+=4){
-    let r=d[i], g=d[i+1], b=d[i+2];
-    if(useCal){
-      r=(r-black.r)/((white.r-black.r)||1)*255;
-      g=(g-black.g)/((white.g-black.g)||1)*255;
-      b=(b-black.b)/((white.b-black.b)||1)*255;
-    }
-    if(gamma!==1.0){
-      r=255*Math.pow(clamp(r/255,0,1),gamma);
-      g=255*Math.pow(clamp(g/255,0,1),gamma);
-      b=255*Math.pow(clamp(b/255,0,1),gamma);
-    }
-    d[i]=clamp(r,0,255); d[i+1]=clamp(g,0,255); d[i+2]=clamp(b,0,255);
-  }
-}
-function sampleAt(imgEl,rx,ry){
-  try{
-    const s=12;
-    const canvas=document.createElement('canvas'); canvas.width=s; canvas.height=s;
-    const ctx=canvas.getContext('2d',{willReadFrequently:true});
-    const px=Math.floor(rx*imgEl.naturalWidth), py=Math.floor(ry*imgEl.naturalHeight);
-    const sx=clamp(px-Math.floor(s/2),0,imgEl.naturalWidth-s), sy=clamp(py-Math.floor(s/2),0,imgEl.naturalHeight-s);
-    const srcCanvas=app.images[app.activeTab];
-    if(srcCanvas){
-      ctx.drawImage(srcCanvas,sx,sy,s,s,0,0,s,s);
-    }else{
-      ctx.drawImage(imgEl,-sx,-sy);
-    }
-    const data=ctx.getImageData(0,0,s,s).data;
-    let r=0,g=0,b=0; for(let i=0;i<data.length;i+=4){r+=data[i];g+=data[i+1];b+=data[i+2];}
-    const n=data.length/4; return {r:r/n,g:g/n,b:b/n};
-  }catch(e){console.warn(e); return {r:0,g:0,b:0}}
-}
-if(els.mainCanvas){
-  els.mainCanvas.addEventListener('click',e=>{
-    if(!app.picking) return;
-    const rect=els.mainCanvas.getBoundingClientRect();
-    const x=(e.clientX-rect.left)/rect.width, y=(e.clientY-rect.top)/rect.height;
-    const img=getActiveImg(); if(!img) return;
-    const rgb=sampleAt(img,x,y);
-    if(app.picking==='black'){
-      app.cal.black={x,y}; app.cal.blackRGB=rgb;
-      const el=$('calBlackVal'); if(el) el.textContent=`${rgb.r.toFixed(0)},${rgb.g.toFixed(0)},${rgb.b.toFixed(0)}`;
-      toast('黒点を登録');
-    }else{
-      app.cal.white={x,y}; app.cal.whiteRGB=rgb;
-      const el=$('calWhiteVal'); if(el) el.textContent=`${rgb.r.toFixed(0)},${rgb.g.toFixed(0)},${rgb.b.toFixed(0)}`;
-      toast('白点を登録');
-    }
-    app.picking=null;
-    const mb=$('modeBlack'), mw=$('modeWhite');
-    if(mb) mb.className='btn tooltip'; if(mw) mw.className='btn tooltip';
-    drawMain();
-  });
-}
-const modeBlack=$('modeBlack'), modeWhite=$('modeWhite');
-if(modeBlack) modeBlack.addEventListener('click',()=>{
-  app.picking=app.picking==='black'?null:'black';
-  modeBlack.className = app.picking==='black'?'btn btn-active tooltip':'btn tooltip';
-  if(modeWhite) modeWhite.className='btn tooltip';
-  if(app.picking) toast('画像上の黒い基準点をクリックしてください');
-});
-if(modeWhite) modeWhite.addEventListener('click',()=>{
-  app.picking=app.picking==='white'?null:'white';
-  modeWhite.className = app.picking==='white'?'btn btn-active tooltip':'btn tooltip';
-  if(modeBlack) modeBlack.className='btn tooltip';
-  if(app.picking) toast('画像上の白い基準点をクリックしてください');
-});
-const btnClearCal=$('btnClearCal'); if(btnClearCal) btnClearCal.addEventListener('click',()=>{app.cal={black:null,white:null,blackRGB:null,whiteRGB:null}; const b=$('calBlackVal'), w=$('calWhiteVal'); if(b) b.textContent='未設定'; if(w) w.textContent='未設定'; drawMain();});
-const chkUseCal=$('chkUseCal'); if(chkUseCal) chkUseCal.addEventListener('change',e=>{app.params.useCal=e.target.checked; drawMain();});
-const paramGamma=$('paramGamma'); if(paramGamma) paramGamma.addEventListener('input',e=>{app.params.gamma=parseFloat(e.target.value); const l=$('gammaLabel'); if(l) l.textContent=app.params.gamma.toFixed(2); drawMain();});
-const paramThresh=$('paramThresh'); if(paramThresh) paramThresh.addEventListener('input',e=>{app.params.thresh=parseInt(e.target.value); const l=$('threshLabel'); if(l) l.textContent=e.target.value;});
-const chkOpenCV=$('chkOpenCV'); if(chkOpenCV) chkOpenCV.addEventListener('change',e=>{app.params.useOpenCV=e.target.checked;});
-['weightFabric','weightBefore','weightAfter'].forEach(id=>{
-  const el=$(id); if(!el) return;
-  el.addEventListener('input',e=>{
-    const k=id==='weightFabric'?'fabric':id==='weightBefore'?'before':'after';
-    app.weights[k]=parseFloat(e.target.value)||null;
-  });
-});
-const btnClearWeights=$('btnClearWeights'); if(btnClearWeights) btnClearWeights.addEventListener('click',()=>{['weightFabric','weightBefore','weightAfter'].forEach(id=>{const el=$(id); if(el) el.value='';}); app.weights={fabric:null,before:null,after:null};});
-function getRoiImageData(tab){
-  const srcCanvas=app.images[tab]; if(!srcCanvas) return null;
-  const {x,y,w,h}=app.roi;
-  const sx=Math.floor(x/100*srcCanvas.width), sy=Math.floor(y/100*srcCanvas.height), sw=Math.max(1,Math.floor(w/100*srcCanvas.width)), sh=Math.max(1,Math.floor(h/100*srcCanvas.height));
-  if(sw<=0||sh<=0) return null;
-  const tmp=document.createElement('canvas'); tmp.width=sw; tmp.height=sh;
-  const ctx=tmp.getContext('2d',{willReadFrequently:true});
-  ctx.drawImage(srcCanvas,sx,sy,sw,sh,0,0,sw,sh);
-  let imageData=ctx.getImageData(0,0,sw,sh);
-  if(app.params.useCal) applyCorrectionToImageData(imageData);
-  if(app.params.useOpenCV && app.opencvReady && window.cv && typeof cv.Mat!=='undefined'){
-    try{
-      if(typeof cv.matFromImageData==='function'){
-        let src=cv.matFromImageData(imageData);
-        let dst=new cv.Mat();
-        cv.medianBlur(src,dst,3);
-        const out=document.createElement('canvas'); out.width=sw; out.height=sh;
-        cv.imshow(out,dst);
-        const octx=out.getContext('2d'); imageData=octx.getImageData(0,0,sw,sh);
-        src.delete(); dst.delete();
-      }
-    }catch(e){console.warn('OpenCV fallback',e)}
-  }
-  return imageData;
-}
-function analyzeTab(tab){
-  const imageData=getRoiImageData(tab); if(!imageData) return null;
-  const d=imageData.data; let rSum=0,gSum=0,bSum=0; const count=d.length/4; if(count===0) return null;
-  for(let i=0;i<d.length;i+=4){rSum+=d[i];gSum+=d[i+1];bSum+=d[i+2];}
-  const rAvg=rSum/count, gAvg=gSum/count, bAvg=bSum/count;
-  const lab=rgbToLab(rAvg,gAvg,bAvg);
-  let lVar=0, samples=0;
-  for(let i=0;i<d.length;i+=40){ const ll=rgbToLab(d[i],d[i+1],d[i+2]).L; lVar+=(ll-lab.L)*(ll-lab.L); samples++; }
-  const lStd=Math.sqrt(lVar/Math.max(1,samples));
-  return {tab,count,rgb:{r:rAvg,g:gAvg,b:bAvg},Lab:lab,lStd,imageData};
-}
-function analyzeAll(){
-  try{
-    for(const k of ['fabric','before','after']){ if(app.images[k]) app.results[k]=analyzeTab(k); }
-    renderResults(); renderCharts(); buildTsv(); drawMinis();
-  }catch(e){console.error(e); toast('解析エラー: '+e.message)}
-}
-const btnAnalyze=$('btnAnalyze');
-if(btnAnalyze) btnAnalyze.addEventListener('click',()=>{
-  if(!app.images.fabric && !app.images.before && !app.images.after){toast('画像がありません - Ctrl+Vで貼り付け');return;}
-  btnAnalyze.disabled=true; btnAnalyze.textContent='⏳ 解析中...';
-  setTimeout(()=>{
-    try{
-      analyzeAll();
-      const rs=$('resultStatus'); if(rs){rs.textContent='解析完了'; rs.className='badge badge-green mono';}
-      log(app.opencvReady?'解析完了 (OpenCV)':'解析完了 (Canvas)');
-      toast('解析完了 L*a*b* / ΔE');
-    }catch(e){console.error(e); toast('解析エラー');}
-    btnAnalyze.disabled=false; btnAnalyze.textContent='▶ 解析実行 L*a*b* / ΔE';
-  },50);
-});
-function renderResults(){
-  const f=app.results.fabric, b=app.results.before, a=app.results.after;
-  const table=$('resultTable'); if(!table) return;
-  const row=(label,res)=>{
-    if(!res) return `<div class="card-surface" style="display:flex;justify-content:space-between"><span style="font-size:10px;font-weight:700">${label}</span><span class="mono" style="font-size:10px;color:var(--overlay)">未解析</span></div>`;
-    return `<div class="card-surface"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;font-weight:700">${label}</span><span class="mono" style="font-size:10px;color:var(--sub)">${res.count.toLocaleString()}px</span></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px" class="mono"><div><div style="font-size:9px;color:var(--sub)">L*</div><div style="font-weight:700;font-size:12px">${fmt(res.Lab.L)}</div></div><div><div style="font-size:9px;color:var(--sub)">a*</div><div style="font-weight:700;font-size:12px">${fmt(res.Lab.a)}</div></div><div><div style="font-size:9px;color:var(--sub)">b*</div><div style="font-weight:700;font-size:12px">${fmt(res.Lab.b)}</div></div></div><div class="mono" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px;font-size:9px;color:var(--overlay)"><div>R ${fmt(res.rgb.r,0)}</div><div>G ${fmt(res.rgb.g,0)}</div><div>B ${fmt(res.rgb.b,0)}</div></div><div class="mono" style="font-size:9px;color:var(--sub);margin-top:4px">σL* ${fmt(res.lStd,2)}</div></div>`;
-  };
-  let html=row('原布 FABRIC',f)+row('洗浄前 BEFORE',b)+row('洗浄後 AFTER',a);
-  if(f&&b){
-    const de_fb=deltaE(f.Lab,b.Lab), de_fa=f&&a?deltaE(f.Lab,a.Lab):null, de_ba=b&&a?deltaE(b.Lab,a.Lab):null;
-    html+=`<div class="card-surface"><div style="font-size:10px;font-weight:700;margin-bottom:6px">ΔE*ab 色差</div><div class="mono" style="font-size:11px;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between"><span>ΔE 原布-洗浄前</span><strong>${fmt(de_fb)}</strong></div><div style="display:flex;justify-content:space-between"><span>ΔE 原布-洗浄後</span><strong>${fmt(de_fa)}</strong></div><div style="display:flex;justify-content:space-between;color:var(--green)"><span>ΔE 洗浄前-後</span><strong>${fmt(de_ba)}</strong></div></div></div>`;
-  }
-  table.innerHTML=html;
-  let rateL='-',rateE='-',rateW='-'; let pL=0,pE=0,pW=0;
-  if(f&&b&&a){
-    const rL=safeRate(a.Lab.L-b.Lab.L,f.Lab.L-b.Lab.L); if(rL!=null){rateL=fmt(rL,1)+'%'; pL=clamp(rL,0,100);}
-    const de_fb=deltaE(f.Lab,b.Lab), de_fa=deltaE(f.Lab,a.Lab); if(de_fb&&de_fb>1e-6){const rE=(1-de_fa/de_fb)*100; rateE=fmt(rE,1)+'%'; pE=clamp(rE,0,100);}
-  }
-  if(app.weights.fabric!=null&&app.weights.before!=null&&app.weights.after!=null){
-    const rW=safeRate(app.weights.before-app.weights.after,app.weights.before-app.weights.fabric); if(rW!=null){rateW=fmt(rW,1)+'%'; pW=clamp(rW,0,100);}
-  }
-  const setRate=(idL,barId,val,p)=>{const el=$(idL); if(el) el.textContent=val; const bar=$(barId); if(bar) bar.style.width=p+'%';};
-  setRate('rateL','barL',rateL,pL); setRate('rateE','barE',rateE,pE); setRate('rateW','barW',rateW,pW);
-}
-function drawMinis(){
-  ['fabric','before','after'].forEach(k=>{
-    const c=$('mini'+k.charAt(0).toUpperCase()+k.slice(1)); if(!c) return; const ctx=c.getContext('2d');
-    ctx.fillStyle='#11111b'; ctx.fillRect(0,0,c.width,c.height);
-    const src=app.images[k]; if(!src){ctx.fillStyle='#313244';ctx.fillRect(0,0,c.width,c.height);return;}
-    const {x,y,w,h}=app.roi; const sx=x/100*src.width, sy=y/100*src.height, sw=w/100*src.width, sh=h/100*src.height;
-    ctx.drawImage(src,sx,sy,sw,sh,0,0,c.width,c.height);
-    const res=app.results[k]; const labEl=$('mini'+k.charAt(0).toUpperCase()+k.slice(1)+'Lab'); if(res&&labEl) labEl.textContent=`L*${fmt(res.Lab.L,1)} a*${fmt(res.Lab.a,1)} b*${fmt(res.Lab.b,1)}`;
-  });
+function drawCalPoints(){
+  const layer=$('calPointsLayer'); layer.innerHTML='';
+  const cal=app.cals[app.active]; if(!cal) return;
+  ['black','white'].forEach(type=>{ const pt=cal[type]; if(!pt) return; const el=document.createElement('div'); el.className=`cal-point ${type}`; el.style.left=(pt.x*drawState.dispW)+'px'; el.style.top=(pt.y*drawState.dispH)+'px'; el.textContent=type==='black'?'B':'W'; layer.appendChild(el); });
 }
 function drawCompare(){
-  const c=$('compareCanvas'); if(!c) return; const ctx=c.getContext('2d');
-  const before=app.images.before, after=app.images.after;
-  ctx.fillStyle='#11111b'; ctx.fillRect(0,0,c.width,c.height);
-  if(!before||!after){ctx.fillStyle='#a6adc8';ctx.font='12px JetBrains Mono';ctx.fillText('BEFORE と AFTER を読込んで比較',20,120);return;}
-  const split=parseInt(($('compareSlider')&&$('compareSlider').value)||50)/100;
-  const {x,y,w,h}=app.roi;
-  ctx.drawImage(before, x/100*before.width, y/100*before.height, w/100*before.width, h/100*before.height, 0,0,c.width,c.height);
-  ctx.save(); ctx.beginPath(); ctx.rect(c.width*split,0,c.width*(1-split),c.height); ctx.clip();
-  ctx.drawImage(after, x/100*after.width, y/100*after.height, w/100*after.width, h/100*after.height, 0,0,c.width,c.height);
-  ctx.restore(); ctx.strokeStyle='#89b4fa'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(c.width*split,0); ctx.lineTo(c.width*split,c.height); ctx.stroke();
+  const key=app.active; const orig=app.images[key]; const corr=app.correctedCanvases[key];
+  const cOrig=$('compareOrig'), cCorr=$('compareCorr');
+  if(orig){ const r=cOrig.getContext('2d'); cOrig.width=orig.width; cOrig.height=orig.height; r.drawImage(orig,0,0); $('origLabel').textContent=`${orig.width}x${orig.height}`; }
+  if(corr){ const r=cCorr.getContext('2d'); cCorr.width=corr.width; cCorr.height=corr.height; r.drawImage(corr,0,0); $('correctedBadge').textContent='生成済'; $('correctedBadge').className='badge ok'; }
+  else { const r=cCorr.getContext('2d'); cCorr.width=200; cCorr.height=130; r.fillStyle='#e2e8f0'; r.fillRect(0,0,200,130); r.fillStyle='#64748b'; r.font='12px sans-serif'; r.fillText('未生成',70,65); $('correctedBadge').textContent='未生成'; }
 }
-const compareSlider=$('compareSlider'); if(compareSlider) compareSlider.addEventListener('input',drawCompare);
-function renderCharts(){
-  const f=app.results.fabric, b=app.results.before, a=app.results.after;
-  if(!f&&!b&&!a) return;
-  if(typeof Chart==='undefined'){console.warn('Chart.js not loaded');return;}
-  const ctxLab=$('chartLab'); if(ctxLab){
-    const cctx=ctxLab.getContext('2d'); if(app.charts.lab) try{app.charts.lab.destroy();}catch{}
-    try{
-      app.charts.lab=new Chart(cctx,{
-        type:'bar',
-        data:{
-          labels:['L*','a*','b*'],
-          datasets:[
-            f?{label:'原布',data:[f.Lab.L,f.Lab.a,f.Lab.b],backgroundColor:'#cdd6f4'}:null,
-            b?{label:'洗浄前',data:[b.Lab.L,b.Lab.a,b.Lab.b],backgroundColor:'#f38ba8'}:null,
-            a?{label:'洗浄後',data:[a.Lab.L,a.Lab.a,a.Lab.b],backgroundColor:'#a6e3a1'}:null
-          ].filter(Boolean)
-        },
-        options:{responsive:true,plugins:{legend:{labels:{color:'#cdd6f4',font:{size:10}}}},scales:{x:{ticks:{color:'#a6adc8'}},y:{ticks:{color:'#a6adc8'}}}}
-      });
-    }catch(e){console.warn(e)}
-  }
-  const ctxE=$('chartDeltaE'); if(ctxE && f && b){
-    const cctx=ctxE.getContext('2d'); if(app.charts.deltaE) try{app.charts.deltaE.destroy();}catch{}
-    try{
-      const de_fb=deltaE(f.Lab,b.Lab)||0, de_fa=a?deltaE(f.Lab,a.Lab)||0:0, de_ba=(b&&a)?deltaE(b.Lab,a.Lab)||0:0;
-      app.charts.deltaE=new Chart(cctx,{
-        type:'bar',
-        data:{labels:['ΔE 原布-前','ΔE 原布-後','ΔE 前-後'],datasets:[{label:'ΔE*ab',data:[de_fb,de_fa,de_ba],backgroundColor:['#89b4fa','#a6e3a1','#f9e2af']}]},
-        options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#a6adc8',font:{size:10}}},y:{ticks:{color:'#a6adc8'}}}}
-      });
-    }catch(e){console.warn(e)}
-  }
+function drawSliderCompare(){
+  const wrap=$('beforeAfterWrap'); const before=app.correctedCanvases['before']||app.images['before']; const after=app.correctedCanvases['after']||app.images['after'];
+  if(!before||!after){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  const sc=$('sliderCanvas'); const sctx=sc.getContext('2d');
+  const w=Math.min(before.width, after.width, 900); const h=Math.min(before.height, after.height, 600);
+  sc.width=w; sc.height=h;
+  // draw before full, then after clipped by slider
+  sctx.clearRect(0,0,w,h);
+  sctx.drawImage(before,0,0,w,h);
+  const pct=parseInt($('sliderRange').value,10)/100;
+  sctx.save(); sctx.beginPath(); sctx.rect(0,0,w*pct,h); sctx.clip(); sctx.drawImage(after,0,0,w,h); sctx.restore();
+  $('sliderHandle').style.left=(pct*100)+'%'; $('sliderVal').textContent=Math.round(pct*100)+'%';
 }
+
+function sampleColor(key,normX,normY,radius=7){
+  const img=app.images[key]; if(!img) return null;
+  const off=document.createElement('canvas'); off.width=img.width; off.height=img.height;
+  const octx=off.getContext('2d'); octx.drawImage(img,0,0);
+  const cx=Math.round(normX*img.width), cy=Math.round(normY*img.height);
+  const r=Math.max(1,radius); const x0=Math.max(0,cx-r), y0=Math.max(0,cy-r), w=Math.min(img.width-x0, r*2+1), h=Math.min(img.height-y0, r*2+1);
+  const data=octx.getImageData(x0,y0,w,h).data; let R=0,G=0,B=0,c=0; for(let i=0;i<data.length;i+=4){R+=data[i]; G+=data[i+1]; B+=data[i+2]; c++;} return {r:R/c,g:G/c,b:B/c};
+}
+
+function applyCalibration(key){
+  const cal=app.cals[key]; const img=app.images[key];
+  if(!img||!cal.blackRGB||!cal.whiteRGB){ toast('黒・白2点必要'); return; }
+  const b=cal.blackRGB,w=cal.whiteRGB;
+  const off=document.createElement('canvas'); off.width=img.width; off.height=img.height;
+  const octx=off.getContext('2d'); octx.drawImage(img,0,0);
+  const id=octx.getImageData(0,0,off.width,off.height); const d=id.data;
+  const eps=1; const dR=Math.max(eps,w.r-b.r), dG=Math.max(eps,w.g-b.g), dB=Math.max(eps,w.b-b.b);
+  for(let i=0;i<d.length;i+=4){ d[i]=Math.max(0,Math.min(255,(d[i]-b.r)/dR*255)); d[i+1]=Math.max(0,Math.min(255,(d[i+1]-b.g)/dG*255)); d[i+2]=Math.max(0,Math.min(255,(d[i+2]-b.b)/dB*255)); }
+  octx.putImageData(id,0,0);
+  app.correctedCanvases[key]=off;
+  const imgEl=new Image(); imgEl.src=off.toDataURL('image/jpeg',0.92); imgEl.onload=()=>{app.correctedImages[key]=imgEl; drawMain();};
+  $(`thumb_${key}`)?.classList.add('cal-ok'); toast(`${key} 補正適用`); updateCalStatus(); drawCompare();
+}
+function updateCalStatus(){
+  let done=0; ['fabric','before','after'].forEach(k=>{ if(app.cals[k].blackRGB&&app.cals[k].whiteRGB) done++; });
+  const badge=$('calStatusBadge'); badge.textContent=done===3?'3/3 完了':done?`${done}/3`:'未設定'; badge.className=done===3?'badge ok':done?'badge live':'badge';
+  updateStepper();
+}
+function syncCalUI(){
+  const cal=app.cals[app.active];
+  const set=(type, rgbKey, txtId, posId, swId)=>{
+    const rgb=cal[rgbKey]; const sw=$(swId), txt=$(txtId), pos=$(posId);
+    if(rgb){ sw.style.background=`rgb(${rgb.r|0},${rgb.g|0},${rgb.b|0})`; txt.textContent=`${rgb.r.toFixed(0)},${rgb.g.toFixed(0)},${rgb.b.toFixed(0)}`; const pt=cal[type]; if(pt) pos.textContent=`${(pt.x*100).toFixed(1)}%,${(pt.y*100).toFixed(1)}%`; }
+    else { sw.style.background=type==='black'?'#111':'#fff'; txt.textContent='未設定'; pos.textContent='-'; }
+  };
+  set('black','blackRGB','txtBlack','posBlack','swatchBlack'); set('white','whiteRGB','txtWhite','posWhite','swatchWhite');
+  if(app.calMode){ $('calModeBadge').style.display='inline-flex'; $('calModeBadge').textContent=app.calMode==='black'?'⚫ 黒点をタップ':'⚪ 白点をタップ'; } else $('calModeBadge').style.display='none';
+  $('btnViewOriginal').className=app.viewMode==='original'?'btn btn-sm btn-primary':'btn btn-sm';
+  $('btnViewCorrected').className=app.viewMode==='corrected'?'btn btn-sm btn-primary':'btn btn-sm';
+}
+function syncRoiInputs(){ const r=app.rois[app.active]; $('roiX').value=(r.x*100).toFixed(1); $('roiY').value=(r.y*100).toFixed(1); $('roiW').value=(r.w*100).toFixed(1); $('roiH').value=(r.h*100).toFixed(1); }
+
+function updateWeightUI(){
+  const f=app.weights.fabric, b=app.weights.before, a=app.weights.after;
+  $('badgeW_fabric').textContent=f!=null?`${f} g`:'未入力'; $('badgeW_before').textContent=b!=null?`${b} g`:'未入力'; $('badgeW_after').textContent=a!=null?`${a} g`:'未入力';
+  $('badgeW_fabric').className=f!=null?'badge ok':'badge'; $('badgeW_before').className=b!=null?'badge ok':'badge'; $('badgeW_after').className=a!=null?'badge ok':'badge';
+  if(f!=null&&b!=null){ const soil=b-f; $('soilAmount').textContent=`${soil.toFixed(3)} g`; } else $('soilAmount').textContent='- g';
+  if(b!=null&&a!=null){ const rem=b-a; $('removeAmount').textContent=`${rem.toFixed(3)} g`; } else $('removeAmount').textContent='- g';
+  const wb=$('weightBadge'); if(f!=null&&b!=null&&a!=null) wb.textContent=`重量 ${f}/${b}/${a} g`; else wb.textContent='重量 未入力';
+  ['fabric','before','after'].forEach(k=>{ const th=$(`thumb_${k}`); if(app.weights[k]!=null) th.classList.add('weight-ok'); else th.classList.remove('weight-ok'); });
+  updateStepper();
+}
+
+// Load image
+function loadImageFile(file,key){
+  const k=key||app.active; const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image(); img.onload=()=>{
+      app.images[k]=img; app.correctedCanvases[k]=null; app.correctedImages[k]=null; app.cals[k]={black:null,white:null,blackRGB:null,whiteRGB:null};
+      const thumb=$(`thumb_${k}`); thumb.innerHTML=`<img src="${e.target.result}"><span class="lab">${k==='fabric'?'素地':k==='before'?'前':'後'}</span>`;
+      document.querySelector(`.tab[data-tab="${k}"]`)?.classList.add('has');
+      if(k===app.active){drawMain(); syncCalUI();}
+      updateCalStatus(); toast(`${k} 読込`);
+    }; img.src=e.target.result;
+  }; reader.readAsDataURL(file);
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setActiveTab(t.dataset.tab)));
+const dropZone=$('dropZone'), fileInput=$('fileInput');
+dropZone.addEventListener('click',()=>fileInput.click());
+dropZone.addEventListener('dragover',e=>{e.preventDefault(); dropZone.classList.add('drag');});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop',e=>{e.preventDefault(); dropZone.classList.remove('drag'); const f=e.dataTransfer.files[0]; if(f) loadImageFile(f);});
+fileInput.addEventListener('change',e=>{const f=e.target.files[0]; if(f) loadImageFile(f); e.target.value='';});
+['fabric','before','after'].forEach(k=>{$(`thumb_${k}`)?.addEventListener('click',()=>setActiveTab(k));});
+
+// ROI drag
+(function(){
+  const roiBox=$('roiBox'); let mode=null,start={},orig={};
+  const getPos=e=>{ const rect=$('canvasStage').getBoundingClientRect(); const cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left; const cy=(e.touches?e.touches[0].clientY:e.clientY)-rect.top; return {x:cx,y:cy}; };
+  roiBox.addEventListener('pointerdown',e=>{ if(e.target.classList.contains('handle')) return; mode='move'; roiBox.setPointerCapture(e.pointerId); start=getPos(e); orig={...app.rois[app.active]}; e.preventDefault(); });
+  roiBox.addEventListener('pointermove',e=>{ if(!mode) return; const cur=getPos(e); const dx=(cur.x-start.x)/drawState.dispW, dy=(cur.y-start.y)/drawState.dispH; if(mode==='move'){ const r=app.rois[app.active]; r.x=orig.x+dx; r.y=orig.y+dy; clamp(r); syncRoiInputs(); drawMain(); }});
+  roiBox.addEventListener('pointerup',e=>{mode=null; try{roiBox.releasePointerCapture(e.pointerId);}catch{}});
+  document.querySelectorAll('.handle').forEach(h=>{
+    h.addEventListener('pointerdown',e=>{ mode='resize'; start=getPos(e); orig={...app.rois[app.active]}; h.setPointerCapture(e.pointerId); e.stopPropagation(); });
+    h.addEventListener('pointermove',e=>{ if(mode!=='resize') return; const cur=getPos(e); const dx=(cur.x-start.x)/drawState.dispW, dy=(cur.y-start.y)/drawState.dispH; const r=app.rois[app.active]; const hd=h.dataset.h; if(hd.includes('e')||hd==='ne'||hd==='se') r.w=orig.w+dx; if(hd.includes('s')||hd==='sw'||hd==='se') r.h=orig.h+dy; if(hd.includes('w')){r.x=orig.x+dx; r.w=orig.w-dx;} if(hd.includes('n')){r.y=orig.y+dy; r.h=orig.h-dy;} clamp(r); syncRoiInputs(); drawMain(); });
+    h.addEventListener('pointerup',e=>{mode=null; try{h.releasePointerCapture(e.pointerId);}catch{}});
+  });
+  function clamp(r){ r.x=Math.max(0,Math.min(0.95,r.x)); r.y=Math.max(0,Math.min(0.95,r.y)); r.w=Math.max(0.05,Math.min(1-r.x,r.w)); r.h=Math.max(0,Math.min(1-r.y,r.h)); }
+})();
+['roiX','roiY','roiW','roiH'].forEach(id=>{$(id).addEventListener('change',()=>{ const r=app.rois[app.active]; r.x=parseFloat($('roiX').value)/100; r.y=parseFloat($('roiY').value)/100; r.w=parseFloat($('roiW').value)/100; r.h=parseFloat($('roiH').value)/100; drawMain(); });});
+$('btnRoiCenter').addEventListener('click',()=>{ const r=app.rois[app.active]; r.x=(1-r.w)/2; r.y=(1-r.h)/2; syncRoiInputs(); drawMain(); });
+$('btnRoiFull').addEventListener('click',()=>{ const r=app.rois[app.active]; r.x=0.1; r.y=0.1; r.w=0.8; r.h=0.8; syncRoiInputs(); drawMain(); });
+$('btnRoiCopyPrev').addEventListener('click',()=>{ const order=['fabric','before','after']; const idx=order.indexOf(app.active); const prev=order[(idx-1+order.length)%order.length]; app.rois[app.active]={...app.rois[prev]}; syncRoiInputs(); drawMain(); toast(`${prev}→${app.active}`); });
+$('btnRoiCopyToAll').addEventListener('click',()=>{ const cur={...app.rois[app.active]}; Object.keys(app.rois).forEach(k=>app.rois[k]={...cur}); syncRoiInputs(); drawMain(); toast('全画像に適用'); });
+
+// Weight inputs
+$('weightFabric').addEventListener('input',e=>{ app.weights.fabric=e.target.value?parseFloat(e.target.value):null; updateWeightUI(); });
+$('weightBefore').addEventListener('input',e=>{ app.weights.before=e.target.value?parseFloat(e.target.value):null; updateWeightUI(); });
+$('weightAfter').addEventListener('input',e=>{ app.weights.after=e.target.value?parseFloat(e.target.value):null; updateWeightUI(); });
+
+// Calibration tap
+function setCalMode(t){ app.calMode=t; document.querySelectorAll('#btnSetBlack,#btnSetWhite').forEach(b=>b.classList.remove('btn-primary')); if(t) $(t==='black'?'btnSetBlack':'btnSetWhite').classList.add('btn-primary'); syncCalUI(); }
+$('btnSetBlack').addEventListener('click',()=>setCalMode(app.calMode==='black'?null:'black'));
+$('btnSetWhite').addEventListener('click',()=>setCalMode(app.calMode==='white'?null:'white'));
+$('canvasStage').addEventListener('click',e=>{
+  if(!app.calMode) return; if(e.target.closest('.roi-box')||e.target.classList.contains('handle')) return;
+  const rect=$('canvasStage').getBoundingClientRect(); const cx=e.clientX-rect.left, cy=e.clientY-rect.top;
+  if(cx<0||cy<0||cx>drawState.dispW||cy>drawState.dispH) return;
+  const nx=cx/drawState.dispW, ny=cy/drawState.dispH;
+  const sampled=sampleColor(app.active,nx,ny,8); if(!sampled) return;
+  const cal=app.cals[app.active];
+  if(app.calMode==='black'){ cal.black={x:nx,y:ny}; cal.blackRGB={r:sampled.r,g:sampled.g,b:sampled.b}; }
+  else { cal.white={x:nx,y:ny}; cal.whiteRGB={r:sampled.r,g:sampled.g,b:sampled.b}; }
+  syncCalUI(); drawMain();
+  if($('chkAutoCal').checked && cal.blackRGB && cal.whiteRGB) applyCalibration(app.active);
+  toast(`${app.calMode==='black'?'黒':'白'} ${sampled.r.toFixed(0)},${sampled.g.toFixed(0)},${sampled.b.toFixed(0)}`);
+  if(app.calMode==='black'&&!cal.whiteRGB) setCalMode('white'); else if(app.calMode==='white'&&!cal.blackRGB) setCalMode('black');
+});
+$('btnApplyCal').addEventListener('click',()=>applyCalibration(app.active));
+$('btnClearCal').addEventListener('click',()=>{ app.cals[app.active]={black:null,white:null,blackRGB:null,whiteRGB:null}; app.correctedCanvases[app.active]=null; app.correctedImages[app.active]=null; syncCalUI(); drawMain(); updateCalStatus(); toast('クリア'); });
+$('btnViewOriginal').addEventListener('click',()=>{app.viewMode='original'; syncCalUI(); drawMain();});
+$('btnViewCorrected').addEventListener('click',()=>{app.viewMode='corrected'; syncCalUI(); drawMain();});
+
+// Auto gauze detection
+function isOpenCvUsable(){ try{return window.cv&&typeof cv.Mat!=='undefined';}catch{return false} }
+function logDetect(m){ $('detectLog').textContent=m; }
+
+function autoDetectGauze(key){
+  const img=app.images[key]; const roi=app.rois[key];
+  if(!img){ toast('画像なし'); return; }
+  if(!isOpenCvUsable()){ logDetect('OpenCV未準備 - JS簡易検出にフォールバック'); fallbackDetect(key); return; }
+  try{
+    $('detectBadge').style.display='inline-flex'; logDetect('OpenCV解析中...');
+    const off=document.createElement('canvas'); off.width=img.width; off.height=img.height;
+    const octx=off.getContext('2d'); octx.drawImage(img,0,0);
+    const sx=Math.round(roi.x*img.width), sy=Math.round(roi.y*img.height), sw=Math.round(roi.w*img.width), sh=Math.round(roi.h*img.height);
+    const imageData=octx.getImageData(sx,sy,sw,sh);
+    let src=cv.matFromImageData(imageData);
+    let gray=new cv.Mat(); cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+    let blur=new cv.Mat(); cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);
+    let thresh=new cv.Mat();
+    const thr=parseInt($('detectThresh').value,10);
+    cv.adaptiveThreshold(blur,thresh,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY_INV,21,thr);
+    let kernel=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(5,5));
+    cv.morphologyEx(thresh,thresh,cv.MORPH_CLOSE,kernel);
+    let contours=new cv.MatVector(), hierarchy=new cv.Mat();
+    cv.findContours(thresh,contours,hierarchy,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
+    let best=null, bestArea=0, bestRect=null;
+    const minAreaRatio=parseInt($('detectMinArea').value,10)/100;
+    const totalArea=sw*sh;
+    for(let i=0;i<contours.size();i++){
+      const cnt=contours.get(i);
+      const area=cv.contourArea(cnt);
+      if(area<totalArea*minAreaRatio || area>totalArea*0.98) continue;
+      const peri=cv.arcLength(cnt,true);
+      const approx=new cv.Mat(); cv.approxPolyDP(cnt,approx,0.02*peri,true);
+      if(approx.rows===4){
+        const rect=cv.boundingRect(cnt);
+        const aspect=rect.width/rect.height;
+        if(aspect<0.3||aspect>3.0) { approx.delete(); continue; }
+        if(area>bestArea){ if(best) best.delete(); best=approx; bestArea=area; bestRect=rect; }
+        else approx.delete();
+      } else approx.delete();
+    }
+    if(bestRect){
+      // Convert rect in ROI coords to full image normalized ROI
+      const newX = (sx+bestRect.x)/img.width;
+      const newY = (sy+bestRect.y)/img.height;
+      const newW = bestRect.width/img.width;
+      const newH = bestRect.height/img.height;
+      // Add small margin 2%
+      const margin=0.02;
+      app.rois[key]={x:Math.max(0,newX-margin), y:Math.max(0,newY-margin), w:Math.min(1-newX+margin*2,newW+margin*2), h:Math.min(1-newY+margin*2,newH+margin*2)};
+      syncRoiInputs(); drawMain();
+      logDetect(`検出成功 面積 ${(bestArea/totalArea*100).toFixed(1)}% 矩形 ${bestRect.width}x${bestRect.height}`);
+      toast(`ガーゼ検出成功 ${key}`);
+      // visual detect box
+      const db=$('detectBox'); db.style.display='block'; db.style.left=(app.rois[key].x*drawState.dispW)+'px'; db.style.top=(app.rois[key].y*drawState.dispH)+'px'; db.style.width=(app.rois[key].w*drawState.dispW)+'px'; db.style.height=(app.rois[key].h*drawState.dispH)+'px';
+      setTimeout(()=>db.style.display='none',2000);
+    } else {
+      logDetect('輪郭が見つかりません - 感度を下げてみてください'); toast('検出失敗 - 粗枠を広げて再試行');
+    }
+    src.delete(); gray.delete(); blur.delete(); thresh.delete(); kernel.delete(); contours.delete(); hierarchy.delete(); if(best) best.delete();
+  }catch(e){ console.error(e); logDetect('検出エラー: '+e.message); fallbackDetect(key); }
+  finally{ $('detectBadge').style.display='none'; }
+}
+function fallbackDetect(key){
+  // Simple JS fallback: use brightness threshold inside ROI
+  const img=app.images[key]; const roi=app.rois[key];
+  const off=document.createElement('canvas'); off.width=img.width; off.height=img.height;
+  const octx=off.getContext('2d'); octx.drawImage(img,0,0);
+  const sx=Math.round(roi.x*img.width), sy=Math.round(roi.y*img.height), sw=Math.round(roi.w*img.width), sh=Math.round(roi.h*img.height);
+  const data=octx.getImageData(sx,sy,sw,sh).data;
+  let minX=sw, minY=sh, maxX=0, maxY=0;
+  // Assume gauze is brighter than background - find bright region
+  for(let y=0;y<sh;y++){ for(let x=0;x<sw;x++){ const idx=(y*sw+x)*4; const l=(data[idx]+data[idx+1]+data[idx+2])/3; if(l>180){ if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; } } }
+  if(maxX>minX&&maxY>minY){ const newX=(sx+minX)/img.width, newY=(sy+minY)/img.height, newW=(maxX-minX)/img.width, newH=(maxY-minY)/img.height; app.rois[key]={x:newX,y:newY,w:newW,h:newH}; syncRoiInputs(); drawMain(); logDetect('JS簡易検出でROI更新'); }
+}
+$('btnAutoDetect').addEventListener('click',()=>autoDetectGauze(app.active));
+$('btnAutoDetectAll').addEventListener('click',()=>{ ['fabric','before','after'].forEach(k=>{ if(app.images[k]) autoDetectGauze(k); });});
+$('detectThresh').addEventListener('input',e=>{ $('detectThreshVal').textContent=e.target.value; app.detectParams.thresh=parseInt(e.target.value,10); });
+$('detectMinArea').addEventListener('input',e=>{ $('detectMinAreaVal').textContent=e.target.value+'%'; app.detectParams.minAreaPct=parseInt(e.target.value,10); });
+
+// Analysis
+function analyzeImage(key){
+  const canvas=app.correctedCanvases[key] || (()=>{ const c=document.createElement('canvas'); const im=app.images[key]; if(!im) return null; c.width=im.width; c.height=im.height; c.getContext('2d').drawImage(im,0,0); return c; })();
+  const roi=app.rois[key]; if(!canvas||!roi) return null;
+  const sw=Math.round(roi.w*canvas.width), sh=Math.round(roi.h*canvas.height), sx=Math.round(roi.x*canvas.width), sy=Math.round(roi.y*canvas.height);
+  const ctx2=canvas.getContext('2d'); const data=ctx2.getImageData(sx,sy,sw,sh).data;
+  let R=0,G=0,B=0,c=0; const hist=new Array(100).fill(0);
+  for(let i=0;i<data.length;i+=4){ R+=data[i]; G+=data[i+1]; B+=data[i+2]; c++; const L=rgbToLab(data[i],data[i+1],data[i+2]).L; const bin=Math.max(0,Math.min(99,Math.floor(L))); hist[bin]++; }
+  R/=c; G/=c; B/=c; const lab=rgbToLab(R,G,B);
+  // K/S approximation: R~ Y/100, K/S = (1-R)^2/(2R)
+  const Rv=Math.max(0.01, lab.Y/100); const KS=(1-Rv)*(1-Rv)/(2*Rv);
+  const WI=lab.L - 2*Math.sqrt(lab.a*lab.a+lab.b*lab.b); // simplified whiteness
+  return {rgb:{r:R,g:G,b:B}, lab, KS, WI, hist, count:c};
+}
+function doAnalyze(){
+  const keys=['fabric','before','after'];
+  for(const k of keys){ if(!app.images[k]){ toast(`${k} 画像未登録`); setActiveTab(k); return; } if(!app.cals[k].blackRGB||!app.cals[k].whiteRGB){ toast(`${k} 黒白未設定`); setActiveTab(k); document.querySelector('[data-acc="cal"]').classList.add('open'); return; } if(app.weights[k]==null){ toast(`${k} 重量未入力 - 0で続行も可能ですが入力推奨`); } if(!app.correctedCanvases[k]) applyCalibration(k); }
+  const fabric=analyzeImage('fabric'), before=analyzeImage('before'), after=analyzeImage('after');
+  app.results={fabric,before,after};
+  const d76_fb=deltaE76(fabric.lab,before.lab), d76_fa=deltaE76(fabric.lab,after.lab), d76_ba=deltaE76(before.lab,after.lab);
+  const d00_ba=deltaE00(before.lab,after.lab);
+  const washL=before.lab.L!==fabric.lab.L? ((before.lab.L-after.lab.L)/(before.lab.L-fabric.lab.L))*100:0;
+  const washE=d76_fb? ((d76_fb-d76_fa)/d76_fb)*100:0;
+  // weight wash
+  let washW=null, soil=null, removed=null;
+  const wf=app.weights.fabric, wb=app.weights.before, wa=app.weights.after;
+  if(wf!=null&&wb!=null&&wa!=null&&wb!==wf){ soil=wb-wf; removed=wb-wa; washW=soil!==0? (removed/soil)*100:0; }
+  else if(wb!=null&&wa!=null){ washW=((wb-wa)/wb)*100; }
+
+  $('noResult').style.display='none'; $('resultArea').style.display='block';
+  $('resFabric').textContent=`L ${fabric.lab.L.toFixed(1)} a ${fabric.lab.a.toFixed(1)} b ${fabric.lab.b.toFixed(1)}`; $('resFabricSub').textContent=`RGB ${fabric.rgb.r.toFixed(0)},${fabric.rgb.g.toFixed(0)},${fabric.rgb.b.toFixed(0)} KS ${fabric.KS.toFixed(3)}`;
+  $('resBefore').textContent=`L ${before.lab.L.toFixed(1)} a ${before.lab.a.toFixed(1)} b ${before.lab.b.toFixed(1)}`; $('resBeforeSub').textContent=`RGB ${before.rgb.r.toFixed(0)},${before.rgb.g.toFixed(0)},${before.rgb.b.toFixed(0)}`;
+  $('resAfter').textContent=`L ${after.lab.L.toFixed(1)} a ${after.lab.a.toFixed(1)} b ${after.lab.b.toFixed(1)}`; $('resAfterSub').textContent=`RGB ${after.rgb.r.toFixed(0)},${after.rgb.g.toFixed(0)},${after.rgb.b.toFixed(0)}`;
+  $('resDE1').textContent=d76_fb?.toFixed(2); $('resDE2').textContent=d76_fa?.toFixed(2); $('resDE3').textContent=d00_ba?.toFixed(2);
+  $('resRateL').textContent=`${washL.toFixed(1)} %`; $('rateLBar').style.width=`${Math.max(0,Math.min(100,washL))}%`;
+  $('resRateE').textContent=`${washE.toFixed(1)} %`; $('rateEBar').style.width=`${Math.max(0,Math.min(100,washE))}%`;
+  $('resRateW').textContent=washW!=null?`${washW.toFixed(1)} %`:'-'; $('resWeightDetail').textContent=soil!=null?`汚染 ${soil.toFixed(3)}g 除去 ${removed.toFixed(3)}g`:(wb!=null&&wa!=null?`前 ${wb}g 後 ${wa}g`:'重量未入力');
+  $('ksValue').textContent=`前 ${before.KS.toFixed(3)} → 後 ${after.KS.toFixed(3)} (Δ ${(before.KS-after.KS).toFixed(3)})`; $('wiValue').textContent=`素地 ${fabric.WI.toFixed(1)} / 前 ${before.WI.toFixed(1)} / 後 ${after.WI.toFixed(1)}`;
+
+  // charts
+  const ctxChart=$('resultChart').getContext('2d'); if(app.chart) app.chart.destroy();
+  app.chart=new Chart(ctxChart,{type:'bar',data:{labels:['素地 L','前 L','後 L','ΔE 前-素地','ΔE 後-素地','ΔE00 前-後','重量洗浄率'],datasets:[{data:[fabric.lab.L,before.lab.L,after.lab.L,d76_fb,d76_fa,d00_ba,washW||0],backgroundColor:['#93c5fd','#fca5a5','#86efac','#fdba74','#a5b4fc','#fde68a','#bfdbfe'],borderRadius:8}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  // hist
+  const hctx=$('histChart').getContext('2d'); if(app.histChart) app.histChart.destroy();
+  const labels=Array.from({length:100},(_,i)=>i);
+  app.histChart=new Chart(hctx,{type:'line',data:{labels, datasets:[{label:'素地', data:fabric.hist, borderColor:'#93c5fd', backgroundColor:'rgba(147,197,253,.2)', tension:.3, fill:true, pointRadius:0},{label:'洗浄前', data:before.hist, borderColor:'#fca5a5', backgroundColor:'rgba(252,165,165,.15)', tension:.3, fill:true, pointRadius:0},{label:'洗浄後', data:after.hist, borderColor:'#86efac', backgroundColor:'rgba(134,239,172,.15)', tension:.3, fill:true, pointRadius:0}]},options:{responsive:true,plugins:{legend:{display:true, position:'top', labels:{font:{size:10}}}},scales:{x:{title:{display:true,text:'L (明度)',font:{size:10}}},y:{beginAtZero:true,title:{display:true,text:'頻度'}}}}});
+
+  buildTsv(); saveHistory(washL,washW); toast('解析完了'); updateStepper();
+}
+$('btnAnalyze').addEventListener('click',doAnalyze);
+$('btnClearResults').addEventListener('click',()=>{ app.results=null; $('resultArea').style.display='none'; $('noResult').style.display='block'; });
+
+// history
+function saveHistory(washL,washW){
+  const hist=JSON.parse(localStorage.getItem('labwash_history')||'[]');
+  hist.unshift({id:$('metaExpId').value||new Date().toLocaleTimeString(), washL:washL?.toFixed(1), washW:washW?.toFixed(1)||'-', time:new Date().toLocaleTimeString()});
+  if(hist.length>20) hist.pop();
+  localStorage.setItem('labwash_history',JSON.stringify(hist)); renderHistory();
+}
+function renderHistory(){
+  const hist=JSON.parse(localStorage.getItem('labwash_history')||'[]'); const tbody=$('historyTable').querySelector('tbody'); tbody.innerHTML='';
+  hist.forEach((h,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${h.id}</td><td>${h.washL}%</td><td>${h.washW}%</td><td><button class="btn btn-sm" style="padding:2px 6px;min-height:22px;font-size:10px" data-i="${i}">削除</button></td>`; tbody.appendChild(tr); });
+  tbody.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ const idx=parseInt(b.dataset.i,10); const hist=JSON.parse(localStorage.getItem('labwash_history')||'[]'); hist.splice(idx,1); localStorage.setItem('labwash_history',JSON.stringify(hist)); renderHistory(); }));
+}
+
+// weight, tsv, pdf etc
 function buildRecord(){
-  const f=app.results.fabric,b=app.results.before,a=app.results.after;
   return {
-    meta:{experimentId:$('metaExpId').value,sampleName:$('metaSample').value,operator:$('metaOperator').value,washCondition:$('metaWash').value,temperature:$('metaTemp').value,time:$('metaTime').value,date:$('metaDate').value,timestamp:new Date().toISOString()},
-    weights:app.weights, roi:app.roi, cal:app.cal, params:app.params,
-    results:{
-      fabric:f?{L:f.Lab.L,a:f.Lab.a,b:f.Lab.b,R:f.rgb.r,G:f.rgb.g,B:f.rgb.b,stdL:f.lStd}:null,
-      before:b?{L:b.Lab.L,a:b.Lab.a,b:b.Lab.b,R:b.rgb.r,G:b.rgb.g,B:b.rgb.b,stdL:b.lStd}:null,
-      after:a?{L:a.Lab.L,a:a.Lab.a,b:a.Lab.b,R:a.rgb.r,G:a.rgb.g,B:a.rgb.b,stdL:a.lStd}:null
-    },
-    deltaE:{fabric_before:f&&b?deltaE(f.Lab,b.Lab):null,fabric_after:f&&a?deltaE(f.Lab,a.Lab):null,before_after:b&&a?deltaE(b.Lab,a.Lab):null},
-    rates:{L_based:f&&b&&a?safeRate(a.Lab.L-b.Lab.L,f.Lab.L-b.Lab.L):null,E_based:(()=>{if(!f||!b) return null; const de_fb=deltaE(f.Lab,b.Lab),de_fa=a?deltaE(f.Lab,a.Lab):null; if(!de_fb) return null; return (1-de_fa/de_fb)*100})(),weight_based:app.weights.fabric!=null&&app.weights.before!=null&&app.weights.after!=null?safeRate(app.weights.before-app.weights.after,app.weights.before-app.weights.fabric):null}
+    meta:{experimentId:$('metaExpId').value,sampleName:$('metaSample').value,operator:$('metaOperator').value,washCondition:$('metaWash').value,temp:$('metaTemp').value,time:$('metaTime').value,date:$('metaDate').value,memo:$('memo').value,rois:app.rois,cals:app.cals,weights:app.weights,detectParams:app.detectParams},
+    results:app.results?{fabric:app.results.fabric.lab,before:app.results.before.lab,after:app.results.after.lab,fabricRGB:app.results.fabric.rgb,beforeRGB:app.results.before.rgb,afterRGB:app.results.after.rgb,KS:{fabric:app.results.fabric.KS,before:app.results.before.KS,after:app.results.after.KS}}:null,
+    deltaE: app.results?{fab_before:deltaE76(app.results.fabric.lab,app.results.before.lab),fab_after:deltaE76(app.results.fabric.lab,app.results.after.lab),before_after_76:deltaE76(app.results.before.lab,app.results.after.lab),before_after_00:deltaE00(app.results.before.lab,app.results.after.lab)}:null
   };
 }
-function downloadText(name,text,type){const blob=new Blob([text],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function buildTsv(){
-  try{
-    const rec=buildRecord();
-    const headers=['項目','原布','洗浄前','洗浄後','ΔE原布-前','ΔE原布-後','ΔE前-後','洗浄率L%','洗浄率E%','重量率%','EXP-ID','試料','実施者','条件'];
-    const row=[['L*',rec.results.fabric?.L,rec.results.before?.L,rec.results.after?.L],['a*',rec.results.fabric?.a,rec.results.before?.a,rec.results.after?.a],['b*',rec.results.fabric?.b,rec.results.before?.b,rec.results.after?.b],['R',rec.results.fabric?.R,rec.results.before?.R,rec.results.after?.R],['G',rec.results.fabric?.G,rec.results.before?.G,rec.results.after?.G],['B',rec.results.fabric?.B,rec.results.before?.B,rec.results.after?.B]].map(r=>r.join('\t')).join('\n');
-    const summary=[headers.join('\t'),['Summary',rec.results.fabric?.L,rec.results.before?.L,rec.results.after?.L,rec.deltaE.fabric_before,rec.deltaE.fabric_after,rec.deltaE.before_after,rec.rates.L_based,rec.rates.E_based,rec.rates.weight_based,rec.meta.experimentId,rec.meta.sampleName,rec.meta.operator,rec.meta.washCondition].join('\t')].join('\n');
-    const full=row+'\n'+summary;
-    const ta=$('tsvPreview'); if(ta) ta.value=full;
-    return full;
-  }catch(e){console.warn(e); return '';}
+  if(!app.results) return '';
+  const rec=buildRecord(); const header=['expId','sample','fabric_L','fabric_a','fabric_b','before_L','before_a','before_b','after_L','after_a','after_b','dE_fab_before','dE_fab_after','dE00_before_after','washL','washE','washW','weight_fabric','weight_before','weight_after','soil_g','removed_g','KS_before','KS_after'];
+  const soil=app.weights.before!=null&&app.weights.fabric!=null?app.weights.before-app.weights.fabric:null;
+  const removed=app.weights.before!=null&&app.weights.after!=null?app.weights.before-app.weights.after:null;
+  const row=[rec.meta.experimentId,rec.meta.sampleName,rec.results.fabric.L,rec.results.fabric.a,rec.results.fabric.b,rec.results.before.L,rec.results.before.a,rec.results.before.b,rec.results.after.L,rec.results.after.a,rec.results.after.b,rec.deltaE.fab_before,rec.deltaE.fab_after,rec.deltaE.before_after_00,$('resRateL').textContent,$('resRateE').textContent,$('resRateW').textContent,app.weights.fabric,app.weights.before,app.weights.after,soil,removed,app.results.before.KS,app.results.after.KS];
+  const tsv=header.join('\t')+'\n'+row.join('\t'); $('tsvPreview').value=tsv; return tsv;
 }
-const downloadCsvBtn=$('downloadCsv');
-if(downloadCsvBtn) downloadCsvBtn.addEventListener('click',()=>{
-  const rec=buildRecord();
-  const header=['expId','sample','operator','condition','fabric_L','fabric_a','fabric_b','before_L','before_a','before_b','after_L','after_a','after_b','deltaE_fab_before','deltaE_fab_after','deltaE_before_after','washRate_L','washRate_E','washRate_weight','weight_fabric','weight_before','weight_after'];
-  const values=[rec.meta.experimentId,rec.meta.sampleName,rec.meta.operator,rec.meta.washCondition,rec.results.fabric?.L,rec.results.fabric?.a,rec.results.fabric?.b,rec.results.before?.L,rec.results.before?.a,rec.results.before?.b,rec.results.after?.L,rec.results.after?.a,rec.results.after?.b,rec.deltaE.fabric_before,rec.deltaE.fabric_after,rec.deltaE.before_after,rec.rates.L_based,rec.rates.E_based,rec.rates.weight_based,rec.weights.fabric,rec.weights.before,rec.weights.after].map(v=>`"${(v??'').toString().replace(/"/g,'""')}"`).join(',');
-  downloadText(`wash_${rec.meta.experimentId||'exp'}.csv`, header.join(',')+'\n'+values,'text/csv'); toast('CSV DL');
+function downloadText(name,content,type){ const blob=new Blob([content],{type}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+$('downloadCsv').addEventListener('click',()=>{ if(!app.results){toast('先に解析');return;} const tsv=buildTsv().replace(/\t/g,','); downloadText(`wash_${$('metaExpId').value||'exp'}.csv`,tsv,'text/csv'); });
+$('btnCopyTSV').addEventListener('click',()=>{ const t=buildTsv(); if(!t){toast('データなし');return;} navigator.clipboard.writeText(t).then(()=>toast('コピー完了')); });
+$('downloadJson').addEventListener('click',()=>downloadText(`wash_${$('metaExpId').value||'exp'}.json`,JSON.stringify(buildRecord(),null,2),'application/json'));
+$('btnDownloadPdf').addEventListener('click',async()=>{
+  if(!app.results){toast('先に解析');return;}
+  const {jsPDF}=window.jspdf; const doc=new jsPDF('p','mm','a4'); const rec=buildRecord(); let y=10;
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text(`Lab Wash V6 Report - ${rec.meta.experimentId||'EXP'}`,14,y); y+=6;
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(100); doc.text(`Sample:${rec.meta.sampleName} Operator:${rec.meta.operator} Date:${rec.meta.date} Weights:${app.weights.fabric}/${app.weights.before}/${app.weights.after}g`,14,y); y+=5; doc.setDrawColor(200); doc.line(14,y,196,y); y+=4;
+  doc.setTextColor(0); doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.text('黒白キャリブ + 重量 + 自動検出',14,y); y+=4; doc.setFont('helvetica','normal'); doc.setFontSize(7);
+  ['fabric','before','after'].forEach(k=>{ const c=rec.meta.cals[k]; const w=rec.meta.weights[k]; doc.text(`${k}: 黒 ${c.blackRGB?`${c.blackRGB.r.toFixed(0)},${c.blackRGB.g.toFixed(0)},${c.blackRGB.b.toFixed(0)}`:'-'} 白 ${c.whiteRGB?`${c.whiteRGB.r.toFixed(0)},${c.whiteRGB.g.toFixed(0)},${c.whiteRGB.b.toFixed(0)}`:'-'} 重量 ${w!=null?w+'g':'-'} ROI ${(rec.meta.rois[k].x*100).toFixed(1)}%`,14,y); y+=3; });
+  y+=2; doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.text('解析結果 (補正後)',14,y); y+=4; doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  if(rec.results){ doc.text(`素地 L ${rec.results.fabric.L.toFixed(2)} a ${rec.results.fabric.a.toFixed(2)} b ${rec.results.fabric.b.toFixed(2)}`,14,y); y+=4; doc.text(`前 L ${rec.results.before.L.toFixed(2)} a ${rec.results.before.a.toFixed(2)} b ${rec.results.before.b.toFixed(2)}`,14,y); y+=4; doc.text(`後 L ${rec.results.after.L.toFixed(2)} a ${rec.results.after.a.toFixed(2)} b ${rec.results.after.b.toFixed(2)}`,14,y); y+=4; doc.text(`ΔE fab-before ${rec.deltaE.fab_before.toFixed(2)} fab-after ${rec.deltaE.fab_after.toFixed(2)} ΔE00 before-after ${rec.deltaE.before_after_00.toFixed(2)}`,14,y); y+=4; doc.text(`洗浄率 L ${$('resRateL').textContent} ΔE ${$('resRateE').textContent} 重量 ${$('resRateW').textContent}`,14,y); y+=6; }
+  // images
+  doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.text('補正後画像 + ROI (自動検出適用)',14,y); y+=3;
+  let x=14; ['fabric','before','after'].forEach(k=>{ const c=app.correctedCanvases[k]; if(!c) return; if(y>170){doc.addPage(); y=12; x=14;} const url=c.toDataURL('image/jpeg',0.6); try{doc.addImage(url,'JPEG',x,y,48,48); doc.setFontSize(6); doc.text(k,x,y+52);}catch{} x+=54; }); y+=56;
+  if(app.chart){ if(y>150){doc.addPage(); y=12;} doc.setFontSize(9); doc.text('グラフ',14,y); y+=3; try{ const chartUrl=$('resultChart').toDataURL('image/png'); doc.addImage(chartUrl,'PNG',14,y,110,55); y+=60; }catch{} }
+  doc.save(`LabWash_V6_${rec.meta.experimentId||'exp'}.pdf`); toast('PDF保存');
 });
-function copyTsv(){const tsv=buildTsv(); if(!tsv){toast('データなし');return;} navigator.clipboard.writeText(tsv).then(()=>toast('TSVコピー - Excel貼付可')).catch(()=>{const ta=$('tsvPreview'); if(ta){ta.select(); document.execCommand('copy'); toast('コピーしました');}});}
-const btnCopyTop=$('btnCopyTSVTop'), btnCopy2=$('btnCopyTSV2'); if(btnCopyTop) btnCopyTop.addEventListener('click',copyTsv); if(btnCopy2) btnCopy2.addEventListener('click',copyTsv);
-const downloadJsonBtn=$('downloadJson'); if(downloadJsonBtn) downloadJsonBtn.addEventListener('click',()=>{downloadText(`wash_${$('metaExpId').value||'exp'}.json`,JSON.stringify(buildRecord(),null,2),'application/json');});
-const btnDownloadReport=$('btnDownloadReport'); if(btnDownloadReport) btnDownloadReport.addEventListener('click',()=>{const rec=buildRecord(); const html=`<!doctype html><meta charset="utf-8"><title>Report ${rec.meta.experimentId}</title><body style="font-family:sans-serif;padding:20px"><h1>洗浄評価レポート ${rec.meta.experimentId}</h1><pre>${JSON.stringify(rec,null,2)}</pre></body>`; downloadText(`report_${rec.meta.experimentId||'exp'}.html`,html,'text/html');});
-function getPreset(){return {version:'3.1-fixed',roi:app.roi,cal:app.cal,params:app.params,meta:{expId:$('metaExpId').value,sample:$('metaSample').value,operator:$('metaOperator').value,wash:$('metaWash').value,temp:$('metaTemp').value,time:$('metaTime').value,date:$('metaDate').value}};}
-function applyPreset(p){try{if(p.roi){app.roi=p.roi; syncRoiInputs();} if(p.cal){app.cal=p.cal; const b=$('calBlackVal'),w=$('calWhiteVal'); if(b) b.textContent=p.cal.blackRGB?`${p.cal.blackRGB.r.toFixed(0)},${p.cal.blackRGB.g.toFixed(0)},${p.cal.blackRGB.b.toFixed(0)}`:'未設定'; if(w) w.textContent=p.cal.whiteRGB?`${p.cal.whiteRGB.r.toFixed(0)},${p.cal.whiteRGB.g.toFixed(0)},${p.cal.whiteRGB.b.toFixed(0)}`:'未設定';} if(p.params){app.params={...app.params,...p.params}; const g=$('paramGamma'),gl=$('gammaLabel'),t=$('paramThresh'),tl=$('threshLabel'),uc=$('chkUseCal'),uo=$('chkOpenCV'); if(g) g.value=app.params.gamma; if(gl) gl.textContent=app.params.gamma.toFixed(2); if(t) t.value=app.params.thresh; if(tl) tl.textContent=app.params.thresh; if(uc) uc.checked=app.params.useCal; if(uo) uo.checked=app.params.useOpenCV;} if(p.meta){const map={metaExpId:'expId',metaSample:'sample',metaOperator:'operator',metaWash:'wash',metaTemp:'temp',metaTime:'time',metaDate:'date'}; Object.entries(map).forEach(([id,k])=>{const el=$(id); if(el&&p.meta[k]!=null) el.value=p.meta[k];});} const pi=$('presetInfo'); if(pi) pi.textContent=`v${p.version||'?'} ${new Date().toLocaleString()}`; toast('プリセット適用'); drawMain();}catch(e){console.error(e); toast('プリセットエラー');}}
-const btnPresetSave=$('btnPresetSaveFile'), btnDownloadPreset=$('btnDownloadPreset');
-if(btnPresetSave) btnPresetSave.addEventListener('click',()=>{downloadText(`preset_${$('metaExpId').value||'lab'}.json`,JSON.stringify(getPreset(),null,2),'application/json');});
-if(btnDownloadPreset) btnDownloadPreset.addEventListener('click',()=>{if(btnPresetSave) btnPresetSave.click();});
-const presetFileInput=$('presetFileInput'); if(presetFileInput) presetFileInput.addEventListener('change',e=>{const f=e.target.files&&e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{try{applyPreset(JSON.parse(r.result));}catch{toast('JSON解析エラー');}}; r.readAsText(f); e.target.value='';});
-const btnSaveLocal=$('btnSaveLocal'); if(btnSaveLocal) btnSaveLocal.addEventListener('click',()=>{localStorage.setItem('labwash_v3_preset',JSON.stringify(getPreset())); const pi=$('presetInfo'); if(pi) pi.textContent='ローカル保存 '+new Date().toLocaleTimeString(); toast('ローカル保存');});
-const btnLoadLocal=$('btnLoadLocal'); if(btnLoadLocal) btnLoadLocal.addEventListener('click',()=>{const s=localStorage.getItem('labwash_v3_preset'); if(!s){toast('保存なし');return;} try{applyPreset(JSON.parse(s));}catch{toast('読込エラー');}});
-const btnClearLocal=$('btnClearLocal'); if(btnClearLocal) btnClearLocal.addEventListener('click',()=>{localStorage.removeItem('labwash_v3_preset'); const pi=$('presetInfo'); if(pi) pi.textContent='未保存'; toast('クリア');});
-function isOpenCvUsable(){try{return window.cv && typeof cv.Mat!=='undefined' && (typeof cv.imread==='function' || typeof cv.matFromImageData==='function');}catch{return false}}
-function useJsFallback(msg){
-  const el=$('opencvStatus'), dot=$('statusDot'), txt=$('statusText');
-  if(el){el.style.background='rgba(249,226,175,.14)'; el.style.borderColor='rgba(249,226,175,.4)';}
-  if(dot){dot.style.background='var(--yellow)';}
-  if(txt){txt.textContent='⚙️ JSフォールバック: '+(msg||'Canvas');}
-}
-window.__opencvRuntimeReady=()=>{
-  if(isOpenCvUsable()){
-    app.opencvReady=true;
-    const el=$('opencvStatus'), dot=$('statusDot'), txt=$('statusText');
-    if(el){el.style.background='rgba(166,227,161,.14)'; el.style.borderColor='rgba(166,227,161,.4)';}
-    if(dot){dot.style.background='var(--green)'; dot.style.boxShadow='0 0 0 4px rgba(166,227,161,.25)'; dot.style.animation='none';}
-    if(txt){txt.textContent='✨ OpenCV Ready 4.x'; txt.style.color='var(--green)';}
-    log('OpenCV ready');
-  }
-};
-setTimeout(()=>{
-  if(isOpenCvUsable()){
-    window.__opencvRuntimeReady();
-  }else{
-    useJsFallback('読込待機 - Canvasで動作可');
-  }
-},1200);
-function init(){
-  updateThumb(); syncRoiInputs(); drawMain(); setActiveTab('fabric');
-  window.addEventListener('resize',()=>{drawMain();});
-}
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
+
+// Accordion toggle
+document.querySelectorAll('.acc-head').forEach(head=>{
+  head.addEventListener('click',()=>{
+    const item=head.parentElement; const isOpen=item.classList.contains('open');
+    // On mobile allow multiple open, on desktop also
+    item.classList.toggle('open',!isOpen);
+  });
+});
+
+// slider
+$('sliderRange').addEventListener('input',()=>drawSliderCompare());
+
+// Preset save/load
+function getPreset(){ return {version:'6.0',rois:app.rois,cals:app.cals,weights:app.weights,meta:{expId:$('metaExpId').value,sample:$('metaSample').value,operator:$('metaOperator').value,wash:$('metaWash').value,temp:$('metaTemp').value,time:$('metaTime').value,date:$('metaDate').value,memo:$('memo').value}}; }
+function applyPreset(p){ if(p.rois) app.rois={...app.rois,...p.rois}; if(p.cals) app.cals={...app.cals,...p.cals}; if(p.weights){ app.weights={...app.weights,...p.weights}; $('weightFabric').value=p.weights.fabric??''; $('weightBefore').value=p.weights.before??''; $('weightAfter').value=p.weights.after??''; } if(p.meta){ const map={metaExpId:'expId',metaSample:'sample',metaOperator:'operator',metaWash:'wash',metaTemp:'temp',metaTime:'time',metaDate:'date',memo:'memo'}; Object.entries(map).forEach(([id,k])=>{const el=$(id); if(el&&p.meta[k]!=null) el.value=p.meta[k];}); } syncCalUI(); syncRoiInputs(); updateWeightUI(); drawMain(); updateCalStatus(); toast('プリセット適用'); }
+$('btnSaveLocal').addEventListener('click',()=>{ localStorage.setItem('labwash_v6',JSON.stringify(getPreset())); $('presetInfo').textContent='保存 '+new Date().toLocaleTimeString(); toast('保存'); });
+$('btnLoadLocal').addEventListener('click',()=>{ const s=localStorage.getItem('labwash_v6'); if(!s){toast('保存なし');return;} applyPreset(JSON.parse(s)); });
+$('btnDownloadPreset').addEventListener('click',()=>downloadText(`preset_v6_${$('metaExpId').value||'lab'}.json`,JSON.stringify(getPreset(),null,2),'application/json'));
+$('btnUploadPreset').addEventListener('click',()=>$('presetFileInput').click());
+$('presetFileInput').addEventListener('change',e=>{const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{try{applyPreset(JSON.parse(r.result));}catch{toast('JSONエラー');}}; r.readAsText(f); e.target.value='';});
+$('btnResetAll').addEventListener('click',()=>{ if(!confirm('リセットしますか？')) return; app.images={fabric:null,before:null,after:null}; app.correctedCanvases={fabric:null,before:null,after:null}; app.correctedImages={fabric:null,before:null,after:null}; app.cals={fabric:{black:null,white:null,blackRGB:null,whiteRGB:null},before:{black:null,white:null,blackRGB:null,whiteRGB:null},after:{black:null,white:null,blackRGB:null,whiteRGB:null}}; app.weights={fabric:null,before:null,after:null}; $('weightFabric').value=''; $('weightBefore').value=''; $('weightAfter').value=''; document.querySelectorAll('.thumb').forEach(el=>el.innerHTML=`<span class="lab">${el.id.includes('fabric')?'素地':el.id.includes('before')?'洗浄前':'洗浄後'}</span>`); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('has')); drawMain(); syncCalUI(); updateWeightUI(); updateCalStatus(); });
+
+window.__opencvRuntimeReady=()=>{ if(isOpenCvUsable()){ app.opencvReady=true; $('opencvStatus').className='badge ok'; $('statusDot').className='dot ok'; $('statusText').textContent='OpenCV Ready'; $('detectLog').textContent='OpenCV Ready - 自動検出利用可'; } };
+setTimeout(()=>{ if(isOpenCvUsable()) window.__opencvRuntimeReady(); else {$('statusText').textContent='JSフォールバック'; $('detectLog').textContent='JSフォールバック - 簡易検出のみ';}},1200);
+
+function init(){ setActiveTab('fabric'); drawMain(); renderHistory(); window.addEventListener('resize',()=>drawMain()); }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 </script>
 </body>
 </html>
