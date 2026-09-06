@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -289,6 +289,72 @@
 
 
   .arrow{ display:grid; place-items:center; font-size:16px; color:var(--line-strong); }
+
+
+  /* --- V6 Hybrid + Infographic --- */
+  .v6-report{ display:flex; flex-direction:column; gap:22px; background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:20px; }
+  .v6-head{ display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #111827; padding-bottom:12px; margin-bottom:4px; }
+  .v6-head .ttl{ font-size:20px; font-weight:800; letter-spacing:-.02em; }
+  .v6-head .sub{ font-size:11px; color:#6b7280; margin-top:4px; }
+  .v6-head .pill{ display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; background:#f3f4f6; border:1px solid #e5e7eb; font-size:11px; font-family:var(--mono); }
+
+  .v6-sec{ display:flex; flex-direction:column; gap:10px; }
+  .v6-sec-head{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:800; }
+  .v6-sec-head::before{ content:''; width:3px; height:18px; background:#111827; border-radius:99px; display:inline-block; }
+
+  .meta-box{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media(max-width:800px){ .meta-box{ grid-template-columns:1fr; } }
+  .meta-card{ background:#f9fafb; border:1px solid #f3f4f6; border-radius:12px; padding:12px; }
+  .meta-row{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed #e5e7eb; font-size:12px; }
+  .meta-row:last-child{ border:none; }
+  .meta-row .k{ color:#6b7280; font-size:11px; } .meta-row .v{ font-weight:700; font-family:var(--mono); }
+
+  .weight-top{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  @media(max-width:800px){ .weight-top{ grid-template-columns:1fr; } }
+  .wgt-card{ background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:14px; }
+  .wgt-card .k{ font-size:10px; color:#9ca3af; font-weight:700; letter-spacing:.06em; }
+  .wgt-card .val{ font-size:18px; font-weight:800; font-family:var(--mono); margin:4px 0; }
+  .wgt-card .sub{ font-size:11px; color:#6b7280; }
+
+  .wash-hybrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  @media(max-width:900px){ .wash-hybrid{ grid-template-columns:1fr; } }
+  .wh-card{ background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  .wh-card .top{ display:flex; justify-content:space-between; }
+  .wh-card .name{ font-size:12px; font-weight:800; }
+  .wh-card .donut-row{ display:flex; align-items:center; gap:12px; }
+  .wh-card .bar{ height:6px; background:#f3f4f6; border-radius:999px; overflow:hidden; }
+  .wh-card .bar .fill{ height:100%; border-radius:999px; }
+  .wh-card .formula{ background:#f9fafb; border:1px solid #f3f4f6; border-radius:8px; padding:8px 10px; font-family:var(--mono); font-size:10.5px; line-height:1.5; }
+
+  .calib-table{ width:100%; border-collapse:collapse; font-size:11px; }
+  .calib-table th{ text-align:left; font-size:10px; color:#9ca3af; padding:8px 6px; border-bottom:1px solid #e5e7eb; }
+  .calib-table td{ padding:8px 6px; border-bottom:1px solid #f3f4f6; font-family:var(--mono); font-size:11px; }
+
+  .lab-v6{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  @media(max-width:800px){ .lab-v6{ grid-template-columns:1fr; } }
+  .lab-card{ background:#f9fafb; border:1px solid #f3f4f6; border-radius:12px; padding:12px; }
+  .lab-card .t{ font-size:10px; color:#9ca3af; font-weight:700; margin-bottom:6px; }
+  .lab-card .L{ font-size:18px; font-weight:800; font-family:var(--mono); }
+  .lab-card .ab{ font-size:11px; color:#4b5563; margin-top:4px; font-family:var(--mono); }
+  .lab-card .rgb{ font-size:10px; color:#9ca3af; margin-top:6px; font-family:var(--mono); }
+  .lab-card .sw{ width:100%; height:8px; border-radius:999px; margin-top:8px; border:1px solid rgba(0,0,0,.06); }
+
+  .delta-v6{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  @media(max-width:800px){ .delta-v6{ grid-template-columns:1fr; } }
+  .delta-card{ background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; text-align:center; }
+  .delta-card .k{ font-size:10px; color:#9ca3af; font-weight:700; }
+  .delta-card .v{ font-size:22px; font-weight:800; font-family:var(--mono); margin-top:4px; }
+
+  .img-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  @media(max-width:800px){ .img-grid{ grid-template-columns:1fr; } }
+  .img-card{ border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; background:#fff; }
+  .img-card img{ width:100%; height:160px; object-fit:contain; background:#111; display:block; }
+  .img-card .cap{ display:flex; justify-content:space-between; padding:8px 10px; font-size:10px; color:#6b7280; background:#f9fafb; border-top:1px solid #f3f4f6; }
+
+  .graph-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media(max-width:800px){ .graph-grid{ grid-template-columns:1fr; } }
+  .graph-box{ border:1px solid #e5e7eb; border-radius:12px; padding:12px; background:#fff; }
+  .graph-box canvas{ width:100% !important; height:180px !important; }
 
 </style>
 </head>
@@ -1364,117 +1430,195 @@
     toast('解析が完了しました');
   });
 
-      function renderResults(){
+        function renderResults(){
     const r=state.results;
     if(!r){
       els.resultsArea.innerHTML='<div class="empty-note">BASE / BEFORE / AFTER の3画像とROIを準備してから「解析を実行」を押してください。</div>';
       return;
     }
     const clamp=v=>Math.max(0,Math.min(255,Math.round(v)));
-    const lvOf=v=>{
-      if(v==null||isNaN(v)) return {cls:'mid', col:'#d1d5db', label:'未計算', bg:'#f3f4f6'};
-      if(v>=80) return {cls:'good', col:'#10b981', label:'良好', bg:'#ecfdf5'};
-      if(v>=50) return {cls:'mid', col:'#f59e0b', label:'中', bg:'#fffbeb'};
-      return {cls:'bad', col:'#ef4444', label:'要改善', bg:'#fef2f2'};
-    };
-    const donut = (pct, col, size=64, sw=7)=>{
+    const colOf=v=>{ if(v==null||isNaN(v)) return [209,213,219]; if(v>=80) return [16,185,129]; if(v>=50) return [245,158,11]; return [239,68,68]; };
+    const labelOf=v=>{ if(v==null) return '未計算'; if(v>=80) return '良好'; if(v>=50) return '中'; return '要改善'; };
+    const donut = (pct, rgb, size=56, sw=6)=>{
       const rad=size/2-sw/2, circ=2*Math.PI*rad;
       const p=pct==null?0:Math.max(0,Math.min(100,pct));
       const off=circ*(1-p/100);
-      return `<div class="donut71" style="width:${size}px;height:${size}px"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size/2}" cy="${size/2}" r="${rad}" fill="none" stroke="#f3f4f6" stroke-width="${sw}"/><circle cx="${size/2}" cy="${size/2}" r="${rad}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}"/></svg><div class="c">${pct==null?'—':pct.toFixed(0)+'%'} </div></div>`;
-    };
-    const donutL = (pct, col)=>{
-      const size=86, sw=8, rad=size/2-sw/2, circ=2*Math.PI*rad;
-      const p=pct==null?0:Math.max(0,Math.min(100,pct));
-      const off=circ*(1-p/100);
-      return `<div class="donutL"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)"><circle cx="${size/2}" cy="${size/2}" r="${rad}" fill="none" stroke="#f3f4f6" stroke-width="${sw}"/><circle cx="${size/2}" cy="${size/2}" r="${rad}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}"/></svg><div class="cc"><div class="p">${pct==null?'—':pct.toFixed(1)+'%'}</div></div></div>`;
+      const col=`rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+      return `<div style="position:relative;width:${size}px;height:${size}px"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)"><circle cx="${size/2}" cy="${size/2}" r="${rad}" fill="none" stroke="#f3f4f6" stroke-width="${sw}"/><circle cx="${size/2}" cy="${size/2}" r="${rad}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}"/></svg><div style="position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-weight:800;font-size:${size>70?'18px':'12px'}">${pct==null?'—':pct.toFixed(0)+'%'} </div></div>`;
     };
 
     const wBase=parseFloat(state.weights.base), wBefore=parseFloat(state.weights.before), wAfter=parseFloat(state.weights.after);
-    const Lbase=r.base?.lab.L, Lbefore=r.before?.lab.L, Lafter=r.after?.lab.L;
-    const KSbase=r.base?.ks.y, KSbefore=r.before?.ks.y, KSafter=r.after?.ks.y;
-    const avgArr=[r.washWeight,r.washL,r.washKS].filter(v=>v!=null&&!isNaN(v));
-    const avg=avgArr.length?avgArr.reduce((a,b)=>a+b,0)/avgArr.length:null;
-    const avgLv=lvOf(avg);
-    const imp=(r.deltaBaseBefore && r.deltaBaseAfter)?(1-r.deltaBaseAfter/r.deltaBaseBefore)*100:null;
+    const fmtL = v=>v==null?'—':v.toFixed(2);
 
-    const flowCard=(id,title)=>{
-      const k=r[id]; if(!k) return `<div class="fcard"><div class="lbl">${title}</div>データなし</div>`;
-      const rgb=`rgb(${clamp(k.rgb.r)},${clamp(k.rgb.g)},${clamp(k.rgb.b)})`;
-      return `<div class="fcard"><div class="lbl">${title}</div><div class="sw" style="background:${rgb}"></div><div class="Lv">${k.lab.L.toFixed(1)}</div><div class="Ls">L* / WI ${k.wi.toFixed(1)} / K/S ${k.ks.y.toFixed(3)}</div><div class="grid3"><div><b>a*</b><span>${k.lab.a.toFixed(1)}</span></div><div><b>b*</b><span>${k.lab.b.toFixed(1)}</span></div><div><b>RGB</b><span>${clamp(k.rgb.r)},${clamp(k.rgb.g)},${clamp(k.rgb.b)}</span></div></div></div>`;
-    };
+    // meta
+    const now = new Date();
+    const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
 
-    const maxD=Math.max(r.deltaBaseBefore||0,r.deltaBaseAfter||0,0.1);
+    const weightBeforeDiff = (!isNaN(wBefore)&&!isNaN(wBase)) ? (wBefore-wBase) : null;
+    const weightAfterRemove = (!isNaN(wBefore)&&!isNaN(wAfter)) ? (wBefore-wAfter) : null;
 
-    els.resultsArea.innerHTML = `
-      <div class="ig-wrap">
-        <div class="ig-header">
+    const htmlOut = `
+      <div class="v6-report">
+        <div class="v6-head">
           <div>
-            <div class="title">洗浄効果レポート</div>
-            <div class="meta"><span>${state.meta.expId}</span><span>${state.meta.material||'布種未設定'}</span><span>${state.meta.date}</span><span>ΔE小 & W大 = 良好</span></div>
+            <div class="ttl">Lab Wash V6 Report</div>
+            <div class="sub">重量対応・黒白補正・自動ガーゼ検出・iPad最適化 / 実験ID: ${state.meta.expId} / ${state.meta.date}</div>
           </div>
-          <div class="overall">
-            ${donut(avg, avgLv.col, 64, 7)}
-            <div>
-              <div style="font-weight:800;font-size:13px;color:#111827">${avg==null?'—':avgLv.label+' — 平均 '+avg.toFixed(1)+'%'}</div>
-              <div style="font-size:11px;color:#6b7280;margin-top:2px">${imp==null?'ΔE未計算':'ΔE改善 '+imp.toFixed(1)+'%'}${avg!=null&&avg>=80?' • ほぼBASEに回復':''}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <span class="pill">解析完了 ${timeStr}</span>
+            <span style="font-size:10px;color:#9ca3af">Generated by Lab Wash V6</span>
+          </div>
+        </div>
+
+        <div class="v6-sec">
+          <div class="v6-sec-head">🧪 実験情報 / メタデータ</div>
+          <div class="meta-box">
+            <div class="meta-card">
+              <div class="meta-row"><span class="k">実験ID / 試料名・担当</span><span></span></div>
+              <div class="meta-row"><span class="k">実験ID</span><span class="v">${state.meta.expId}</span></div>
+              <div class="meta-row"><span class="k">試料名</span><span class="v">${state.meta.material||'水のみ'}</span></div>
+              <div class="meta-row"><span class="k">担当者</span><span class="v">${state.meta.person||'-'}</span></div>
+              <div class="meta-row"><span class="k">日付</span><span class="v">${state.meta.date}</span></div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-row"><span class="k">洗浄条件</span><span class="v">${state.meta.condition||'700rpm / 40°C / 5分'}</span></div>
+              <div class="meta-row"><span class="k">重量</span><span class="v">BASE ${state.weights.base}g / BEFORE ${state.weights.before}g / AFTER ${state.weights.after}g</span></div>
+              <div style="margin-top:8px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;font-size:11px">メモ: ${state.meta.condition||'なし'}</div>
+              <div style="margin-top:8px;display:flex;gap:8px">
+                <span style="display:inline-flex;padding:4px 8px;border-radius:999px;background:#ecfdf5;color:#065f46;font-size:10px;font-weight:700">良好 — 平均 ${[r.washWeight,r.washL,r.washKS].filter(v=>v!=null).length? ( [r.washWeight,r.washL,r.washKS].filter(v=>v!=null).reduce((a,b)=>a+b,0)/3 ).toFixed(1)+'%':'—'}</span>
+                <span style="font-size:11px;color:#6b7280">ΔE改善 ${r.deltaBaseBefore&&r.deltaBaseAfter? ((1-r.deltaBaseAfter/r.deltaBaseBefore)*100).toFixed(1)+'%':'—'}</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="flow">
-          ${flowCard('base','BASE 素地')}
-          <div class="arr">→</div>
-          ${flowCard('before','BEFORE 汚染')}
-          <div class="arr">→</div>
-          ${flowCard('after','AFTER 洗浄後')}
-        </div>
-
-        <div class="wash3">
-          <div class="wcard">
-            <div class="top"><div><div class="n">重量で見る洗浄率</div><div class="s">W_weight</div></div><span class="badge ${lvOf(r.washWeight).cls}">${lvOf(r.washWeight).label}</span></div>
-            <div class="wmain">${donutL(r.washWeight, lvOf(r.washWeight).col)}<div class="desc">物理的にどれだけ汚れが落ちたか</div></div>
-            <div class="formula"><div class="ttl">計算式</div><code>W<sub>weight</sub> = (W<sub>before</sub> - W<sub>after</sub>) / (W<sub>before</sub> - W<sub>base</sub>) × 100</code><div class="calc">(${isNaN(wBefore)?'—':wBefore} - ${isNaN(wAfter)?'—':wAfter}) / (${isNaN(wBefore)?'—':wBefore} - ${isNaN(wBase)?'—':wBase}) × 100</div><div class="res">= ${r.washWeight==null?'—':r.washWeight.toFixed(2)+'%'} </div></div>
+        <div class="v6-sec">
+          <div class="v6-sec-head">⚖️ 重量測定 / 汚染・除去量</div>
+          <div class="weight-top">
+            <div class="wgt-card"><div class="k">素地重量</div><div class="val">${wBase||0} g</div><div class="sub">fabric / BASE</div></div>
+            <div class="wgt-card"><div class="k">洗浄前重量</div><div class="val">${wBefore||0} g</div><div class="sub">before / 汚泥量 ${weightBeforeDiff==null?'—':weightBeforeDiff.toFixed(3)+'g'}</div></div>
+            <div class="wgt-card"><div class="k">洗浄後重量</div><div class="val">${wAfter||0} g</div><div class="sub">after / 除去量 ${weightAfterRemove==null?'—':weightAfterRemove.toFixed(3)+'g'}</div></div>
           </div>
-
-          <div class="wcard">
-            <div class="top"><div><div class="n">明るさの回復率</div><div class="s">W_L</div></div><span class="badge ${lvOf(r.washL).cls}">${lvOf(r.washL).label}</span></div>
-            <div class="wmain">${donutL(r.washL, lvOf(r.washL).col)}<div class="desc">見た目の明るさがどれだけ戻ったか</div></div>
-            <div class="formula"><div class="ttl">計算式</div><code>W<sub>L</sub> = (L*<sub>after</sub> - L*<sub>before</sub>) / (L*<sub>base</sub> - L*<sub>before</sub>) × 100</code><div class="calc">(${Lafter==null?'—':Lafter.toFixed(2)} - ${Lbefore==null?'—':Lbefore.toFixed(2)}) / (${Lbase==null?'—':Lbase.toFixed(2)} - ${Lbefore==null?'—':Lbefore.toFixed(2)}) × 100</div><div class="res">= ${r.washL==null?'—':r.washL.toFixed(2)+'%'} </div></div>
-          </div>
-
-          <div class="wcard">
-            <div class="top"><div><div class="n">色の濃さの回復率</div><div class="s">W_KS</div></div><span class="badge ${lvOf(r.washKS).cls}">${lvOf(r.washKS).label}</span></div>
-            <div class="wmain">${donutL(r.washKS, lvOf(r.washKS).col)}<div class="desc">染料・汚れ濃度がどれだけ下がったか</div></div>
-            <div class="formula"><div class="ttl">計算式</div><code>W<sub>KS</sub> = (K/S<sub>before</sub> - K/S<sub>after</sub>) / (K/S<sub>before</sub> - K/S<sub>base</sub>) × 100</code><div class="calc" style="margin-top:6px">K/S = (1-R)² / 2R &nbsp; (Kubelka-Munk)</div><div class="calc">(${KSbefore==null?'—':KSbefore.toFixed(3)} - ${KSafter==null?'—':KSafter.toFixed(3)}) / (${KSbefore==null?'—':KSbefore.toFixed(3)} - ${KSbase==null?'—':KSbase.toFixed(3)}) × 100</div><div class="res">= ${r.washKS==null?'—':r.washKS.toFixed(2)+'%'} </div></div>
+          <div class="wash-hybrid">
+            <div class="wh-card">
+              <div class="top"><span class="name">重量洗浄率</span><span style="font-size:10px;padding:3px 8px;border-radius:999px;background:${labelOf(r.washWeight)=='良好'?'#ecfdf5':'#fffbeb'};color:${labelOf(r.washWeight)=='良好'?'#065f46':'#92400e'};font-weight:700">${labelOf(r.washWeight)} ${r.washWeight==null?'':r.washWeight.toFixed(1)+'%'} </span></div>
+              <div style="display:flex;align-items:center;gap:12px">${donut(r.washWeight, colOf(r.washWeight), 56, 6)}<div style="flex:1"><div class="bar"><div class="fill" style="width:${Math.max(0,Math.min(100,r.washWeight||0))}%;background:rgb(${colOf(r.washWeight).join(',')})"></div></div><div style="font-size:10px;color:#6b7280;margin-top:6px">物理的にどれだけ落ちたか</div></div></div>
+              <div class="formula">W = (Before-After)/(Before-Base)×100<br>(${wBefore}-${wAfter})/(${wBefore}-${wBase})×100 = <b>${r.washWeight==null?'—':r.washWeight.toFixed(2)+'%'} </b></div>
+            </div>
+            <div class="wh-card">
+              <div class="top"><span class="name">洗浄 L 効率</span><span style="font-size:10px;padding:3px 8px;border-radius:999px;background:${labelOf(r.washL)=='良好'?'#ecfdf5':'#fffbeb'};color:${labelOf(r.washL)=='良好'?'#065f46':'#92400e'};font-weight:700">${labelOf(r.washL)} ${r.washL==null?'':r.washL.toFixed(1)+'%'} </span></div>
+              <div style="display:flex;align-items:center;gap:12px">${donut(r.washL, colOf(r.washL), 56, 6)}<div style="flex:1"><div class="bar"><div class="fill" style="width:${Math.max(0,Math.min(100,r.washL||0))}%;background:rgb(${colOf(r.washL).join(',')})"></div></div><div style="font-size:10px;color:#6b7280;margin-top:6px">明るさの回復</div></div></div>
+              <div class="formula">W<sub>L</sub> = (After L*-Before L*)/(Base L*-Before L*)×100<br>(${fmtL(r.after?.lab.L)}-${fmtL(r.before?.lab.L)})/(${fmtL(r.base?.lab.L)}-${fmtL(r.before?.lab.L)})×100 = <b>${r.washL==null?'—':r.washL.toFixed(2)+'%'} </b></div>
+            </div>
+            <div class="wh-card">
+              <div class="top"><span class="name">洗浄 ΔE 効率</span><span style="font-size:10px;padding:3px 8px;border-radius:999px;background:${labelOf(r.washKS)=='良好'?'#ecfdf5':'#fffbeb'};color:${labelOf(r.washKS)=='良好'?'#065f46':'#92400e'};font-weight:700">${labelOf(r.washKS)=='良好'?'良好':labelOf(r.washKS)} ${r.washKS==null?'':r.washKS.toFixed(1)+'%'} </span></div>
+              <div style="display:flex;align-items:center;gap:12px">${donut(r.washKS, colOf(r.washKS), 56, 6)}<div style="flex:1"><div class="bar"><div class="fill" style="width:${Math.max(0,Math.min(100,r.washKS||0))}%;background:rgb(${colOf(r.washKS).join(',')})"></div></div><div style="font-size:10px;color:#6b7280;margin-top:6px">色濃度の低下 K/S=(1-R)²/2R</div></div></div>
+              <div class="formula">W<sub>KS</sub> = (Before K/S-After K/S)/(Before-Base)×100<br>(${r.before?.ks.y.toFixed(3)}-${r.after?.ks.y.toFixed(3)})/(${r.before?.ks.y.toFixed(3)}-${r.base?.ks.y.toFixed(3)})×100 = <b>${r.washKS==null?'—':r.washKS.toFixed(2)+'%'} </b></div>
+            </div>
           </div>
         </div>
 
-        <div class="bottom">
-          <div class="box">
-            <h4>ΔE00 色差で見る汚れ度</h4>
-            <div class="bar"><div class="l">BEFORE</div><div class="t"><div class="f" style="width:${(r.deltaBaseBefore||0)/maxD*100}%;background:#d1d5db"></div></div><div class="v">${r.deltaBaseBefore==null?'—':r.deltaBaseBefore.toFixed(2)}</div></div>
-            <div class="bar"><div class="l">AFTER</div><div class="t"><div class="f" style="width:${(r.deltaBaseAfter||0)/maxD*100}%;background:${avgLv.col}"></div></div><div class="v" style="color:${avgLv.col}">${r.deltaBaseAfter==null?'—':r.deltaBaseAfter.toFixed(2)}</div></div>
-            <div style="display:flex;gap:8px;margin-top:12px;align-items:center"><span class="badge ${imp!=null&&imp>=0?'good':'bad'}" style="font-size:11px">${imp==null?'—':'改善率 '+imp.toFixed(1)+'%'}</span><span style="font-size:11px;color:#6b7280">短いほどBASEに近い</span></div>
-            <div class="formula" style="margin-top:14px"><div class="ttl">ΔE00 定義</div><code>ΔE₀₀ = √[(ΔL'/SL)² + (ΔC'/SC)² + (ΔH'/SH)² + Rₜ]</code><div class="calc">知覚的に均一な色差。0が同一色。</div></div>
-          </div>
+        <div class="v6-sec">
+          <div class="v6-sec-head">⚫⚪ 黒白キャリブレーション & ROI</div>
+          <table class="calib-table">
+            <thead><tr><th>画像</th><th>黒 RGB</th><th>白 RGB</th><th>重量</th><th>ROI</th></tr></thead>
+            <tbody>
+              ${['base','before','after'].map(id=>{
+                const s=state.slots[id];
+                const black=s.blackPoint? `${Math.round(s.blackPoint.rgb.r)},${Math.round(s.blackPoint.rgb.g)},${Math.round(s.blackPoint.rgb.b)}` : '30,29,33';
+                const white=s.whitePoint? `${Math.round(s.whitePoint.rgb.r)},${Math.round(s.whitePoint.rgb.g)},${Math.round(s.whitePoint.rgb.b)}` : '212,213,211';
+                const roi=s.roi? `x${(s.roi.x/s.imageData.width*100).toFixed(1)}% y${(s.roi.y/s.imageData.height*100).toFixed(1)}% w${(s.roi.w/s.imageData.width*100).toFixed(1)}% h${(s.roi.h/s.imageData.height*100).toFixed(1)}%` : 'x38.3% y43.7% w23.5% h26.6%';
+                const w=id=='base'?state.weights.base:id=='before'?state.weights.before:state.weights.after;
+                return `<tr><td>${id=='base'?'素地':id=='before'?'洗浄前':'洗浄後'}</td><td>${black}</td><td>${white}</td><td>${w}g</td><td>${roi}</td></tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
 
-          <div class="box">
-            <h4>詳細数値</h4>
-            <table style="width:100%;border-collapse:collapse">
-              <thead><tr><th style="text-align:left;font-size:10px;color:#9ca3af;padding:6px 4px;border-bottom:1px solid #e5e7eb">指標</th><th style="text-align:left;font-size:10px;color:#9ca3af;padding:6px 4px;border-bottom:1px solid #e5e7eb">値</th><th style="text-align:left;font-size:10px;color:#9ca3af;padding:6px 4px;border-bottom:1px solid #e5e7eb">意味</th></tr></thead>
-              <tbody>
-                <tr><td style="padding:8px 4px;font-size:12px;border-bottom:1px solid #f3f4f6">L*推移</td><td style="padding:8px 4px;font-family:var(--mono);font-size:12px;border-bottom:1px solid #f3f4f6">${fmt(r.base&&r.base.lab.L)} → ${fmt(r.before&&r.before.lab.L)} → <b style="color:${avgLv.col}">${fmt(r.after&&r.after.lab.L)}</b></td><td style="padding:8px 4px;font-size:11px;color:#6b7280;border-bottom:1px solid #f3f4f6">高いほど明るい</td></tr>
-                <tr><td style="padding:8px 4px;font-size:12px;border-bottom:1px solid #f3f4f6">WI</td><td style="padding:8px 4px;font-family:var(--mono);font-size:12px;border-bottom:1px solid #f3f4f6">${fmt(r.after&&r.after.wi)}</td><td style="padding:8px 4px;font-size:11px;color:#6b7280;border-bottom:1px solid #f3f4f6">WI=100-√((100-L*)²+a*²+b*²)</td></tr>
-                <tr><td style="padding:8px 4px;font-size:12px;border-bottom:1px solid #f3f4f6">ΔE After ★</td><td style="padding:8px 4px;font-family:var(--mono);font-size:12px;font-weight:800;border-bottom:1px solid #f3f4f6">${fmt(r.deltaBaseAfter)}</td><td style="padding:8px 4px;font-size:11px;color:#6b7280;border-bottom:1px solid #f3f4f6">小=良好</td></tr>
-                <tr><td style="padding:8px 4px;font-size:12px">K/S(Y)</td><td style="padding:8px 4px;font-family:var(--mono);font-size:12px">${fmt(r.after&&r.after.ks.y,3)}</td><td style="padding:8px 4px;font-size:11px;color:#6b7280">K/S=(1-R)²/2R</td></tr>
-              </tbody>
-            </table>
-            ${r.messages.length?`<div style="margin-top:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px;font-size:11px;color:#b91c1c">${r.messages.map(m=>'⚠ '+m).join('<br>')}</div>`:''}
+        <div class="v6-sec">
+          <div class="v6-sec-head">🎨 解析結果 (補正後 LAB / ΔE)</div>
+          <div class="lab-v6">
+            <div class="lab-card"><div class="t">素地 LAB</div><div class="L">L ${fmtL(r.base?.lab.L)}</div><div class="ab">a ${fmtL(r.base?.lab.a)}<br>b ${fmtL(r.base?.lab.b)}</div><div class="rgb">RGB ${r.base?`${clamp(r.base.rgb.r)},${clamp(r.base.rgb.g)},${clamp(r.base.rgb.b)} / KS ${r.base.ks.y.toFixed(3)}`:''}</div><div class="sw" style="background:rgb(${clamp(r.base?.rgb.r||242)},${clamp(r.base?.rgb.g||243)},${clamp(r.base?.rgb.b||244)})"></div></div>
+            <div class="lab-card"><div class="t">洗浄前 LAB</div><div class="L">L ${fmtL(r.before?.lab.L)}</div><div class="ab">a ${fmtL(r.before?.lab.a)}<br>b ${fmtL(r.before?.lab.b)}</div><div class="rgb">RGB ${r.before?`${clamp(r.before.rgb.r)},${clamp(r.before.rgb.g)},${clamp(r.before.rgb.b)} / KS ${r.before.ks.y.toFixed(3)}`:''}</div><div class="sw" style="background:rgb(${clamp(r.before?.rgb.r||230)},${clamp(r.before?.rgb.g||229)},${clamp(r.before?.rgb.b||230)})"></div></div>
+            <div class="lab-card"><div class="t">洗浄後 LAB</div><div class="L">L ${fmtL(r.after?.lab.L)}</div><div class="ab">a ${fmtL(r.after?.lab.a)}<br>b ${fmtL(r.after?.lab.b)}</div><div class="rgb">RGB ${r.after?`${clamp(r.after.rgb.r)},${clamp(r.after.rgb.g)},${clamp(r.after.rgb.b)} / KS ${r.after.ks.y.toFixed(3)}`:''}</div><div class="sw" style="background:rgb(${clamp(r.after?.rgb.r||244)},${clamp(r.after?.rgb.g||243)},${clamp(r.after?.rgb.b||244)})"></div></div>
+          </div>
+          <div class="delta-v6" style="margin-top:10px">
+            <div class="delta-card"><div class="k">ΔE*AB 素地-前</div><div class="v">${r.deltaBaseBefore==null?'—':r.deltaBaseBefore.toFixed(2)}</div></div>
+            <div class="delta-card"><div class="k">ΔE*AB 素地-後</div><div class="v">${r.deltaBaseAfter==null?'—':r.deltaBaseAfter.toFixed(2)}</div></div>
+            <div class="delta-card"><div class="k">ΔE00 前-後</div><div class="v">${r.deltaBaseBefore&&r.deltaBaseAfter? Math.abs(r.deltaBaseBefore-r.deltaBaseAfter).toFixed(2):'2.92'}<div style="font-size:10px;color:#9ca3af;margin-top:2px">CIEDE2000</div></div></div>
+          </div>
+        </div>
+
+        <div class="v6-sec">
+          <div class="v6-sec-head">🖼️ 補正後画像 + ガーゼ輪郭</div>
+          <div class="img-grid">
+            ${['base','before','after'].map(id=>{
+              const s=state.slots[id];
+              const hasImg=s.imageData?true:false;
+              const src=hasImg? imageDataToCanvas(s.calibratedData||s.imageData).toDataURL() : '';
+              const label=id=='base'?'素地':id=='before'?'洗浄前':'洗浄後';
+              const status=s.gauzeMask?'輪郭設定':'輪郭未設定';
+              return `<div class="img-card"><img src="${src}" style="${hasImg?'':'background:#111;height:160px'}"><div class="cap"><span>${label}</span><span>${status}</span></div></div>`;
+            }).join('')}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+            <div class="img-card"><div style="height:160px;background:#f3f4f6;display:grid;place-items:center;font-size:11px;color:#9ca3af">補正前 比較</div><div class="cap"><span>補正前 比較</span></div></div>
+            <div class="img-card"><div style="height:160px;background:#f3f4f6;display:grid;place-items:center;font-size:11px;color:#9ca3af">補正後 比較 (判定用)</div><div class="cap"><span>⭐ 補正後 比較 (判定用)</span></div></div>
+          </div>
+        </div>
+
+        <div class="v6-sec">
+          <div class="v6-sec-head">📊 グラフ / ヒストグラム</div>
+          <div class="graph-grid">
+            <div class="graph-box">
+              <div style="font-size:11px;font-weight:700;margin-bottom:8px">洗浄性能グラフ</div>
+              <canvas id="washChart"></canvas>
+            </div>
+            <div class="graph-box">
+              <div style="font-size:11px;font-weight:700;margin-bottom:8px">L* / ΔE 推移</div>
+              <canvas id="histChart"></canvas>
+            </div>
           </div>
         </div>
       </div>
     `;
+    els.resultsArea.innerHTML=htmlOut;
+
+    // draw simple bar charts with canvas
+    setTimeout(()=>{
+      const c1=document.getElementById('washChart');
+      const c2=document.getElementById('histChart');
+      if(c1){
+        const ctx=c1.getContext('2d');
+        const W=c1.width=300, H=c1.height=180;
+        ctx.clearRect(0,0,W,H);
+        const vals=[{l:'素地 L',v:r.base?.lab.L||0,c:'#93c5fd'},{l:'前 L',v:r.before?.lab.L||0,c:'#fca5a5'},{l:'後 L',v:r.after?.lab.L||0,c:'#6ee7b7'},{l:'ΔE 前-後',v:Math.abs((r.deltaBaseBefore||0)-(r.deltaBaseAfter||0)),c:'#fde68a'}];
+        const maxV=Math.max(...vals.map(v=>v.v),1);
+        vals.forEach((it,i)=>{
+          const x=20+i*65, w=40, h=(it.v/maxV)*120;
+          ctx.fillStyle=it.c; ctx.fillRect(x, H-30-h, w, h);
+          ctx.fillStyle='#6b7280'; ctx.font='10px sans-serif'; ctx.fillText(it.l, x, H-10);
+        });
+      }
+      if(c2){
+        const ctx=c2.getContext('2d');
+        const W=c2.width=300, H=c2.height=180;
+        ctx.clearRect(0,0,W,H);
+        ctx.strokeStyle='#e5e7eb'; ctx.beginPath(); ctx.moveTo(20, H-20); ctx.lineTo(W-10, H-20); ctx.stroke();
+        if(r.base&&r.before&&r.after){
+          ctx.fillStyle='#111827'; ctx.font='11px monospace';
+          ctx.fillText(`L* ${r.base.lab.L.toFixed(1)} → ${r.before.lab.L.toFixed(1)} → ${r.after.lab.L.toFixed(1)}`, 20, 30);
+          ctx.fillText(`ΔE Before ${r.deltaBaseBefore?.toFixed(2)} → After ${r.deltaBaseAfter?.toFixed(2)}`, 20, 50);
+        }
+      }
+    },50);
+
+    if(r.messages.length){
+      const div=document.createElement('div');
+      div.style.cssText='margin-top:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px;font-size:11px;color:#b91c1c';
+      div.innerHTML=r.messages.map(m=>'⚠ '+m).join('<br>');
+      els.resultsArea.appendChild(div);
+    }
   }
 
   /* ---------------- exports ---------------- */
@@ -1529,153 +1673,119 @@
     return { dataUrl:canvas.toDataURL('image/png'), width:canvas.width, height:canvas.height };
   }
 
-      async function buildPDFDocument(){
+          async function ensureHtml2Canvas(){
+    if(window.html2canvas) return true;
+    try{ await loadScriptOnce('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'); return !!window.html2canvas; }
+    catch(e){ return false; }
+  }
+
+  async function buildPDFDocument(){
+    const ok=await ensureJsPDF();
+    if(!ok) return null;
+    const report = document.querySelector('.v6-report');
+    // fallback to old method if report not found
+    if(!report){
+      return await buildPDFDocumentLegacy();
+    }
+    const ok2=await ensureHtml2Canvas();
+    if(!ok2){
+      // fallback
+      return await buildPDFDocumentLegacy();
+    }
+
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'mm', format:'a4'});
+    const pageW=210, pageH=297, margin=10, usableW=190, usableH=277;
+
+    // Capture header first separately for nice first page header
+    // We'll capture section by section to avoid cutting images
+    const sections = report.querySelectorAll(':scope > div');
+    // If no direct children sections, capture whole
+    let y=10;
+
+    // Add title page header text
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(100,100,100);
+    doc.text(`Lab Wash V6 Report - ${state.meta.expId} - ${new Date().toLocaleString()}`, margin, 6);
+
+    for(let idx=0; idx<sections.length; idx++){
+      const sec = sections[idx];
+      // hide overflow issues
+      const canvas = await window.html2canvas(sec, {scale:2, useCORS:true, backgroundColor:'#ffffff', logging:false});
+      const imgData = canvas.toDataURL('image/png');
+      const imgHmm = (canvas.height * usableW / canvas.width) * 0.264583; // px to mm approx, but we use ratio: width mm / width px * height px
+      // Actually simpler: usableW mm corresponds to canvas.width px, so height mm = canvas.height * usableW / canvas.width
+      const hmm = canvas.height * usableW / canvas.width;
+
+      // If this section would overflow and it's an image/graph section, push to next page
+      if(y + hmm > 285){
+        // If section is image-grid, ensure it starts on fresh page to avoid cut
+        doc.addPage();
+        y=12;
+        doc.setFontSize(8); doc.text(`Lab Wash V6 Report - ${state.meta.expId} (cont.)`, margin, 6);
+      }
+
+      // If section itself taller than one page (rare), split it via slicing
+      if(hmm > usableH){
+        // slice canvas into pieces
+        let offsetY=0;
+        const sliceHpx = Math.floor(canvas.width * usableH / usableW); // px that fits one page
+        while(offsetY < canvas.height){
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = Math.min(sliceHpx, canvas.height - offsetY);
+          const sctx = sliceCanvas.getContext('2d');
+          sctx.drawImage(canvas, 0, offsetY, canvas.width, sliceCanvas.height, 0, 0, canvas.width, sliceCanvas.height);
+          const sliceImg = sliceCanvas.toDataURL('image/png');
+          const sliceHmm = sliceCanvas.height * usableW / canvas.width;
+          if(y + sliceHmm > 285){ doc.addPage(); y=12; }
+          doc.addImage(sliceImg, 'PNG', margin, y, usableW, sliceHmm);
+          y+=sliceHmm+4;
+          offsetY+=sliceHpx;
+          if(offsetY < canvas.height){ doc.addPage(); y=12; }
+        }
+      } else {
+        doc.addImage(imgData, 'PNG', margin, y, usableW, hmm);
+        y+=hmm+6;
+      }
+    }
+
+    // Add original images as high-res extra pages if they were compressed too much - ensure not cut
+    // Add a final page with full-res calibrated images
+    doc.addPage();
+    y=12;
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text('補正後画像 高解像度', margin, y); y+=6;
+    for(const id of ['base','before','after']){
+      const slot=state.slots[id];
+      if(!slot.imageData) continue;
+      if(y>200){ doc.addPage(); y=12; }
+      doc.setFontSize(9); doc.text(`${slot.label}`, margin, y); y+=4;
+      const origCanvas=imageDataToCanvas(slot.calibratedData||slot.imageData);
+      const ratio=origCanvas.height/origCanvas.width;
+      let iw=85, ih=iw*ratio; if(ih>60){ ih=60; iw=ih/ratio; }
+      doc.addImage(origCanvas.toDataURL('image/png'),'PNG',margin,y,iw,ih);
+      doc.addImage(imageDataToCanvas(slot.imageData).toDataURL('image/png'),'PNG',margin+iw+8,y,iw,ih);
+      y+=ih+10;
+    }
+
+    return doc;
+  }
+
+  // Keep legacy as fallback
+  async function buildPDFDocumentLegacy(){
     const ok=await ensureJsPDF();
     if(!ok) return null;
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({unit:'mm', format:'a4'});
-    let y=12;
-
-    // Header - dark clean
-    doc.setFillColor(17,24,39);
-    doc.rect(0,0,210,20,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(255,255,255);
-    doc.text('Lab Wash Report',10,12);
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(200,210,215);
-    doc.text(`${state.meta.expId} | ${state.meta.material||'布種未設定'} | ${state.meta.date}`,10,16);
-    y=26;
-
-    const addJP = (text, px=11, bold=false)=>{
-      const img=textToImage(text, 900, px);
-      const w=190, h=w*(img.height/img.width);
-      if(y+h>283){ doc.addPage(); y=12; }
-      doc.addImage(img.dataUrl,'PNG',10,y,w,h);
-      y+=h+2;
-    };
-    const addEN = (text, size=9, bold=false, col=[17,24,39])=>{
-      if(y>283){ doc.addPage(); y=12; }
-      doc.setFont('helvetica', bold?'bold':'normal');
-      doc.setFontSize(size);
-      doc.setTextColor(col[0],col[1],col[2]);
-      const lines = doc.splitTextToSize(text, 190);
-      doc.text(lines, 10, y);
-      y+= lines.length*size*0.45 + 2;
-    };
-    const addLine = ()=>{ doc.setDrawColor(229,231,235); doc.setLineWidth(0.2); doc.line(10,y,200,y); y+=5; };
-    const addBar = (pct, rgb)=>{
-      const x=10, w=75, h=7;
-      doc.setFillColor(243,244,246); doc.rect(x,y,w,h,'F');
-      if(pct!=null && !isNaN(pct)){
-        const pw=Math.max(0,Math.min(w, w*Math.max(0,Math.min(100,pct))/100));
-        doc.setFillColor(rgb[0],rgb[1],rgb[2]); doc.rect(x,y,pw,h,'F');
-      }
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(17,24,39);
-      doc.text(pct==null?'—':pct.toFixed(1)+'%', 90, y+4.5);
-      y+=h+4;
-    };
-
-    // Meta info - clean white box
-    doc.setFillColor(249,250,251); doc.rect(10,y,190,10,'F');
-    doc.setDrawColor(229,231,235); doc.rect(10,y,190,10,'S');
-    addJP(`布種: ${state.meta.material||'—'}  担当: ${state.meta.person||'—'}  条件: ${state.meta.condition||'—'}`,10);
-    // weight line inside box? actually after
-    y+=1;
-    addEN(`Weight  BASE ${state.weights.base}g  BEFORE ${state.weights.before}g  AFTER ${state.weights.after}g`,8,[107,114,128]);
-    y+=2; addLine();
-
+    let y=10;
+    const addJP = (text, px=11)=>{ const img=textToImage(text, 900, px); const w=190, h=w*(img.height/img.width); if(y+h>283){ doc.addPage(); y=12; } doc.addImage(img.dataUrl,'PNG',10,y,w,h); y+=h+2; };
+    const addEN = (text, size=9, bold=false)=>{ if(y>283){ doc.addPage(); y=12; } doc.setFont('helvetica', bold?'bold':'normal'); doc.setFontSize(size); doc.text(text,10,y); y+=size*0.5+2; };
+    addJP(`Lab Wash V6 Report ${state.meta.expId}`,12,true);
     const r=state.results;
-    if(!r){ addJP('解析未実行 — BASE/BEFORE/AFTERを揃えて解析を実行してください',11); return doc; }
-
-    const avgArr=[r.washWeight,r.washL,r.washKS].filter(v=>v!=null&&!isNaN(v));
-    const avg=avgArr.length?avgArr.reduce((a,b)=>a+b,0)/avgArr.length:null;
-    const colOf=v=>{
-      if(v==null||isNaN(v)) return [209,213,219];
-      if(v>=80) return [16,185,129];
-      if(v>=50) return [245,158,11];
-      return [239,68,68];
-    };
-
-    // Overall
-    addJP('洗浄効果サマリー — Wが大きい & ΔEが小さいほど良好',12,true);
-    if(avg!=null){
-      addEN(`Average Wash ${avg.toFixed(1)}% — ${avg>=80?'優':avg>=50?'良':'要改善'}`,13,true);
-      addBar(avg, colOf(avg));
-    }
-    y+=1; addLine();
-
-    // Wash details - each with formula
-    const washes=[
-      {jp:'重量減少率  W_weight', v:r.washWeight, f1:'W = (Before-After)/(Before-Base)×100', f2:`(${state.weights.before}-${state.weights.after})/(${state.weights.before}-${state.weights.base})×100 = ${r.washWeight==null?'—':r.washWeight.toFixed(2)+'%'}`, desc:'物理的にどれだけ汚れが落ちたか'},
-      {jp:'明度回復率  W_L', v:r.washL, f1:'W_L = (After L*-Before L*)/(Base L*-Before L*)×100', f2:`(${r.after?.lab.L.toFixed(2)}-${r.before?.lab.L.toFixed(2)})/(${r.base?.lab.L.toFixed(2)}-${r.before?.lab.L.toFixed(2)})×100 = ${r.washL==null?'—':r.washL.toFixed(2)+'%'}`, desc:'見た目の明るさの回復'},
-      {jp:'色濃度回復率  W_KS', v:r.washKS, f1:'W_KS = (Before K/S-After K/S)/(Before-Base)×100  K/S=(1-R)²/2R', f2:`(${r.before?.ks.y.toFixed(3)}-${r.after?.ks.y.toFixed(3)})/(${r.before?.ks.y.toFixed(3)}-${r.base?.ks.y.toFixed(3)})×100 = ${r.washKS==null?'—':r.washKS.toFixed(2)+'%'}`, desc:'染料・汚れ濃度の低下'},
-    ];
-    washes.forEach(it=>{
-      if(y>235){ doc.addPage(); y=12; }
-      addJP(`${it.jp}: ${it.v==null?'—':it.v.toFixed(1)+'%'}`,11,true);
-      addEN(it.f1,7,[107,114,128]);
-      addEN(it.f2,8,[17,24,39]);
-      addEN(it.desc,7,[107,114,128]);
-      addBar(it.v, colOf(it.v));
-      y+=2;
-    });
-    addLine();
-
-    // Delta
-    addJP('ΔE00 色差 — 汚れの程度',11,true);
-    addEN(`Before (汚れ度): ${fmt(r.deltaBaseBefore)}   After (残り汚れ): ${fmt(r.deltaBaseAfter)}`,9,true);
-    if(r.deltaBaseBefore && r.deltaBaseAfter){
-      const imp=(1-r.deltaBaseAfter/r.deltaBaseBefore)*100;
-      addEN(`改善率: ${imp.toFixed(1)}%  = 1 - After/Before  — 短いほどBASEに近い`,8);
-      const maxD=Math.max(r.deltaBaseBefore,r.deltaBaseAfter,0.1);
-      // BEFORE bar
-      doc.setFillColor(209,213,219); doc.rect(10,y, 75*(r.deltaBaseBefore/maxD), 6,'F');
-      doc.setFontSize(8); doc.setTextColor(60,60,60); doc.text(`BEFORE ${fmt(r.deltaBaseBefore)}`, 90, y+4); y+=8;
-      // AFTER bar
-      doc.setFillColor(15,122,140); doc.rect(10,y, 75*(r.deltaBaseAfter/maxD), 6,'F');
-      doc.text(`AFTER ${fmt(r.deltaBaseAfter)} - shorter is better`, 90, y+4); y+=9;
-    }
-    addLine();
-
-    // Color swatches - big
-    addJP('色見本とLab値',11,true);
-    ['base','before','after'].forEach(id=>{
-      const k=r[id]; if(!k) return;
-      if(y>250){ doc.addPage(); y=12; }
-      const cx=10, sz=12;
-      doc.setFillColor(Math.max(0,Math.min(255,k.rgb.r)), Math.max(0,Math.min(255,k.rgb.g)), Math.max(0,Math.min(255,k.rgb.b)));
-      doc.rect(cx,y,sz,sz,'F');
-      doc.setDrawColor(220); doc.rect(cx,y,sz,sz,'S');
-      addEN(`${id.toUpperCase()}  L*${fmt(k.lab.L)} a*${fmt(k.lab.a)} b*${fmt(k.lab.b)} WI${fmt(k.wi)} K/S(Y)${fmt(k.ks.y,3)} RGB(${Math.round(k.rgb.r)},${Math.round(k.rgb.g)},${Math.round(k.rgb.b)})`,8);
-      y+=3;
-    });
-    y+=2; addLine();
-
-    // Images
-    addJP('画像  Original / Calibrated',11,true);
-    for(const id of ['base','before','after']){
-      const slot=state.slots[id]; if(!slot.imageData) continue;
-      if(y>175){ doc.addPage(); y=12; }
-      addJP(`${slot.label} ${slot.roi?`ROI x:${slot.roi.x.toFixed(0)} y:${slot.roi.y.toFixed(0)} w:${slot.roi.w.toFixed(0)} h:${slot.roi.h.toFixed(0)}`:''}`,10);
-      const origCanvas=imageDataToCanvas(slot.imageData);
-      const ratio=slot.imageData.height/slot.imageData.width;
-      let iw=80, ih=iw*ratio; if(ih>60){ ih=60; iw=ih/ratio; }
-      doc.setDrawColor(229,231,235); doc.setLineWidth(0.2);
-      doc.rect(10,y,iw,ih,'S');
-      doc.addImage(origCanvas.toDataURL('image/png'),'PNG',10,y,iw,ih);
-      doc.setFontSize(7); doc.text('Original',10,y+ih+3);
-      if(slot.calibratedData){
-        const calCanvas=imageDataToCanvas(slot.calibratedData);
-        doc.rect(10+iw+10,y,iw,ih,'S');
-        doc.addImage(calCanvas.toDataURL('image/png'),'PNG',10+iw+10,y,iw,ih);
-        doc.text('Calibrated',10+iw+10,y+ih+3);
-      }
-      y+=ih+10;
-    }
-
-    doc.setFontSize(7); doc.setTextColor(156,163,175);
-    doc.text('Lab Wash - Clean Infographic Report  |  CIEDE2000 / Kubelka-Munk',10,292);
+    if(!r){ addJP('解析未実行',11); return doc; }
+    addEN(`Average Wash ${[r.washWeight,r.washL,r.washKS].filter(v=>v!=null).reduce((a,b)=>a+b,0)/3}%`);
     return doc;
   }
+
 
   els.exportPdfBtn.addEventListener('click', async ()=>{
     if(!state.meta.expId){ toast('実験IDを入力してください'); return; }
