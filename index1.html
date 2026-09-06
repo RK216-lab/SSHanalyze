@@ -229,6 +229,71 @@
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
   footer.foot{text-align:center;color:var(--ink-soft);font-size:11.5px;padding:24px 0;}
+
+  /* --- Clean Infographic v3 --- */
+  .empty-note{ padding:24px; text-align:center; color:var(--ink-soft); font-size:13px; background:var(--panel-2); border:1px dashed var(--line); border-radius:12px; }
+
+  .ig-wrap{ display:flex; flex-direction:column; gap:20px; }
+  .ig-header{ display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px 20px; }
+  .ig-header .title{ font-size:16px; font-weight:700; letter-spacing:.02em; }
+  .ig-header .meta{ font-size:11px; color:var(--ink-soft); margin-top:4px; font-family:var(--mono); }
+  .overall-pill{ display:flex; align-items:center; gap:12px; }
+  .donut{ position:relative; width:68px; height:68px; flex:none; }
+  .donut svg{ display:block; transform:rotate(-90deg); }
+  .donut .center{ position:absolute; inset:0; display:grid; place-items:center; font-family:var(--mono); font-weight:800; font-size:18px; letter-spacing:-.03em; }
+
+  .cards-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  @media(max-width:900px){ .cards-3{ grid-template-columns:1fr; } }
+  .flow-cards{ display:grid; grid-template-columns:1fr 32px 1fr 32px 1fr; gap:8px; align-items:start; }
+  @media(max-width:800px){ .flow-cards{ grid-template-columns:1fr; } .flow-cards .arrow{ transform:rotate(90deg); margin:2px auto; } }
+  .flow-card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; text-align:center; }
+  .flow-card .top-label{ font-size:10px; font-weight:700; letter-spacing:.1em; color:var(--ink-soft); margin-bottom:8px; }
+  .flow-card .swatch{ width:100%; height:72px; border-radius:10px; border:1px solid rgba(0,0,0,.08); margin-bottom:10px; }
+  .flow-card .Lval{ font-family:var(--mono); font-size:28px; font-weight:800; line-height:1; }
+  .flow-card .Lsub{ font-size:11px; color:var(--ink-soft); margin-top:4px; }
+  .mini-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px; }
+  .mini-grid .mi{ background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:6px 4px; }
+  .mini-grid .mi b{ display:block; font-size:9px; color:var(--ink-soft); }
+  .mini-grid .mi span{ font-family:var(--mono); font-size:11px; font-weight:700; }
+
+  .wash-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  @media(max-width:900px){ .wash-grid{ grid-template-columns:1fr; } }
+  .wash-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .wash-card .head{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .wash-card .head .name{ font-size:13px; font-weight:700; }
+  .wash-card .head .sub{ font-size:10px; color:var(--ink-soft); font-family:var(--mono); margin-top:2px; }
+  .wash-card .donut-row{ display:flex; align-items:center; gap:16px; }
+  .donut-big{ position:relative; width:84px; height:84px; flex:none; }
+  .donut-big .center{ position:absolute; inset:0; display:grid; place-items:center; text-align:center; }
+  .donut-big .center .pct{ font-family:var(--mono); font-weight:800; font-size:22px; line-height:1; }
+  .donut-big .center .lbl{ font-size:10px; color:var(--ink-soft); margin-top:2px; }
+
+  .formula-box{ background:#f8fafb; border:1px solid #e6ecee; border-radius:10px; padding:10px 12px; }
+  .formula-box .f-title{ font-size:10px; font-weight:700; color:var(--ink-soft); letter-spacing:.05em; margin-bottom:6px; }
+  .formula-box .f-main{ font-family:var(--mono); font-size:11.5px; line-height:1.5; word-break:break-all; }
+  .formula-box .f-calc{ font-size:11px; color:var(--ink-soft); margin-top:6px; border-top:1px dashed #d7dee1; padding-top:6px; }
+  .formula-box .f-result{ font-size:12px; font-weight:700; margin-top:4px; }
+
+  .delta-section{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:800px){ .delta-section{ grid-template-columns:1fr; } }
+  .panel{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+  .panel h4{ margin:0 0 12px; font-size:12px; font-weight:700; color:var(--ink-soft); }
+  .bar-line{ display:flex; align-items:center; gap:10px; margin:10px 0; }
+  .bar-line .lb{ width:52px; font-size:11px; font-weight:700; color:var(--ink-soft); }
+  .bar-line .track{ flex:1; height:10px; background:#eef1f3; border-radius:999px; overflow:hidden; }
+  .bar-line .fill{ height:100%; border-radius:999px; }
+  .bar-line .val{ width:56px; text-align:right; font-family:var(--mono); font-weight:700; font-size:12px; }
+
+  table.clean{ width:100%; border-collapse:collapse; }
+  table.clean th{ text-align:left; font-size:10px; color:var(--ink-soft); padding:8px 6px; border-bottom:1px solid var(--line); font-weight:700; }
+  table.clean td{ padding:8px 6px; font-size:12px; border-bottom:1px solid #eef1f3; }
+  table.clean td.v{ font-family:var(--mono); font-weight:600; }
+
+  .pill{ display:inline-flex; padding:3px 8px; border-radius:999px; font-size:10px; font-weight:700; }
+  .pill.good{ background:#e5f5ee; color:#1f8a5f; } .pill.warn{ background:#fbf0dd; color:#a1660f; } .pill.bad{ background:#fbe9e5; color:#b3341f; }
+
+  .arrow{ display:grid; place-items:center; font-size:16px; color:var(--line-strong); }
+
 </style>
 </head>
 <body>
@@ -1303,43 +1368,169 @@
     toast('解析が完了しました');
   });
 
-  function renderResults(){
+    function renderResults(){
     const r=state.results;
     if(!r){
       els.resultsArea.innerHTML='<div class="empty-note">BASE / BEFORE / AFTER の3画像とROIを準備してから「解析を実行」を押してください。</div>';
       return;
     }
-    const slotHtml = id => {
+    const clamp = v=>Math.max(0,Math.min(255,Math.round(v)));
+    const level = v=>{
+      if(v==null||isNaN(v)) return {cls:'', color:'#d7dee1', label:'未計算'};
+      if(v>=80) return {cls:'good', color:'#22a06b', label:'良好'};
+      if(v>=50) return {cls:'warn', color:'#c68a14', label:'中'};
+      return {cls:'bad', color:'#c13a22', label:'低'};
+    };
+    const donutSVG = (pct, color, size=68, stroke=8)=>{
+      const rad = (size/2 - stroke/2);
+      const circ = 2*Math.PI*rad;
+      const p = pct==null?0:Math.max(0,Math.min(100,pct));
+      const off = circ*(1-p/100);
+      // background #eef1f3
+      return `<div class="donut" style="width:${size}px;height:${size}px"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size/2}" cy="${size/2}" r="${rad}" fill="none" stroke="#eef1f3" stroke-width="${stroke}"/><circle cx="${size/2}" cy="${size/2}" r="${rad}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}" transform="rotate(-90 ${size/2} ${size/2})"/></svg><div class="center">${pct==null?'—':pct.toFixed(0)+'%'} </div></div>`;
+    };
+    const donutBig = (pct, color)=>{
+      const size=84, stroke=10, rad=size/2-stroke/2, circ=2*Math.PI*rad;
+      const p = pct==null?0:Math.max(0,Math.min(100,pct));
+      const off = circ*(1-p/100);
+      const lv = level(pct);
+      return `<div class="donut-big" style="width:${size}px;height:${size}px"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)"><circle cx="${size/2}" cy="${size/2}" r="${rad}" fill="none" stroke="#eef1f3" stroke-width="${stroke}"/><circle cx="${size/2}" cy="${size/2}" r="${rad}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}"/></svg><div class="center"><div class="pct">${pct==null?'—':pct.toFixed(1)+'%'}</div><div class="lbl">${lv.label}</div></div></div>`;
+    };
+
+    // weights for formula detail
+    const wBase = parseFloat(state.weights.base), wBefore = parseFloat(state.weights.before), wAfter = parseFloat(state.weights.after);
+    const Lbase = r.base?.lab.L, Lbefore = r.before?.lab.L, Lafter = r.after?.lab.L;
+    const KSbase = r.base?.ks.y, KSbefore = r.before?.ks.y, KSafter = r.after?.ks.y;
+
+    const avgArr = [r.washWeight, r.washL, r.washKS].filter(v=>v!=null&&!isNaN(v));
+    const avg = avgArr.length? avgArr.reduce((a,b)=>a+b,0)/avgArr.length : null;
+    const avgLv = level(avg);
+    const improvement = (r.deltaBaseBefore && r.deltaBaseAfter) ? (1 - r.deltaBaseAfter/r.deltaBaseBefore)*100 : null;
+
+    const flowCard = (id, title)=>{
       const k=r[id];
-      if(!k) return `<div class="slot-card"><h3>${id.toUpperCase()}</h3><div class="empty-note">データなし</div></div>`;
-      return `<div class="slot-card"><h3>${id.toUpperCase()}</h3>
-        <div class="line">L* ${k.lab.L.toFixed(2)}  a* ${k.lab.a.toFixed(2)}  b* ${k.lab.b.toFixed(2)}</div>
-        <div class="line">WI ${k.wi.toFixed(2)}　K/S(Y) ${k.ks.y.toFixed(3)}</div>
-        <div class="sub">RGB avg (${k.rgb.r.toFixed(1)}, ${k.rgb.g.toFixed(1)}, ${k.rgb.b.toFixed(1)})</div>
-        <div class="sub">K/S R:${k.ks.r.toFixed(3)} G:${k.ks.g.toFixed(3)} B:${k.ks.b.toFixed(3)}</div>
+      if(!k) return `<div class="flow-card"><div class="top-label">${title}</div><div class="empty-note" style="padding:20px">データなし</div></div>`;
+      const rgb = `rgb(${clamp(k.rgb.r)},${clamp(k.rgb.g)},${clamp(k.rgb.b)})`;
+      return `<div class="flow-card">
+        <div class="top-label">${title}</div>
+        <div class="swatch" style="background:${rgb}"></div>
+        <div class="Lval">${k.lab.L.toFixed(1)}</div>
+        <div class="Lsub">L* / WI ${k.wi.toFixed(1)} / K/S ${k.ks.y.toFixed(3)}</div>
+        <div class="mini-grid">
+          <div class="mi"><b>a*</b><span>${k.lab.a.toFixed(1)}</span></div>
+          <div class="mi"><b>b*</b><span>${k.lab.b.toFixed(1)}</span></div>
+          <div class="mi"><b>RGB</b><span>${clamp(k.rgb.r)},${clamp(k.rgb.g)},${clamp(k.rgb.b)}</span></div>
+        </div>
       </div>`;
     };
-    const rows = [
-      ['L*', `${fmt(r.base&&r.base.lab.L)} / ${fmt(r.before&&r.before.lab.L)} / ${fmt(r.after&&r.after.lab.L)}`, '0が黒、100が白。数値が高いほど明るい（洗浄が進むほど上昇する）。', false],
-      ['a* / b*', r.after ? `${r.after.lab.a.toFixed(2)} / ${r.after.lab.b.toFixed(2)}` : '未計算', 'AFTERの色相。a*が赤緑、b*が黄青の方向を表す。', false],
-      ['WI（白色度）', fmt(r.after&&r.after.wi), '100 − √((100−L*)²+a*²+b*²)。値が大きいほど白に近い。', false],
-      ['K/S(Y)', fmt(r.after&&r.after.ks.y,3), 'Kubelka-Munk理論。K/S=(1−R)²/(2R)。染料濃度と比例関係にある指標。', false],
-      ['ΔE00 (Base, Before)', fmt(r.deltaBaseBefore), '洗浄前の汚れの程度。値が大きいほどBASEとの色差が大きい。', true],
-      ['ΔE00 (Base, After) ★洗浄効果', fmt(r.deltaBaseAfter), '洗浄後にどれだけBASEに近づいたか。小さいほど洗浄効果が高い。', true],
-      ['W_weight（重量減少率）', pct(r.washWeight), 'W = (Before−After) / (Before−Base) × 100', false],
-      ['W_L（明度回復率）', pct(r.washL), 'W_L = (After L*−Before L*) / (Base L*−Before L*) × 100', false],
-      ['W_KS（K/S回復率）', pct(r.washKS), 'W_KS = (Before K/S(Y)−After K/S(Y)) / (Before K/S(Y)−Base K/S(Y)) × 100', false]
-    ];
-    const tableRows = rows.map(([k,v,d,hi])=>
-      `<tr${hi?' class="highlight"':''}><td class="k">${k}</td><td class="v">${v}</td><td class="desc">${d}</td></tr>`
-    ).join('');
+
+    // max for delta bar scaling
+    const maxDelta = Math.max(r.deltaBaseBefore||0, r.deltaBaseAfter||0, 0.1);
+    const beforePctBar = (r.deltaBaseBefore||0)/maxDelta*100;
+    const afterPctBar = (r.deltaBaseAfter||0)/maxDelta*100;
+
     els.resultsArea.innerHTML = `
-      <div class="slot-cards">${['base','before','after'].map(slotHtml).join('')}</div>
-      <table class="results">
-        <thead><tr><th>指標</th><th>値</th><th>説明</th></tr></thead>
-        <tbody>${tableRows}</tbody>
-      </table>
-      ${r.messages.length ? `<div class="msg err" style="margin-top:10px">${r.messages.map(m=>'⚠ '+m).join('<br>')}</div>` : ''}
+      <div class="ig-wrap">
+        <div class="ig-header">
+          <div>
+            <div class="title">洗浄効果レポート</div>
+            <div class="meta">${state.meta.expId} • ${state.meta.material||'布種未設定'} • ${state.meta.date} • ΔE小 & W大が良好</div>
+          </div>
+          <div class="overall-pill">
+            ${donutSVG(avg, avgLv.color, 68, 7)}
+            <div>
+              <div style="font-weight:700;font-size:13px">${avg==null?'—':avgLv.label+' — 平均 '+avg.toFixed(1)+'%'}</div>
+              <div style="font-size:11px;color:var(--ink-soft)">${improvement==null?'ΔE未計算':'ΔE改善 '+improvement.toFixed(1)+'%'}${avg!=null&&avg>=80?' • ほぼBASEに回復':''}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-cards">
+          ${flowCard('base','BASE 素地')}
+          <div class="arrow">→</div>
+          ${flowCard('before','BEFORE 汚染')}
+          <div class="arrow">→</div>
+          ${flowCard('after','AFTER 洗浄後')}
+        </div>
+
+        <div class="wash-grid">
+          <div class="wash-card">
+            <div class="head"><div><div class="name">重量で見る洗浄率</div><div class="sub">W_weight</div></div><span class="pill ${level(r.washWeight).cls}">${level(r.washWeight).label}</span></div>
+            <div class="donut-row">
+              ${donutBig(r.washWeight, level(r.washWeight).color)}
+              <div style="flex:1">
+                <div style="font-size:11px;color:var(--ink-soft)">物理的にどれだけ汚れが落ちたか</div>
+              </div>
+            </div>
+            <div class="formula-box">
+              <div class="f-title">計算式</div>
+              <div class="f-main">W<sub>weight</sub> = (W<sub>Before</sub> − W<sub>After</sub>) / (W<sub>Before</sub> − W<sub>Base</sub>) × 100</div>
+              <div class="f-calc">(${isNaN(wBefore)?'—':wBefore} − ${isNaN(wAfter)?'—':wAfter}) / (${isNaN(wBefore)?'—':wBefore} − ${isNaN(wBase)?'—':wBase}) × 100</div>
+              <div class="f-result">= ${r.washWeight==null?'未計算':r.washWeight.toFixed(2)+'%'} </div>
+            </div>
+          </div>
+
+          <div class="wash-card">
+            <div class="head"><div><div class="name">明るさの回復率</div><div class="sub">W_L</div></div><span class="pill ${level(r.washL).cls}">${level(r.washL).label}</span></div>
+            <div class="donut-row">
+              ${donutBig(r.washL, level(r.washL).color)}
+              <div style="flex:1"><div style="font-size:11px;color:var(--ink-soft)">見た目の明るさがどれだけ戻ったか</div></div>
+            </div>
+            <div class="formula-box">
+              <div class="f-title">計算式</div>
+              <div class="f-main">W<sub>L</sub> = (L*<sub>After</sub> − L*<sub>Before</sub>) / (L*<sub>Base</sub> − L*<sub>Before</sub>) × 100</div>
+              <div class="f-calc">(${Lafter==null?'—':Lafter.toFixed(2)} − ${Lbefore==null?'—':Lbefore.toFixed(2)}) / (${Lbase==null?'—':Lbase.toFixed(2)} − ${Lbefore==null?'—':Lbefore.toFixed(2)}) × 100</div>
+              <div class="f-result">= ${r.washL==null?'未計算':r.washL.toFixed(2)+'%'} </div>
+            </div>
+          </div>
+
+          <div class="wash-card">
+            <div class="head"><div><div class="name">色の濃さの回復率</div><div class="sub">W_KS</div></div><span class="pill ${level(r.washKS).cls}">${level(r.washKS).label}</span></div>
+            <div class="donut-row">
+              ${donutBig(r.washKS, level(r.washKS).color)}
+              <div style="flex:1"><div style="font-size:11px;color:var(--ink-soft)">染料・汚れ濃度がどれだけ下がったか</div></div>
+            </div>
+            <div class="formula-box">
+              <div class="f-title">計算式</div>
+              <div class="f-main">W<sub>KS</sub> = (K/S<sub>Before</sub> − K/S<sub>After</sub>) / (K/S<sub>Before</sub> − K/S<sub>Base</sub>) × 100</div>
+              <div class="f-main" style="margin-top:4px;font-size:10px;color:var(--ink-soft)">K/S = (1−R)² / 2R (Kubelka-Munk)</div>
+              <div class="f-calc">(${KSbefore==null?'—':KSbefore.toFixed(3)} − ${KSafter==null?'—':KSafter.toFixed(3)}) / (${KSbefore==null?'—':KSbefore.toFixed(3)} − ${KSbase==null?'—':KSbase.toFixed(3)}) × 100</div>
+              <div class="f-result">= ${r.washKS==null?'未計算':r.washKS.toFixed(2)+'%'} </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="delta-section">
+          <div class="panel">
+            <h4>ΔE00 色差で見る汚れ度</h4>
+            <div class="bar-line"><div class="lb">BEFORE</div><div class="track"><div class="fill" style="width:${beforePctBar}%;background:#b9c4c8"></div></div><div class="val">${r.deltaBaseBefore==null?'—':r.deltaBaseBefore.toFixed(2)}</div></div>
+            <div class="bar-line"><div class="lb">AFTER</div><div class="track"><div class="fill" style="width:${afterPctBar}%;background:${avgLv.color}"></div></div><div class="val" style="color:${avgLv.color}">${r.deltaBaseAfter==null?'—':r.deltaBaseAfter.toFixed(2)}</div></div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+              <span class="pill ${improvement!=null&&improvement>=0?'good':'bad'}">${improvement==null?'—':'改善率 '+improvement.toFixed(1)+'%'}</span>
+              <span style="font-size:11px;color:var(--ink-soft)">ΔEが0に近いほどBASEに近い。小さいほど洗浄効果高。</span>
+            </div>
+            <div class="formula-box" style="margin-top:12px">
+              <div class="f-title">ΔE00 (CIEDE2000)</div>
+              <div class="f-main">色差 = √[(ΔL'/S<sub>L</sub>)² + (ΔC'/S<sub>C</sub>)² + (ΔH'/S<sub>H</sub>)² + R<sub>T</sub>]</div>
+              <div class="f-calc">L*a*b*から知覚的に均一な色差を算出。値が大きいほど色が違う。</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h4>L* / WI / K/S サマリー</h4>
+            <table class="clean">
+              <thead><tr><th>指標</th><th>値</th><th>意味</th></tr></thead>
+              <tbody>
+                <tr><td>L*推移</td><td class="v">${fmt(r.base&&r.base.lab.L)} → ${fmt(r.before&&r.before.lab.L)} → <span style="color:${avgLv.color};font-weight:800">${fmt(r.after&&r.after.lab.L)}</span></td><td>高いほど明るい</td></tr>
+                <tr><td>WI 白色度</td><td class="v">${fmt(r.after&&r.after.wi)}</td><td>100が真っ白<br><span style="font-family:var(--mono);font-size:10px">WI=100−√((100−L*)²+a*²+b*²)</span></td></tr>
+                <tr><td>ΔE After ★</td><td class="v" style="font-weight:800">${fmt(r.deltaBaseAfter)}</td><td>小=良好</td></tr>
+                <tr><td>K/S(Y)</td><td class="v">${fmt(r.after&&r.after.ks.y,3)}</td><td>染料濃度<br><span style="font-family:var(--mono);font-size:10px">K/S=(1−R)²/2R</span></td></tr>
+              </tbody>
+            </table>
+            ${r.messages.length?`<div class="msg err" style="margin-top:10px">${r.messages.map(m=>'⚠ '+m).join('<br>')}</div>`:''}
+          </div>
+        </div>
+      </div>
     `;
   }
 
@@ -1395,58 +1586,118 @@
     return { dataUrl:canvas.toDataURL('image/png'), width:canvas.width, height:canvas.height };
   }
 
-  async function buildPDFDocument(){
+    async function buildPDFDocument(){
     const ok=await ensureJsPDF();
     if(!ok) return null;
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({unit:'mm', format:'a4'});
-    let y=14;
-    doc.setFontSize(18); doc.text('Lab Wash Report', 10, y); y+=9;
+    let y=12;
 
-    const addBlock=(text, fontPx=14)=>{
-      const img=textToImage(text, 900, fontPx);
-      const widthMM=180, heightMM=widthMM*(img.height/img.width);
-      if(y+heightMM>282){ doc.addPage(); y=14; }
-      doc.addImage(img.dataUrl, 'PNG', 10, y, widthMM, heightMM);
-      y+=heightMM+2;
+    // Header - simple
+    doc.setFillColor(255,255,255);
+    doc.rect(0,0,210,18,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(21,32,37);
+    doc.text('Lab Wash Report', 10, 11);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(84,100,107);
+    doc.text(`${state.meta.expId} | ${state.meta.material||''} | ${state.meta.date}`, 10, 15);
+
+    y=22;
+    const line = (yy)=>{ doc.setDrawColor(215,222,225); doc.setLineWidth(0.2); doc.line(10,yy,200,yy); };
+
+    const addJP = (text, fontPx=11, bold=false)=>{
+      const img=textToImage(text, 880, fontPx);
+      const w=180, h=w*(img.height/img.width);
+      if(y+h>280){ doc.addPage(); y=12; }
+      doc.addImage(img.dataUrl,'PNG',10,y,w,h);
+      y+=h+2;
+    };
+    const addEN = (text, size=9, bold=false)=>{
+      if(y>275){ doc.addPage(); y=12; }
+      doc.setFont('helvetica', bold?'bold':'normal'); doc.setFontSize(size); doc.setTextColor(21,32,37);
+      doc.text(text, 10, y);
+      y+= size*0.5 + 1;
     };
 
-    addBlock(`実験ID: ${state.meta.expId}`);
-    addBlock(`布種: ${state.meta.material || '—'}　担当者: ${state.meta.person || '—'}　日付: ${state.meta.date}`);
-    addBlock(`実験条件: ${state.meta.condition || '—'}`);
-    addBlock(`重量　BASE: ${state.weights.base} g　BEFORE: ${state.weights.before} g　AFTER: ${state.weights.after} g`);
-    y+=2;
+    // Meta box
+    doc.setFillColor(246,248,249); doc.rect(10,y,190,14,'F');
+    doc.setDrawColor(215,222,225); doc.rect(10,y,190,14,'S');
+    addEN(`Material: ${state.meta.material||'-'}  Person: ${state.meta.person||'-'}  Condition: ${state.meta.condition||'-'}`,8);
+    addEN(`Weight BASE:${state.weights.base}g BEFORE:${state.weights.before}g AFTER:${state.weights.after}g`,8);
+    y+=4; line(y); y+=4;
 
     const r=state.results;
-    addBlock('解析結果', 15);
     if(r){
-      [
-        r.base ? `BASE  L*${fmt(r.base.lab.L)} a*${fmt(r.base.lab.a)} b*${fmt(r.base.lab.b)} WI${fmt(r.base.wi)}` : 'BASE 未計算',
-        r.before ? `BEFORE  L*${fmt(r.before.lab.L)} a*${fmt(r.before.lab.a)} b*${fmt(r.before.lab.b)} WI${fmt(r.before.wi)}` : 'BEFORE 未計算',
-        r.after ? `AFTER  L*${fmt(r.after.lab.L)} a*${fmt(r.after.lab.a)} b*${fmt(r.after.lab.b)} WI${fmt(r.after.wi)}` : 'AFTER 未計算',
-        `ΔE00(Base,Before) = ${fmt(r.deltaBaseBefore)}　ΔE00(Base,After) = ${fmt(r.deltaBaseAfter)}`,
-        `W_weight = ${pct(r.washWeight)}　W_L = ${pct(r.washL)}　W_KS = ${pct(r.washKS)}`
-      ].forEach(l=>addBlock(l,12));
-    } else {
-      addBlock('（解析未実行）', 12);
-    }
-    y+=2;
+      addJP('洗浄効果サマリー — Wが大きい & ΔEが小さいほど良好',12,true);
+      y+=1;
+      const washes=[
+        {label:'W_weight 重量減少率', v:r.washWeight, formula:'(Before-After)/(Before-Base)*100'},
+        {label:'W_L 明度回復率', v:r.washL, formula:'(After L*-Before L*)/(Base L*-Before L*)*100'},
+        {label:'W_KS K/S回復率', v:r.washKS, formula:'(Before K/S-After K/S)/(Before-Base)*100'},
+      ];
+      washes.forEach(it=>{
+        if(y>265){ doc.addPage(); y=12; }
+        addJP(`${it.label}: ${it.v==null?'—':it.v.toFixed(1)+'%'}`,11);
+        addEN(`${it.formula}`,7);
+        // bar
+        const bx=10, bw=60, bh=4;
+        doc.setFillColor(238,241,243); doc.rect(bx,y,bw,bh,'F');
+        if(it.v!=null){
+          const w=Math.max(0,Math.min(bw,bw*it.v/100));
+          const col=it.v>=80?[34,160,107]:it.v>=50?[198,138,20]:[193,58,34];
+          doc.setFillColor(col[0],col[1],col[2]); doc.rect(bx,y,w,bh,'F');
+        }
+        y+=6;
+      });
+      y+=2; line(y); y+=4;
 
+      addJP('ΔE00 色差',11,true);
+      addEN(`DeltaE Before (dirt): ${fmt(r.deltaBaseBefore)}   After (remaining): ${fmt(r.deltaBaseAfter)}`,9,true);
+      if(r.deltaBaseBefore && r.deltaBaseAfter){
+        const imp=(1-r.deltaBaseAfter/r.deltaBaseBefore)*100;
+        addEN(`Improvement: ${imp.toFixed(1)}%  = 1 - After/Before`,8);
+        // bars
+        const maxD=Math.max(r.deltaBaseBefore,r.deltaBaseAfter,0.1);
+        doc.setFillColor(185,196,200); doc.rect(10,y, 60*(r.deltaBaseBefore/maxD), 5,'F');
+        doc.setFontSize(7); doc.text(`BEFORE ${fmt(r.deltaBaseBefore)}`, 75, y+3.5);
+        y+=7;
+        doc.setFillColor(15,122,140); doc.rect(10,y, 60*(r.deltaBaseAfter/maxD), 5,'F');
+        doc.text(`AFTER ${fmt(r.deltaBaseAfter)} - shorter is better`, 75, y+3.5);
+        y+=8;
+      }
+      y+=2; line(y); y+=4;
+
+      addJP('色見本と数値',11,true);
+      ['base','before','after'].forEach(id=>{
+        const k=r[id]; if(!k) return;
+        if(y>260){ doc.addPage(); y=12; }
+        const cx=10;
+        doc.setFillColor(Math.max(0,Math.min(255,k.rgb.r)), Math.max(0,Math.min(255,k.rgb.g)), Math.max(0,Math.min(255,k.rgb.b)));
+        doc.rect(cx,y,8,8,'F'); doc.setDrawColor(200); doc.rect(cx,y,8,8,'S');
+        addEN(`${id.toUpperCase()}  L*${fmt(k.lab.L)} a*${fmt(k.lab.a)} b*${fmt(k.lab.b)} WI${fmt(k.wi)} K/S(Y)${fmt(k.ks.y,3)} RGB(${Math.round(k.rgb.r)},${Math.round(k.rgb.g)},${Math.round(k.rgb.b)})`,8);
+        y+=2;
+      });
+      y+=4; line(y); y+=4;
+    }
+
+    addJP('画像 (Original / Calibrated)',11,true);
     for(const id of ['base','before','after']){
-      const slot=state.slots[id];
-      if(!slot.imageData) continue;
-      if(y>240){ doc.addPage(); y=14; }
-      addBlock(slot.label, 14);
+      const slot=state.slots[id]; if(!slot.imageData) continue;
+      if(y>190){ doc.addPage(); y=12; }
+      addJP(`${slot.label} ${slot.roi?`ROI x:${slot.roi.x.toFixed(0)} y:${slot.roi.y.toFixed(0)} w:${slot.roi.w.toFixed(0)} h:${slot.roi.h.toFixed(0)}`:''}`,10);
       const origCanvas=imageDataToCanvas(slot.imageData);
       const ratio=slot.imageData.height/slot.imageData.width;
-      let iw=90, ih=iw*ratio;
-      if(ih>65){ ih=65; iw=ih/ratio; }
-      doc.addImage(origCanvas.toDataURL('image/png'), 'PNG', 10, y, iw, ih);
+      let iw=70, ih=iw*ratio; if(ih>50){ ih=50; iw=ih/ratio; }
+      doc.setDrawColor(215,222,225); doc.rect(10,y,iw,ih,'S');
+      doc.addImage(origCanvas.toDataURL('image/png'),'PNG',10,y,iw,ih);
       if(slot.calibratedData){
-        doc.addImage(imageDataToCanvas(slot.calibratedData).toDataURL('image/png'), 'PNG', 10+iw+5, y, iw, ih);
+        const calCanvas=imageDataToCanvas(slot.calibratedData);
+        doc.rect(10+iw+8,y,iw,ih,'S');
+        doc.addImage(calCanvas.toDataURL('image/png'),'PNG',10+iw+8,y,iw,ih);
       }
-      y+=ih+7;
+      y+=ih+8;
     }
+    doc.setFontSize(7); doc.setTextColor(140,150,155);
+    doc.text('Lab Wash - Clean Infographic Report',10,290);
     return doc;
   }
 
