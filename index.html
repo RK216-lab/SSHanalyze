@@ -6,11 +6,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Lab Wash V6 - 重量対応・自動ガーゼ検出・iPad最適化</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script>window.Module={onRuntimeInitialized(){ if(window.__opencvRuntimeReady) window.__opencvRuntimeReady(); }};</script>
-<script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script>
+<script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@5.0.0-release.1/dist/opencv.js"></script>
+<script>
+window.Module={
+  onRuntimeInitialized(){
+    console.log('OpenCV runtime initialized');
+    if(window.__opencvRuntimeReady) window.__opencvRuntimeReady();
+  }
+};
+window.__opencvLoadFailed = false;
+function loadOpenCVFallback(){
+  if(window.cv && typeof cv.Mat !== 'undefined'){ if(window.__opencvRuntimeReady) window.__opencvRuntimeReady(); return; }
+  console.warn('Primary OpenCV CDN failed, trying fallback...');
+  const s=document.createElement('script');
+  s.src='https://docs.opencv.org/4.10.0/opencv.js';
+  s.async=true;
+  s.onload=()=>{ console.log('Fallback OpenCV loaded'); setTimeout(()=>{ if(window.__opencvRuntimeReady) window.__opencvRuntimeReady(); }, 300); };
+  s.onerror=()=>{ console.error('Fallback OpenCV also failed'); window.__opencvLoadFailed=true; const el=document.getElementById('opencvStatus'); if(el){ el.className='badge'; el.innerHTML='<span class=dot></span><span id=statusText class=mono style=font-size:10px>JSフォールバック</span>'; } const log=document.getElementById('detectLog'); if(log) log.textContent='OpenCV読み込み失敗 - JSフォールバックで動作します (ネットワークを確認)'; };
+  document.head.appendChild(s);
+}
+// 3秒でメインCDNが来なければフォールバック
+setTimeout(()=>{ if(!window.cv || typeof cv.Mat==='undefined'){ loadOpenCVFallback(); } }, 3500);
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js" onerror="loadOpenCVFallback()"></script>
 <style>
 :root{
   --bg:#f3f4f6; --card:#ffffff; --card-2:#f9fafb; --card-3:#f1f5f9; --border:#e5e7eb; --border-strong:#cbd5e1;
@@ -269,6 +287,7 @@ img, canvas, video, svg{max-width:100%}
 #noResult{padding:20px; line-height:1.7}
 #noResult::before{content:'💡'; font-size:20px; display:block; margin-bottom:8px}
 
+.drop.paste-active{border-color:#22c55e!important;background:#ecfdf5!important;box-shadow:0 0 0 4px rgba(34,197,94,.2)}
 </style>
 </head>
 <body>
@@ -317,9 +336,9 @@ img, canvas, video, svg{max-width:100%}
         <button class="acc-head"><div class="left-head">🖼️ 画像 / 重量</div><div class="chevron">▼</div></button>
         <div class="acc-body">
           <div class="tabs" id="imgTabs"><button class="tab active" data-tab="fabric">素地</button><button class="tab" data-tab="before">洗浄前</button><button class="tab" data-tab="after">洗浄後</button></div>
-          <div id="dropZone" class="drop" style="margin-top:10px"><div><div style="font-size:22px">⬆️</div><div style="font-size:12px;font-weight:800" id="dropLabel">素地画像をドロップ</div><div style="font-size:11px;color:var(--sub)">タップで選択</div></div><input id="fileInput" type="file" accept="image/*" style="display:none"></div>
+          <div id="dropZone" class="drop" style="margin-top:10px"><div><div style="font-size:22px">⬆️</div><div style="font-size:12px;font-weight:800" id="dropLabel">素地画像をドロップ / ペースト(Ctrl+V)</div><div style="font-size:11px;color:var(--sub)">タップで選択</div></div><input id="fileInput" type="file" accept="image/*" style="display:none"></div>
           <div class="thumb-row"><div class="thumb" id="thumb_fabric"><span class="lab">素地</span></div><div class="thumb" id="thumb_before"><span class="lab">洗浄前</span></div><div class="thumb" id="thumb_after"><span class="lab">洗浄後</span></div></div>
-          <div class="mini-note" style="margin-top:10px">重さは各画像に紐付け。ガーゼ1枚ずつ計量して入力 → 重量洗浄率を自動計算。</div>
+          <div class="mini-note" style="margin-top:10px">📋 Ctrl+V / Cmd+V で画像ペースト対応。スクショを直接貼り付け可能。<br>重さは各画像に紐付け。ガーゼ1枚ずつ計量して入力 → 重量洗浄率を自動計算。</div>
           <div style="margin-top:10px" class="weight-grid">
             <div class="weight-card active" data-w="fabric"><div class="w-head"><span class="w-title">⚖️ 素地 重量 (g)</span><span class="badge" id="badgeW_fabric">未入力</span></div><input id="weightFabric" class="input mono" type="number" step="0.001" placeholder="例 1.234"><div class="label" style="margin-top:6px">メモ</div><input id="memoFabric" class="input" style="min-height:36px" placeholder="乾燥状態など"></div>
             <div class="weight-card" data-w="before"><div class="w-head"><span class="w-title">⚖️ 洗浄前 重量 (g)</span><span class="badge" id="badgeW_before">未入力</span></div><input id="weightBefore" class="input mono" type="number" step="0.001" placeholder="例 1.456"><div class="label" style="margin-top:6px">汚染量 = 前-素地</div><div class="mono" id="soilAmount" style="font-size:11px;color:var(--sub)">- g</div></div>
@@ -475,6 +494,7 @@ img, canvas, video, svg{max-width:100%}
   #pdfReport .pdf-footer{position:absolute;left:28px;right:28px;bottom:16px;border-top:2px solid #f1f5f9;padding-top:10px;display:flex;justify-content:space-between;font-size:9px;color:#94a3b8}
   #pdfReport .pdf-kv{display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed #e5e7eb; font-size:11px}
   #pdfReport .pdf-kv:last-child{border-bottom:none}
+.drop.paste-active{border-color:#22c55e!important;background:#ecfdf5!important;box-shadow:0 0 0 4px rgba(34,197,94,.2)}
 </style>
 
 <script>
@@ -706,24 +726,139 @@ function updateWeightUI(){
 
 // Load image
 function loadImageFile(file,key){
-  const k=key||app.active; const reader=new FileReader();
-  reader.onload=e=>{
-    const img=new Image(); img.onload=()=>{
-      app.images[k]=img; app.correctedCanvases[k]=null; app.correctedImages[k]=null; app.gauzeContours[k]=null; app.cals[k]={black:null,white:null,blackRGB:null,whiteRGB:null};
-      const thumb=$(`thumb_${k}`); thumb.innerHTML=`<img src="${e.target.result}"><span class="lab">${k==='fabric'?'素地':k==='before'?'前':'後'}</span>`;
-      document.querySelector(`.tab[data-tab="${k}"]`)?.classList.add('has');
-      if(k===app.active){drawMain(); syncCalUI();}
-      updateCalStatus(); toast(`${k} 読込`);
-    }; img.src=e.target.result;
-  }; reader.readAsDataURL(file);
+  const k=key||app.active;
+  const logEl=$('detectLog');
+  if(logEl) logEl.textContent=`${k} 読み込み中... ${file.name} (${(file.size/1024).toFixed(1)}KB)`;
+  // FileReader + createObjectURL 両対応で確実に読み込む
+  const url=URL.createObjectURL(file);
+  const reader=new FileReader();
+  let done=false;
+  function onImgLoaded(img, src){
+    if(done) return; done=true;
+    app.images[k]=img;
+    app.correctedCanvases[k]=null;
+    app.correctedImages[k]=null;
+    app.gauzeContours[k]=null;
+    app.cals[k]={black:null,white:null,blackRGB:null,whiteRGB:null};
+    const thumb=$(`thumb_${k}`);
+    if(thumb) thumb.innerHTML=`<img src="${src}"><span class="lab">${k==='fabric'?'素地':k==='before'?'前':'後'}</span>`;
+    document.querySelector(`.tab[data-tab="${k}"]`)?.classList.add('has');
+    document.querySelector(`.weight-card[data-w="${k}"]`)?.classList.add('active');
+    if(k===app.active){drawMain(); syncCalUI(); syncRoiInputs();}
+    updateCalStatus(); updateWeightUI(); updateStepper();
+    toast(`${k} 読込完了 ${img.width}x${img.height}`);
+    if(logEl) logEl.textContent+=`\n✓ ${k} 読み込み成功`;
+    // 自動で軽くガーゼ検出を試みる (OpenCV準備できてれば)
+    setTimeout(()=>{ if(app.images[k] && app.rois[k]){ try{ autoDetectGauze(k); }catch(e){ console.warn(e); } } }, 300);
+  }
+  const img=new Image();
+  img.onload=()=>{
+    onImgLoaded(img, url);
+    // メモリ解放はサムネ用に残すので遅延
+    // URL.revokeObjectURL(url) は dataURL版があれば不要
+  };
+  img.onerror=()=>{
+    console.error('createObjectURL failed, fallback to FileReader');
+    // fallback to FileReader
+    reader.onload=e=>{
+      const img2=new Image();
+      img2.onload=()=>onImgLoaded(img2, e.target.result);
+      img2.onerror=()=>{ toast('画像読み込み失敗'); if(logEl) logEl.textContent+='\n✗ 読み込み失敗'; URL.revokeObjectURL(url); };
+      img2.src=e.target.result;
+    };
+    reader.onerror=()=>{ toast('ファイル読み込み失敗'); URL.revokeObjectURL(url); };
+    reader.readAsDataURL(file);
+  };
+  img.src=url;
 }
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setActiveTab(t.dataset.tab)));
 const dropZone=$('dropZone'), fileInput=$('fileInput');
+function safeLoad(file){
+  if(!file){ toast('ファイルが空です'); return; }
+  if(!file.type.startsWith('image/')){ toast('画像ファイルを選択してください: '+file.type); return; }
+  loadImageFile(file);
+}
+// クリックで選択
 dropZone.addEventListener('click',()=>fileInput.click());
-dropZone.addEventListener('dragover',e=>{e.preventDefault(); dropZone.classList.add('drag');});
-dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag'));
-dropZone.addEventListener('drop',e=>{e.preventDefault(); dropZone.classList.remove('drag'); const f=e.dataTransfer.files[0]; if(f) loadImageFile(f);});
-fileInput.addEventListener('change',e=>{const f=e.target.files[0]; if(f) loadImageFile(f); e.target.value='';});
+// dragenter/dragover 両方で preventDefault しないと drop が発火しない (これが元の最大のバグ)
+['dragenter','dragover'].forEach(ev=>{
+  dropZone.addEventListener(ev,e=>{e.preventDefault(); e.stopPropagation(); dropZone.classList.add('drag');});
+});
+['dragleave','dragend'].forEach(ev=>{
+  dropZone.addEventListener(ev,e=>{e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag');});
+});
+dropZone.addEventListener('drop',e=>{
+  e.preventDefault(); e.stopPropagation();
+  dropZone.classList.remove('drag');
+  const files=e.dataTransfer?.files;
+  if(!files||!files.length){ toast('ドロップされたファイルを取得できませんでした'); return; }
+  safeLoad(files[0]);
+});
+fileInput.addEventListener('change',e=>{
+  const f=e.target.files[0];
+  if(f) safeLoad(f);
+  e.target.value='';
+});
+// ドキュメント全体で画像を開かないように (iPad/PCで勝手に遷移するのを防ぐ)
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>e.preventDefault());
+
+// === 画像ペースト対応 (Ctrl+V / Cmd+V) ===
+document.addEventListener('paste', e=>{
+  const dz=document.getElementById('dropZone'); if(dz){ dz.classList.add('paste-active'); setTimeout(()=>dz.classList.remove('paste-active'), 600); }
+  const clipboard = e.clipboardData || window.clipboardData;
+  if(!clipboard) return;
+  // files がある場合
+  const files = clipboard.files;
+  if(files && files.length){
+    for(let f of files){
+      if(f.type.startsWith('image/')){
+        e.preventDefault();
+        toast('ペースト画像を読み込み中...');
+        // アクティブなタブに読み込む
+        loadImageFile(f, app.active);
+        return;
+      }
+    }
+  }
+  // items から取得 (Chrome/Firefoxのスクショなど)
+  const items = clipboard.items;
+  if(items){
+    for(let i=0;i<items.length;i++){
+      const item=items[i];
+      if(item.kind==='file' && item.type.startsWith('image/')){
+        e.preventDefault();
+        const f=item.getAsFile();
+        if(f){
+          toast('ペースト画像を読み込み中... ('+f.type+')');
+          loadImageFile(f, app.active);
+          return;
+        }
+      }
+    }
+  }
+});
+// canvas にフォーカスがある時も貼り付けできるよう、canvasStageでも同じ処理
+const _canvasStageForPaste = document.getElementById('canvasStage');
+if(_canvasStageForPaste){
+  _canvasStageForPaste.setAttribute('tabindex','0');
+  _canvasStageForPaste.addEventListener('paste', e=>{
+    // document側で処理されるので再発火防止だけ
+    e.stopPropagation();
+  });
+}
+
+// サムネにもドロップ可能に (使いやすさ向上)
+['fabric','before','after'].forEach(k=>{
+  const th=$(`thumb_${k}`);
+  if(!th) return;
+  ['dragenter','dragover'].forEach(ev=>th.addEventListener(ev,e=>{e.preventDefault(); e.stopPropagation(); th.style.outline='2px solid #2563eb';}));
+  ['dragleave','drop'].forEach(ev=>th.addEventListener(ev,e=>{e.preventDefault(); th.style.outline='';}));
+  th.addEventListener('drop',e=>{
+    e.preventDefault(); e.stopPropagation(); th.style.outline='';
+    const f=e.dataTransfer?.files?.[0]; if(f) loadImageFile(f,k);
+  });
+});
 ['fabric','before','after'].forEach(k=>{$(`thumb_${k}`)?.addEventListener('click',()=>setActiveTab(k));});
 
 // ROI drag
@@ -803,7 +938,7 @@ $('btnViewOriginal').addEventListener('click',()=>{app.viewMode='original'; sync
 $('btnViewCorrected').addEventListener('click',()=>{app.viewMode='corrected'; syncCalUI(); drawMain();});
 
 // Auto gauze detection
-function isOpenCvUsable(){ try{return window.cv&&typeof cv.Mat!=='undefined';}catch{return false} }
+function isOpenCvUsable(){ try{ return typeof cv!=='undefined' && cv && typeof cv.Mat!=='undefined' && typeof cv.matFromImageData!=='undefined'; }catch{ return false } }
 function logDetect(m){ $('detectLog').textContent=m; }
 function clearGauzeContour(key){ app.gauzeContours[key]=null; if(key===app.active) drawMain(); }
 
@@ -1267,7 +1402,17 @@ $('btnUploadPreset').addEventListener('click',()=>$('presetFileInput').click());
 $('presetFileInput').addEventListener('change',e=>{const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{try{applyPreset(JSON.parse(r.result));}catch{toast('JSONエラー');}}; r.readAsText(f); e.target.value='';});
 $('btnResetAll').addEventListener('click',()=>{ if(!confirm('リセットしますか？')) return; app.images={fabric:null,before:null,after:null}; app.correctedCanvases={fabric:null,before:null,after:null}; app.correctedImages={fabric:null,before:null,after:null}; app.gauzeContours={fabric:null,before:null,after:null}; app.cals={fabric:{black:null,white:null,blackRGB:null,whiteRGB:null},before:{black:null,white:null,blackRGB:null,whiteRGB:null},after:{black:null,white:null,blackRGB:null,whiteRGB:null}}; app.weights={fabric:null,before:null,after:null}; $('weightFabric').value=''; $('weightBefore').value=''; $('weightAfter').value=''; document.querySelectorAll('.thumb').forEach(el=>el.innerHTML=`<span class="lab">${el.id.includes('fabric')?'素地':el.id.includes('before')?'洗浄前':'洗浄後'}</span>`); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('has')); drawMain(); syncCalUI(); updateWeightUI(); updateCalStatus(); });
 
-window.__opencvRuntimeReady=()=>{ if(isOpenCvUsable()){ app.opencvReady=true; $('opencvStatus').className='badge ok'; $('statusDot').className='dot ok'; $('statusText').textContent='OpenCV Ready'; $('detectLog').textContent='OpenCV Ready - 自動検出利用可'; } };
+window.__opencvRuntimeReady=()=>{
+  try{
+    if(isOpenCvUsable()){
+      app.opencvReady=true;
+      const st=$('opencvStatus'); if(st){ st.className='badge ok'; st.innerHTML='<span id=statusDot class=dot ok></span><span id=statusText class=mono style=font-size:10px>OpenCV Ready</span>'; }
+      const log=$('detectLog'); if(log) log.textContent='OpenCV Ready - 自動検出利用可 (ガーゼの不定形輪郭を抽出できます)';
+      console.log('OpenCV Ready confirmed');
+    }
+  }catch(e){ console.error(e); }
+};
+
 setTimeout(()=>{ if(isOpenCvUsable()) window.__opencvRuntimeReady(); else {$('statusText').textContent='JSフォールバック'; $('detectLog').textContent='JSフォールバック - 簡易検出のみ';}},1200);
 
 function init(){ 

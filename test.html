@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>OpenCV.js 読み込みテスト</title>
+  </head>
+  <body>
+    <h1>OpenCV.js 読み込みテスト</h1>
+    <div id="status">読み込み中…</div>
+
+    <!-- 1. OpenCV.js の読み込み -->
+    <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@5.0.0-release.1/dist/opencv.js"></script>
+
+    <!-- 2. cv が準備できたときの処理 -->
+    <script>
+      // cv がまだ定義されていない可能性があるので、まずチェック
+      if (typeof cv !== "undefined") {
+        cv["onRuntimeInitialized"] = () => {
+          const status = document.getElementById("status");
+          status.textContent = "OpenCV.js が読み込まれました。version: " + cv.version_string;
+          console.log("OpenCV.js loaded, version:", cv.version_string);
+        };
+      } else {
+        // まだ cv がない場合、ロード完了を待つ
+        window.addEventListener("load", () => {
+          if (typeof cv !== "undefined") {
+            cv["onRuntimeInitialized"] = () => {
+              const status = document.getElementById("status");
+              status.textContent = "OpenCV.js が読み込まれました。version: " + cv.version_string;
+              console.log("OpenCV.js loaded, version:", cv.version_string);
+            };
+          } else {
+            const status = document.getElementById("status");
+            status.textContent = "OpenCV.js の読み込みに失敗しました。";
+            console.error("OpenCV.js が読み込まれていません");
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
