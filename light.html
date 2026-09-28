@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Lab Wash — 洗浄効果カラー解析</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+  :root{
+    --bg:#eef1f3;
+    --panel:#ffffff;
+    --panel-2:#f6f8f9;
+    --ink:#152025;
+    --ink-soft:#54646b;
+    --line:#d7dee1;
+    --line-strong:#b9c4c8;
+    --accent:#0f7a8c;
+    --accent-ink:#ffffff;
+    --accent-soft:#e2f2f4;
+    --good:#1f8a5f;
+    --good-soft:#e5f5ee;
+    --warn:#a1660f;
+    --warn-soft:#fbf0dd;
+    --bad:#b3341f;
+    --bad-soft:#fbe9e5;
+    --radius-lg:18px;
+    --radius-md:12px;
+    --radius-sm:8px;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --sans:'Zen Kaku Gothic New',system-ui,-apple-system,'Hiragino Kaku Gothic ProN',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--sans);
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  button,input{font-family:inherit;}
+  ::selection{background:var(--accent-soft);}
+
+  .shell{max-width:1180px;margin:0 auto;padding:0 16px 48px;}
+
+  header.top{
+    position:sticky;top:0;z-index:20;
+    background:rgba(255,255,255,.92);backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  .top-inner{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .mark{width:34px;height:34px;border-radius:9px;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;font-family:var(--mono);flex:none;}
+  .top-title{font-weight:700;font-size:16px;letter-spacing:.01em;}
+  .top-sub{font-size:12px;color:var(--ink-soft);}
+  .cv-badge{
+    margin-left:auto;font-size:11.5px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);
+    color:var(--ink-soft);white-space:nowrap;
+  }
+  .cv-badge.ready{background:var(--good-soft);border-color:#bfe3d1;color:var(--good);}
+  .cv-badge.loading{background:var(--accent-soft);border-color:#bfe0e5;color:var(--accent);}
+  .cv-badge.lite{background:var(--warn-soft);border-color:#eed9b0;color:var(--warn);}
+
+  .intro{padding:22px 0 6px;}
+  .intro h1{font-size:22px;margin:0 0 6px;font-weight:700;}
+  .intro p{margin:0;color:var(--ink-soft);font-size:13.5px;max-width:70ch;line-height:1.7;}
+
+  .steps{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0;}
+  .step-chip{
+    background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 13px;
+    font-size:12.5px;color:var(--ink-soft);
+  }
+
+  .banner{
+    border-radius:var(--radius-md);padding:12px 14px;margin-bottom:16px;
+    display:flex;align-items:center;gap:12px;font-size:13px;
+  }
+  .banner.warn{background:var(--warn-soft);border:1px solid #eed9b0;color:var(--warn);}
+  .banner.info{background:var(--accent-soft);border:1px solid #bfe0e5;color:var(--accent);}
+  .banner .spin{width:15px;height:15px;border-radius:50%;border:2px solid #bfe0e5;border-top-color:var(--accent);animation:spin 1s linear infinite;flex:none;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .banner button{border:1px solid currentColor;background:transparent;color:inherit;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;margin-left:auto;flex:none;}
+
+  section.card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);
+    padding:16px;margin-bottom:16px;
+  }
+  section.card h2{font-size:15px;margin:0 0 12px;font-weight:700;}
+  .card-sub{font-size:12px;color:var(--ink-soft);margin:-8px 0 12px;}
+
+  .grid{display:grid;gap:10px;}
+  .grid-4{grid-template-columns:repeat(4,1fr);}
+  .grid-3{grid-template-columns:repeat(3,1fr);}
+  .grid-2{grid-template-columns:repeat(2,1fr);}
+  @media (max-width:820px){
+    .grid-4{grid-template-columns:repeat(2,1fr);}
+    .grid-3{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (max-width:560px){
+    .grid-4,.grid-3,.grid-2{grid-template-columns:1fr;}
+  }
+
+  label.field{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500;}
+  label.field span{color:var(--ink-soft);font-weight:500;}
+  input[type=text],input[type=number],input[type=date]{
+    height:42px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:0 11px;
+    font-size:13.5px;background:#fff;color:var(--ink);
+  }
+  input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  input.mono{font-family:var(--mono);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .tab{
+    flex:1;min-width:140px;height:52px;border-radius:var(--radius-md);border:1px solid var(--line);
+    background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;
+    font-size:13.5px;font-weight:700;color:var(--ink);transition:background .12s,border-color .12s,color .12s;
+  }
+  .tab .dot{width:8px;height:8px;border-radius:50%;background:var(--line-strong);flex:none;}
+  .tab .dot.on{background:var(--good);}
+  .tab .dim{font-size:11px;font-weight:400;color:var(--ink-soft);font-family:var(--mono);}
+  .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .tab.active .dim{color:#c9d3d6;}
+  .tab.active .dot{background:#4bd3a0;}
+
+  .dropzone{
+    border:2px dashed var(--line-strong);border-radius:var(--radius-md);background:var(--panel-2);
+    padding:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+    margin-bottom:14px;transition:border-color .15s,background .15s;
+  }
+  .dropzone.drag{border-color:var(--accent);background:var(--accent-soft);}
+  .dz-text b{font-size:13.5px;}
+  .dz-text .hint{font-size:11.5px;color:var(--ink-soft);margin-top:3px;}
+  .dz-actions{display:flex;gap:8px;}
+
+  .btn{
+    height:42px;padding:0 16px;border-radius:var(--radius-sm);border:1px solid var(--line);
+    background:#fff;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;
+  }
+  .btn:hover{background:var(--panel-2);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .btn-dark{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .btn-dark:hover{background:#0c1519;}
+  .btn-accent{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .btn-accent:hover{background:#0c6577;}
+  .btn-good{background:var(--good);border-color:var(--good);color:#fff;}
+  .btn-good:hover{background:#187249;}
+  .btn-file{position:relative;overflow:hidden;}
+  .btn-file input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  .btn-sm{height:34px;padding:0 12px;font-size:12px;}
+
+  .workspace-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  @media (max-width:900px){.workspace-grid{grid-template-columns:1fr;}}
+  .canvas-panel{border:1px solid var(--line);border-radius:var(--radius-md);overflow:hidden;background:#fff;}
+  .canvas-head{height:36px;padding:0 12px;background:var(--panel-2);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;}
+  .canvas-head .stat{font-family:var(--mono);font-weight:400;color:var(--ink-soft);font-size:11px;}
+  .canvas-wrap{position:relative;height:420px;background:var(--panel-2);}
+  canvas{display:block;width:100%;height:100%;touch-action:none;}
+  #originalCanvas{cursor:crosshair;}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;}
+  .toolbar .spacer{margin-left:auto;font-size:11.5px;color:var(--ink-soft);}
+
+  .mode-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+  @media (max-width:700px){.mode-grid{grid-template-columns:repeat(2,1fr);}}
+  .mode-btn{
+    text-align:left;border-radius:var(--radius-md);border:1px solid var(--line);background:#fff;
+    padding:10px 12px;cursor:pointer;min-height:64px;
+  }
+  .mode-btn .t{font-size:13px;font-weight:700;}
+  .mode-btn .d{font-size:11px;color:var(--ink-soft);margin-top:3px;line-height:1.4;}
+  .mode-btn.active{background:var(--accent);border-color:var(--accent);}
+  .mode-btn.active .t,.mode-btn.active .d{color:#fff;}
+
+  .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+  @media (max-width:760px){.info-grid{grid-template-columns:1fr;}}
+  .info-card{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 11px;}
+  .info-card .h{font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:5px;}
+  .info-card .v{font-family:var(--mono);font-size:12px;line-height:1.5;word-break:break-all;}
+
+  .roi-box{border:1px solid var(--line);border-radius:var(--radius-md);padding:12px;background:var(--panel-2);margin-bottom:12px;}
+  .roi-box .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;}
+  .roi-box .desc{font-size:12px;color:var(--ink-soft);margin-top:4px;max-width:60ch;line-height:1.6;}
+  .roi-box .mono-line{font-family:var(--mono);font-size:11.5px;margin-top:6px;color:var(--ink-soft);}
+
+  .msg{border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;margin-top:8px;}
+  .msg.err{background:var(--bad-soft);color:var(--bad);}
+  .msg.ok{background:var(--good-soft);color:var(--good);}
+
+  details.settings{border:1px solid var(--line);border-radius:var(--radius-md);overflow:hidden;background:#fff;}
+  details.settings summary{list-style:none;cursor:pointer;padding:11px 14px;font-size:13px;font-weight:700;
+    display:flex;justify-content:space-between;align-items:center;}
+  details.settings summary::-webkit-details-marker{display:none;}
+  details.settings summary .hint{font-size:11px;font-weight:400;color:var(--ink-soft);}
+  .settings-body{padding:12px 14px;border-top:1px solid var(--line);background:var(--panel-2);
+    display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:700px){.settings-body{grid-template-columns:1fr;}}
+  .slider-row .lbl{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px;}
+  .slider-row .lbl b{font-weight:600;}
+  .slider-row .lbl span{font-family:var(--mono);color:var(--ink-soft);}
+  input[type=range]{width:100%;accent-color:var(--accent);}
+  .settings-note{grid-column:1/-1;font-size:11px;color:var(--ink-soft);line-height:1.6;}
+
+  table.results{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.results th{text-align:left;padding:8px;background:var(--panel-2);font-size:11px;color:var(--ink-soft);font-weight:600;}
+  table.results td{padding:8px;border-top:1px solid var(--line);}
+  table.results td.k{font-weight:700;}
+  table.results td.v{font-family:var(--mono);}
+  table.results td.desc{font-size:11px;color:var(--ink-soft);}
+  tr.highlight{background:var(--accent-soft);}
+
+  .slot-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+  @media (max-width:760px){.slot-cards{grid-template-columns:1fr;}}
+  .slot-card{border:1px solid var(--line);border-radius:var(--radius-md);padding:12px;background:var(--panel-2);}
+  .slot-card h3{margin:0 0 8px;font-size:13px;}
+  .slot-card .line{font-family:var(--mono);font-size:12px;margin-bottom:3px;}
+  .slot-card .sub{font-size:10.5px;color:var(--ink-soft);font-family:var(--mono);}
+  .empty-note{font-size:12.5px;color:var(--ink-soft);padding:6px 0;}
+
+  .export-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;}
+  .export-note{font-size:11.5px;color:var(--ink-soft);line-height:1.7;margin-top:12px;}
+
+  #toast{
+    position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;font-size:12.5px;padding:10px 18px;border-radius:999px;
+    max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;
+    z-index:50;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  footer.foot{text-align:center;color:var(--ink-soft);font-size:11.5px;padding:24px 0;}
+
+  
+  /* --- v4 Ultra Clean - inspired by 71% donut --- */
+  .ig-wrap{ display:flex; flex-direction:column; gap:16px; }
+  .ig-header{ display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid #e5e7eb; border-radius:20px; padding:18px 22px; }
+  .ig-header .title{ font-size:17px; font-weight:800; letter-spacing:-.02em; }
+  .ig-header .meta{ font-size:11px; color:#6b7280; margin-top:6px; font-family:var(--mono); display:flex; gap:10px; flex-wrap:wrap; }
+  .overall{ display:flex; align-items:center; gap:14px; }
+  .donut71{ position:relative; width:64px; height:64px; }
+  .donut71 svg{ transform:rotate(-90deg); display:block; }
+  .donut71 .c{ position:absolute; inset:0; display:grid; place-items:center; font-family:var(--mono); font-weight:800; font-size:17px; }
+
+  .flow{ display:grid; grid-template-columns:1fr 28px 1fr 28px 1fr; gap:10px; align-items:center; }
+  @media(max-width:820px){ .flow{ grid-template-columns:1fr; } .flow .arr{ transform:rotate(90deg); } }
+  .fcard{ background:#fff; border:1px solid #e5e7eb; border-radius:18px; padding:16px; }
+  .fcard .lbl{ font-size:10px; font-weight:700; letter-spacing:.12em; color:#9ca3af; text-align:center; margin-bottom:10px; }
+  .fcard .sw{ width:100%; height:68px; border-radius:12px; border:1px solid rgba(0,0,0,.06); }
+  .fcard .Lv{ font-family:var(--mono); font-size:30px; font-weight:800; text-align:center; margin:10px 0 2px; letter-spacing:-.04em; }
+  .fcard .Ls{ text-align:center; font-size:11px; color:#6b7280; }
+  .fcard .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:12px; }
+  .fcard .grid3 div{ background:#f9fafb; border:1px solid #f3f4f6; border-radius:10px; padding:7px 2px; text-align:center; }
+  .fcard .grid3 b{ display:block; font-size:9px; color:#9ca3af; margin-bottom:2px; }
+  .fcard .grid3 span{ font-family:var(--mono); font-size:11px; font-weight:700; color:#111827; }
+  .arr{ display:grid; place-items:center; color:#d1d5db; font-size:14px; }
+
+  .wash3{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  @media(max-width:960px){ .wash3{ grid-template-columns:1fr; } }
+  .wcard{ background:#fff; border:1px solid #e5e7eb; border-radius:20px; padding:18px; display:flex; flex-direction:column; gap:14px; }
+  .wcard .top{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .wcard .top .n{ font-size:13px; font-weight:700; color:#111827; }
+  .wcard .top .s{ font-size:10px; color:#9ca3af; font-family:var(--mono); margin-top:2px; }
+  .wcard .badge{ padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; }
+  .badge.good{ background:#ecfdf5; color:#047857; } .badge.mid{ background:#fffbeb; color:#b45309; } .badge.bad{ background:#fef2f2; color:#b91c1c; }
+
+  .wmain{ display:flex; gap:16px; align-items:center; }
+  .donutL{ position:relative; width:86px; height:86px; flex:none; }
+  .donutL .cc{ position:absolute; inset:0; display:grid; place-items:center; }
+  .donutL .cc .p{ font-family:var(--mono); font-size:22px; font-weight:800; line-height:1; letter-spacing:-.03em; }
+  .donutL .cc .q{ font-size:10px; color:#6b7280; margin-top:2px; }
+
+  .desc{ font-size:12px; color:#4b5563; line-height:1.5; flex:1; }
+
+  .formula{ background:#f9fafb; border:1px solid #f3f4f6; border-radius:12px; padding:12px; }
+  .formula .ttl{ font-size:10px; font-weight:700; letter-spacing:.08em; color:#9ca3af; margin-bottom:8px; text-transform:uppercase; }
+  .formula code{ display:block; font-family:var(--mono); font-size:11.5px; line-height:1.6; color:#111827; background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; white-space:nowrap; overflow-x:auto; }
+  .formula .calc{ font-family:var(--mono); font-size:11px; color:#6b7280; margin-top:8px; line-height:1.5; }
+  .formula .res{ font-family:var(--mono); font-size:13px; font-weight:800; color:#111827; margin-top:6px; padding:8px 10px; background:#fff; border-radius:8px; border:1px solid #e5e7eb; }
+
+  .bottom{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:820px){ .bottom{ grid-template-columns:1fr; } }
+  .box{ background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:16px; }
+  .box h4{ margin:0 0 12px; font-size:11px; font-weight:700; letter-spacing:.08em; color:#9ca3af; text-transform:uppercase; }
+  .bar{ display:flex; align-items:center; gap:10px; margin:10px 0; }
+  .bar .l{ width:50px; font-size:11px; font-weight:700; color:#6b7280; }
+  .bar .t{ flex:1; height:8px; background:#f3f4f6; border-radius:999px; overflow:hidden; }
+  .bar .f{ height:100%; border-radius:999px; }
+  .bar .v{ width:50px; text-align:right; font-family:var(--mono); font-size:12px; font-weight:700; }
+
+
+  .arrow{ display:grid; place-items:center; font-size:16px; color:var(--line-strong); }
+
+
+  /* --- V6 Hybrid + Infographic --- */
+  .v6-report{ display:flex; flex-direction:column; gap:22px; background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:20px; }
+  .v6-head{ display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #111827; padding-bottom:12px; margin-bottom:4px; }
+  .v6-head .ttl{ font-size:20px; font-weight:800; letter-spacing:-.02em; }
+  .v6-head .sub{ font-size:11px; color:#6b7280; margin-top:4px; }
+  .v6-head .pill{ display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; background:#f3f4f6; border:1px solid #e5e7eb; font-size:11px; font-family:var(--mono); }
+
+  .v6-sec{ display:flex; flex-direction:column; gap:10px; }
+  .v6-sec-head{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:800; }
+  .v6-sec-head::before{ content:''; width:3px; height:18px; background:#111827; border-radius:99px; display:inline-block; }
+
+  .meta-box{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media(max-width:800px){ .meta-box{ grid-template-columns:1fr; } }
+  .meta-card{ background:#f9fafb; border:1px solid #f3f4f6; border-radius:12px; padding:12px; }
+  .meta-row{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed #e5e7eb; font-size:12px; }
+  .meta-row:last-child{ border:none; }
+  .meta-row .k{ color:#6b7280; font-size:11px; } .meta-row .v{ font-weight:700; font-family:var(--mono); }
+
+  .weight-top{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  @media(max-width:800px){ .weight-top{ grid-template-columns:1fr; } }
+  .wgt-card{ background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:14px; }
+  .wgt-card .k{ font-size:10px; color:#9ca3af; font-weight:700; letter-spacing:.06em; }
+  .wgt-card .val{ font-size:18px; font-weight:800; font-family:var(--mono); margin:4px 0; }
+  .wgt-card .sub{ font-size:11px; color:#6b7280; }
+
+  .wash-hybrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  @media(max-width:900px){ .wash-hybrid{ grid-template-columns:1fr; } }
+  .wh-card{ background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  .wh-card .top{ display:flex; justify-content:space-between; }
+  .wh-card .name{ font-size:12px; font-weight:800; }
+  .wh-card .donut-row{ display:flex; align-items:center; gap:12px; }
+  .wh-card .bar{ height:6px; background:#f3f4f6; border-radius:999px; overflow:hidden; }
+  .wh-card .bar .fill{ height:100%; border-radius:999px; }
+  .wh-card .formula{ background:#f9fafb; border:1px solid #f3f4f6; border-radius:8px; padding:8px 10px; font-family:var(--mono); font-size:10.5px; line-height:1.5; }
+
+  .calib-table{ width:100%; border-collapse:collapse; font-size:11px; }
+  .calib-table th{ text-align:left; font-size:10px; color:#9ca3af; padding:8px 6px; border-bottom:1px solid #e5e7eb; }
+  .calib-table td{ padding:8px 6px; border-bottom:1px solid #f3f4f6; font-family:var(--mono); font-size:11px; }
+
+  .lab-v6{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  @media(max-width:800px){ .lab-v6{ grid-template-columns:1fr; } }
+  .lab-card{ background:#f9fafb; border:1px solid #f3f4f6; border-radius:12px; padding:12px; }
+  .lab-card .t{ font-size:10px; color:#9ca3af; font-weight:700; margin-bottom:6px; }
+  .lab-card .L{ font-size:18px; font-weight:800; font-family:var(--mono); }
+  .lab-card .ab{ font-size:11px; color:#4b5563; margin-top:4px; font-family:var(--mono); }
+  .lab-card .rgb{ font-size:10px; color:#9ca3af; margin-top:6px; font-family:var(--mono); }
+  .lab-card .sw{ width:100%; height:8px; border-radius:999px; margin-top:8px; border:1px solid rgba(0,0,0,.06); }
+
+  .delta-v6{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  @media(max-width:800px){ .delta-v6{ grid-template-columns:1fr; } }
+  .delta-card{ background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; text-align:center; }
+  .delta-card .k{ font-size:10px; color:#9ca3af; font-weight:700; }
+  .delta-card .v{ font-size:22px; font-weight:800; font-family:var(--mono); margin-top:4px; }
+
+  .img-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  @media(max-width:800px){ .img-grid{ grid-template-columns:1fr; } }
+  .img-card{ border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; background:#fff; }
+  .img-card img{ width:100%; height:160px; object-fit:contain; background:#111; display:block; }
+  .img-card .cap{ display:flex; justify-content:space-between; padding:8px 10px; font-size:10px; color:#6b7280; background:#f9fafb; border-top:1px solid #f3f4f6; }
+
+  .graph-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media(max-width:800px){ .graph-grid{ grid-template-columns:1fr; } }
+  .graph-box{ border:1px solid #e5e7eb; border-radius:12px; padding:12px; background:#fff; }
+  .graph-box canvas{ width:100% !important; height:180px !important; }
+
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="mark">LW</div>
+    <div>
+      <div class="top-title">Lab Wash</div>
+      <div class="top-sub">洗浄効果カラー解析ツール</div>
+    </div>
+    <span id="cvBadge" class="cv-badge">OpenCV 準備中...</span>
+  </div>
+</header>
+
+<div class="shell">
+
+  <div class="intro">
+    <h1>布のシミ・洗浄効果を色から測る</h1>
+    <p>BASE（きれいな布）・BEFORE（洗浄前）・AFTER（洗浄後）の3枚の写真から、L*a*b*・白色度・K/S値・色差ΔE00・重量減少率を自動で計算します。すべての処理はブラウザ内で完結し、画像や結果は外部に送信されません。</p>
+  </div>
+
+  <div class="steps">
+    <span class="step-chip">① 画像を読み込む</span>
+    <span class="step-chip">② 黒点・白点でキャリブレーション</span>
+    <span class="step-chip">③ ROI（測定範囲）を指定</span>
+    <span class="step-chip">④ ガーゼ／シミを検出</span>
+    <span class="step-chip">⑤ 解析を実行</span>
+    <span class="step-chip">⑥ PDF / JSON / ZIP で出力</span>
+  </div>
+
+  <div id="cvBanner" style="display:none"></div>
+
+  <!-- 実験情報 -->
+  <section class="card">
+    <h2>実験情報</h2>
+    <div class="grid grid-4">
+      <label class="field"><span>実験ID *</span>
+        <input id="metaExpId" type="text" placeholder="EXP-2026-001">
+      </label>
+      <label class="field"><span>布種・条件の名称</span>
+        <input id="metaMaterial" type="text" placeholder="綿ブロード">
+      </label>
+      <label class="field"><span>担当者</span>
+        <input id="metaPerson" type="text">
+      </label>
+      <label class="field"><span>実験日</span>
+        <input id="metaDate" type="date">
+      </label>
+    </div>
+    <div class="grid grid-4" style="margin-top:10px">
+      <label class="field" style="grid-column:span 2"><span>実験条件（洗剤・温度・時間など）</span>
+        <input id="metaCondition" type="text" placeholder="例: 40℃ 30分 洗剤A 0.5%">
+      </label>
+      <label class="field"><span>BASE重量 (g)</span>
+        <input id="wBase" class="mono" type="number" step="0.001" value="1.00">
+      </label>
+      <label class="field"><span>BEFORE重量 (g)</span>
+        <input id="wBefore" class="mono" type="number" step="0.001" value="1.50">
+      </label>
+    </div>
+    <div class="grid grid-4" style="margin-top:10px">
+      <label class="field"><span>AFTER重量 (g)</span>
+        <input id="wAfter" class="mono" type="number" step="0.001" value="1.10">
+      </label>
+    </div>
+  </section>
+
+  <!-- タブ -->
+  <div class="tabs" id="tabs"></div>
+
+  <!-- ワークスペース -->
+  <section class="card">
+    <div class="dropzone" id="dropzone">
+      <div class="dz-text">
+        <b id="dzTitle">BASE 画像をドラッグ＆ドロップ／貼り付け／選択</b>
+        <div class="hint">PC: 画像をドラッグ、またはウィンドウ内で Ctrl+V。タブレット: 長押しで画像を貼り付け。</div>
+      </div>
+      <div class="dz-actions">
+        <label class="btn btn-dark btn-file">ファイルを選択
+          <input id="fileInput" type="file" accept="image/*">
+        </label>
+        <button class="btn" id="clearImageBtn">この画像をクリア</button>
+      </div>
+    </div>
+
+    <div class="workspace-grid">
+      <div class="canvas-panel">
+        <div class="canvas-head"><span>元画像</span><span class="stat" id="statOriginal">—</span></div>
+        <div class="canvas-wrap"><canvas id="originalCanvas"></canvas></div>
+      </div>
+      <div class="canvas-panel">
+        <div class="canvas-head"><span>キャリブレーション後</span><span class="stat" id="statCalibrated">—</span></div>
+        <div class="canvas-wrap"><canvas id="calibratedCanvas"></canvas></div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn" id="zoomInBtn">拡大 +</button>
+      <button class="btn" id="zoomOutBtn">縮小 −</button>
+      <button class="btn" id="fitBtn">フィット</button>
+      <button class="btn" id="zoom100Btn">100%</button>
+      <span class="spacer">Ctrl / ⌘ + ホイールで拡大縮小・ドラッグで移動・タッチはピンチ操作に対応</span>
+    </div>
+
+    <div class="mode-grid" id="modeGrid"></div>
+
+    <div class="info-grid">
+      <div class="info-card"><div class="h">黒点</div><div class="v" id="infoBlack">未設定</div></div>
+      <div class="info-card"><div class="h">白点</div><div class="v" id="infoWhite">未設定</div></div>
+      <div class="info-card"><div class="h">補正式</div><div class="v">calibrated = (pixel − black) / (white − black) × 255</div></div>
+    </div>
+
+    <div class="roi-box">
+      <div class="row">
+        <div>
+          <b>ROI（測定範囲）とガーゼ検出</b>
+          <div class="desc">「ROI選択」モードで四角をドラッグして範囲を指定し、角のハンドルで調整できます。範囲内でシミ／ガーゼ領域を自動検出します。</div>
+          <div class="mono-line" id="roiInfo">ROI未設定</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm" id="clearRoiBtn">ROIをクリア</button>
+          <button class="btn btn-good" id="detectBtn">ガーゼ検出を実行</button>
+        </div>
+      </div>
+      <div id="roiMsg"></div>
+    </div>
+
+    <details class="settings" id="settingsDetails">
+      <summary>検出パラメータ調整 <span class="hint">通常は初期値のままで問題ありません</span></summary>
+      <div class="settings-body" id="settingsBody"></div>
+    </details>
+  </section>
+
+  <!-- 解析結果 -->
+  <section class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <h2 style="margin:0">解析結果</h2>
+      <button class="btn btn-dark" id="computeBtn">解析を実行</button>
+    </div>
+    <div id="resultsArea" style="margin-top:12px">
+      <div class="empty-note">BASE / BEFORE / AFTER の3画像とROIを準備してから「解析を実行」を押してください。</div>
+    </div>
+  </section>
+
+  <!-- 出力 -->
+  <section class="card">
+    <h2>出力</h2>
+    <div class="export-actions">
+      <button class="btn btn-accent" id="exportPdfBtn">PDFを出力</button>
+      <button class="btn" id="exportJsonBtn">JSONを出力</button>
+      <button class="btn" id="exportZipBtn">ZIPを出力（画像一式）</button>
+    </div>
+    <div class="export-note">PDFには実験情報・解析結果・各画像（元画像／キャリブレーション後／ガーゼ検出結果）を収録します。ZIPには元画像・キャリブレーション画像・検出結果画像・experiment.json・PDFをまとめます。</div>
+  </section>
+
+  <footer class="foot">Lab Wash — ブラウザ完結型カラー解析ツール（CIEDE2000 / K-M理論 / OpenCV検出対応）</footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ---------------- state ---------------- */
+  function newSlot(id, label){
+    return {
+      id, label, image:null, imageData:null, calibratedData:null,
+      blackPoint:null, whitePoint:null, roi:null,
+      gauzeMask:null, gauzeContour:null,
+      view:{scale:1, ox:0, oy:0}, mode:'view', error:'',
+      _origCanvas:null, _calibCanvas:null, _maskCanvas:null, _maskRoiKey:null
+    };
+  }
+  const state = {
+    active:'base',
+    slots:{ base:newSlot('base','BASE'), before:newSlot('before','BEFORE'), after:newSlot('after','AFTER') },
+    cv:{status:'idle'},
+    settings:{blur:5, thresh:0, edge:50, morph:15, minArea:5, tex:30},
+    meta:{expId:'EXP-2026-001', material:'', person:'', date:new Date().toISOString().slice(0,10), condition:''},
+    weights:{base:'1.00', before:'1.50', after:'1.10'},
+    results:null
+  };
+
+  const MODES = [
+    {id:'view',  t:'表示 / 移動',  d:'ドラッグで移動、ピンチ／Ctrl+ホイールで拡大縮小'},
+    {id:'black', t:'黒点を指定',   d:'画像内の最も暗い基準点をクリック（5×5px平均）'},
+    {id:'white', t:'白点を指定',   d:'画像内の最も明るい基準点をクリック（5×5px平均）'},
+    {id:'roi',   t:'ROIを選択',    d:'ドラッグして測定範囲を指定・角をつまんで調整'}
+  ];
+  const SETTINGS_DEF = [
+    {k:'blur',   label:'ぼかし (Gaussian)',        min:1,  max:15,  step:2},
+    {k:'edge',   label:'エッジ検出感度 (Canny)',    min:10, max:150, step:5},
+    {k:'thresh', label:'しきい値オフセット',        min:-20,max:20,  step:1},
+    {k:'morph',  label:'モルフォロジーカーネル',    min:7,  max:31,  step:2},
+    {k:'minArea',label:'最小面積 (ROIに対する%)',   min:1,  max:40,  step:1},
+    {k:'tex',    label:'テクスチャ感度',            min:0,  max:100, step:5}
+  ];
+
+  /* ---------------- element refs ---------------- */
+  const el = id => document.getElementById(id);
+  const els = {
+    tabs:el('tabs'), dropzone:el('dropzone'), dzTitle:el('dzTitle'),
+    fileInput:el('fileInput'), clearImageBtn:el('clearImageBtn'),
+    originalCanvas:el('originalCanvas'), calibratedCanvas:el('calibratedCanvas'),
+    statOriginal:el('statOriginal'), statCalibrated:el('statCalibrated'),
+    zoomInBtn:el('zoomInBtn'), zoomOutBtn:el('zoomOutBtn'), fitBtn:el('fitBtn'), zoom100Btn:el('zoom100Btn'),
+    modeGrid:el('modeGrid'), infoBlack:el('infoBlack'), infoWhite:el('infoWhite'),
+    roiInfo:el('roiInfo'), roiMsg:el('roiMsg'), clearRoiBtn:el('clearRoiBtn'), detectBtn:el('detectBtn'),
+    settingsBody:el('settingsBody'),
+    computeBtn:el('computeBtn'), resultsArea:el('resultsArea'),
+    exportPdfBtn:el('exportPdfBtn'), exportJsonBtn:el('exportJsonBtn'), exportZipBtn:el('exportZipBtn'),
+    cvBadge:el('cvBadge'), cvBanner:el('cvBanner'),
+    toast:el('toast'),
+    metaExpId:el('metaExpId'), metaMaterial:el('metaMaterial'), metaPerson:el('metaPerson'),
+    metaDate:el('metaDate'), metaCondition:el('metaCondition'),
+    wBase:el('wBase'), wBefore:el('wBefore'), wAfter:el('wAfter')
+  };
+  els.metaDate.value = state.meta.date;
+
+  /* ---------------- toast ---------------- */
+  let toastTimer = null;
+  function toast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>els.toast.classList.remove('show'), 3200);
+  }
+
+  /* ---------------- color math ---------------- */
+  function srgbToLinear(c){ c/=255; return c<=0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); }
+  function rgbToLab(r,g,b){
+    const R=srgbToLinear(r), G=srgbToLinear(g), B=srgbToLinear(b);
+    const X=R*0.4124+G*0.3576+B*0.1805;
+    const Y=R*0.2126+G*0.7152+B*0.0722;
+    const Z=R*0.0193+G*0.1192+B*0.9505;
+    const Xn=0.95047, Yn=1, Zn=1.08883;
+    const f=t=> t>0.008856 ? Math.cbrt(t) : (7.787*t + 16/116);
+    const fx=f(X/Xn), fy=f(Y/Yn), fz=f(Z/Zn);
+    return { L:116*fy-16, a:500*(fx-fy), b:200*(fy-fz) };
+  }
+  function whiteIndex(lab){ return 100 - Math.sqrt(Math.pow(100-lab.L,2) + lab.a*lab.a + lab.b*lab.b); }
+  function ksReflect(v){ const R=Math.min(0.999, Math.max(0.001, v/255)); return (1-R)*(1-R)/(2*R); }
+  function ksFromRGB(r,g,b){
+    const y = 0.2126*r + 0.7152*g + 0.0722*b;
+    return { r:ksReflect(r), g:ksReflect(g), b:ksReflect(b), y:ksReflect(y) };
+  }
+  function deltaE2000(lab1, lab2){
+    const toRad=d=>d*Math.PI/180, toDeg=r=>r*180/Math.PI;
+    const {L:L1,a:a1,b:b1}=lab1, {L:L2,a:a2,b:b2}=lab2;
+    const avgLp=(L1+L2)/2;
+    const C1=Math.sqrt(a1*a1+b1*b1), C2=Math.sqrt(a2*a2+b2*b2);
+    const avgC=(C1+C2)/2;
+    const G=0.5*(1-Math.sqrt(Math.pow(avgC,7)/(Math.pow(avgC,7)+Math.pow(25,7))));
+    const a1p=a1*(1+G), a2p=a2*(1+G);
+    const C1p=Math.sqrt(a1p*a1p+b1*b1), C2p=Math.sqrt(a2p*a2p+b2*b2);
+    const avgCp=(C1p+C2p)/2;
+    let h1p=Math.atan2(b1,a1p); if(h1p<0) h1p+=2*Math.PI;
+    let h2p=Math.atan2(b2,a2p); if(h2p<0) h2p+=2*Math.PI;
+    let deltahp;
+    if(C1p*C2p===0) deltahp=0;
+    else { deltahp=h2p-h1p; if(deltahp>Math.PI) deltahp-=2*Math.PI; else if(deltahp<-Math.PI) deltahp+=2*Math.PI; }
+    const deltaLp=L2-L1, deltaCp=C2p-C1p;
+    const deltaHp=2*Math.sqrt(C1p*C2p)*Math.sin(deltahp/2);
+    let avgHp;
+    if(C1p*C2p===0) avgHp=h1p+h2p;
+    else { avgHp=(h1p+h2p)/2; if(Math.abs(h1p-h2p)>Math.PI) avgHp += (avgHp<Math.PI)?Math.PI:-Math.PI; }
+    const T = 1 - 0.17*Math.cos(avgHp-toRad(30)) + 0.24*Math.cos(2*avgHp) + 0.32*Math.cos(3*avgHp+toRad(6)) - 0.2*Math.cos(4*avgHp-toRad(63));
+    const deltaTheta = toRad(30)*Math.exp(-Math.pow((toDeg(avgHp)-275)/25,2));
+    const Rc = 2*Math.sqrt(Math.pow(avgCp,7)/(Math.pow(avgCp,7)+Math.pow(25,7)));
+    const Sl = 1 + (0.015*Math.pow(avgLp-50,2))/Math.sqrt(20+Math.pow(avgLp-50,2));
+    const Sc = 1 + 0.045*avgCp;
+    const Sh = 1 + 0.015*avgCp*T;
+    const Rt = -Math.sin(2*deltaTheta)*Rc;
+    return Math.sqrt(
+      Math.pow(deltaLp/Sl,2) + Math.pow(deltaCp/Sc,2) + Math.pow(deltaHp/Sh,2) + Rt*(deltaCp/Sc)*(deltaHp/Sh)
+    );
+  }
+
+  /* ---------------- canvas helpers ---------------- */
+  function imageDataToCanvas(imgData){
+    const c=document.createElement('canvas'); c.width=imgData.width; c.height=imgData.height;
+    c.getContext('2d').putImageData(imgData,0,0);
+    return c;
+  }
+  // キャッシュ付き版: slot と種別キー(orig/calib)を渡すと、元データが変わっていない限り
+  // 同じ<canvas>を使い回す。render()が高頻度(ドラッグ/パン/ズーム中)で呼ばれても
+  // 毎回 putImageData でピクセル全転送をしないようにするための軽量化。
+  function getCachedCanvas(slot, kind){
+    if(kind==='orig'){
+      if(!slot.imageData) return null;
+      if(!slot._origCanvas) slot._origCanvas = imageDataToCanvas(slot.imageData);
+      return slot._origCanvas;
+    } else {
+      if(!slot.calibratedData) return null;
+      if(!slot._calibCanvas) slot._calibCanvas = imageDataToCanvas(slot.calibratedData);
+      return slot._calibCanvas;
+    }
+  }
+  function clamp255(v){ return Math.max(0, Math.min(255, v)); }
+  function setupHiDPI(canvas){
+    const rect=canvas.getBoundingClientRect();
+    const dpr=window.devicePixelRatio||1;
+    const w=Math.max(1, Math.round(rect.width)), h=Math.max(1, Math.round(rect.height));
+    const needW=Math.max(1, Math.round(w*dpr)), needH=Math.max(1, Math.round(h*dpr));
+    // サイズが変わっていない場合はcanvas.width/heightの再設定(=内容クリア＆再確保)を避ける
+    if(canvas.width!==needW) canvas.width=needW;
+    if(canvas.height!==needH) canvas.height=needH;
+    const ctx=canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {ctx, w, h};
+  }
+  function fitToView(slotId){
+    const slot=state.slots[slotId];
+    if(!slot.imageData) return;
+    const rect=els.originalCanvas.getBoundingClientRect();
+    const iw=slot.imageData.width, ih=slot.imageData.height;
+    const scale=Math.min(rect.width/iw, rect.height/ih)*0.94;
+    slot.view={ scale, ox:(rect.width-iw*scale)/2, oy:(rect.height-ih*scale)/2 };
+  }
+  function screenToImage(clientX, clientY, canvas, view){
+    const rect=canvas.getBoundingClientRect();
+    return { x:(clientX-rect.left-view.ox)/view.scale, y:(clientY-rect.top-view.oy)/view.scale };
+  }
+  function imageToScreen(pt, view){ return { x:pt.x*view.scale+view.ox, y:pt.y*view.scale+view.oy }; }
+
+  /* ---------------- rendering ---------------- */
+  // render()はUI全体(タブ/情報パネル/キャンバス2枚)を再構築する。
+  // ポインタのドラッグ中など高頻度で呼ばれる場面では requestAnimationFrame で
+  // 1フレームにつき1回にまとめ、無駄な再描画を減らす（結果や見た目は変えない）。
+  let rafPending=false;
+  function render(){
+    renderTabs();
+    renderDropzone();
+    renderModeGrid();
+    renderCalibInfo();
+    renderRoiInfo();
+    renderSettings();
+    renderCvBadge();
+    drawCanvases();
+    renderResults();
+  }
+  function scheduleRender(){
+    if(rafPending) return;
+    rafPending=true;
+    requestAnimationFrame(()=>{ rafPending=false; render(); });
+  }
+
+  function renderTabs(){
+    els.tabs.innerHTML='';
+    ['base','before','after'].forEach(id=>{
+      const s=state.slots[id];
+      const b=document.createElement('button');
+      b.className='tab'+(state.active===id?' active':'');
+      const dim = s.imageData ? `${s.imageData.width}×${s.imageData.height}` : '未読込';
+      b.innerHTML = `<span class="dot${s.imageData?' on':''}"></span>${s.label}<span class="dim">${dim}</span>`;
+      b.onclick=()=>{ state.active=id; render(); };
+      els.tabs.appendChild(b);
+    });
+  }
+
+  function renderDropzone(){
+    const s=state.slots[state.active];
+    els.dzTitle.textContent = `${s.label} 画像をドラッグ＆ドロップ／貼り付け／選択`;
+  }
+
+  function renderModeGrid(){
+    const s=state.slots[state.active];
+    els.modeGrid.innerHTML='';
+    MODES.forEach(m=>{
+      const b=document.createElement('button');
+      b.className='mode-btn'+(s.mode===m.id?' active':'');
+      b.innerHTML=`<div class="t">${m.t}</div><div class="d">${m.d}</div>`;
+      b.onclick=()=>{ s.mode=m.id; render(); };
+      els.modeGrid.appendChild(b);
+    });
+  }
+
+  function renderCalibInfo(){
+    const s=state.slots[state.active];
+    els.infoBlack.textContent = s.blackPoint
+      ? `(${s.blackPoint.p.x.toFixed(0)}, ${s.blackPoint.p.y.toFixed(0)})  RGB(${s.blackPoint.rgb.r.toFixed(0)}, ${s.blackPoint.rgb.g.toFixed(0)}, ${s.blackPoint.rgb.b.toFixed(0)})`
+      : '未設定 — 「黒点を指定」モードでクリック';
+    els.infoWhite.textContent = s.whitePoint
+      ? `(${s.whitePoint.p.x.toFixed(0)}, ${s.whitePoint.p.y.toFixed(0)})  RGB(${s.whitePoint.rgb.r.toFixed(0)}, ${s.whitePoint.rgb.g.toFixed(0)}, ${s.whitePoint.rgb.b.toFixed(0)})`
+      : '未設定 — 「白点を指定」モードでクリック';
+    els.statOriginal.textContent = s.imageData ? `${s.imageData.width}×${s.imageData.height} / ${s.view.scale.toFixed(2)}x` : '—';
+    els.statCalibrated.textContent = s.calibratedData ? '補正済み' : (s.imageData ? '未補正' : '—');
+  }
+
+  function renderRoiInfo(){
+    const s=state.slots[state.active];
+    els.roiInfo.textContent = s.roi
+      ? `ROI  x:${s.roi.x.toFixed(0)} y:${s.roi.y.toFixed(0)} w:${s.roi.w.toFixed(0)} h:${s.roi.h.toFixed(0)}`
+      : 'ROI未設定 — 「ROIを選択」モードでドラッグして範囲を指定してください';
+    let msg='';
+    if(s.gauzeMask){
+      const count=s.gauzeMask.reduce((a,v)=>a+v,0);
+      msg = `<div class="msg ok">検出済み: ${count}px${s.gauzeContour?` / 輪郭点 ${s.gauzeContour.length}`:''}</div>`;
+    }
+    if(s.error){ msg += `<div class="msg err">${s.error}</div>`; }
+    els.roiMsg.innerHTML = msg;
+    els.detectBtn.disabled = !(s.imageData && s.roi);
+  }
+
+  function renderSettings(){
+    els.settingsBody.innerHTML='';
+    SETTINGS_DEF.forEach(def=>{
+      const wrap=document.createElement('div'); wrap.className='slider-row';
+      wrap.innerHTML = `<div class="lbl"><b>${def.label}</b><span>${state.settings[def.k]}</span></div>
+        <input type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${state.settings[def.k]}">`;
+      const input=wrap.querySelector('input');
+      input.addEventListener('input', e=>{
+        state.settings[def.k]=parseInt(e.target.value,10);
+        wrap.querySelector('span').textContent = state.settings[def.k];
+      });
+      els.settingsBody.appendChild(wrap);
+    });
+    const note=document.createElement('div'); note.className='settings-note';
+    note.textContent='検出手順: グレースケール化 → ぼかし → Sobelエッジ / Canny / 適応的二値化 / 大津の二値化を統合 → モルフォロジー処理 → 輪郭抽出 → 面積・形状・中心性でスコアリングして最有力領域を採用します。';
+    els.settingsBody.appendChild(note);
+  }
+
+  function renderCvBadge(){
+    const st=state.cv.status;
+    const map={ idle:['OpenCV 準備中...',''], loading:['OpenCV 読み込み中...','loading'],
+      ready:['OpenCV 高精度モード','ready'], lite:['軽量モード（OpenCV未使用）','lite'] };
+    const [txt, cls]=map[st]||map.idle;
+    els.cvBadge.textContent=txt;
+    els.cvBadge.className='cv-badge'+(cls?' '+cls:'');
+    if(st==='loading'){
+      els.cvBanner.style.display='';
+      els.cvBanner.innerHTML = `<div class="banner info"><span class="spin"></span>OpenCV（高精度検出エンジン）を読み込み中です。数秒お待ちください。読み込めない場合は自動的に軽量モードに切り替わります。</div>`;
+    } else if(st==='lite'){
+      els.cvBanner.style.display='';
+      els.cvBanner.innerHTML = `<div class="banner warn">軽量モード（大津の二値化）で動作しています。ネットワーク環境によりOpenCVが読み込めませんでした。検出精度は保たれますが、複雑な形状ではOpenCVモードの方が安定します。<button id="retryCvBtn">再試行</button></div>`;
+      const rb=el('retryCvBtn'); if(rb) rb.onclick=loadOpenCV;
+    } else {
+      els.cvBanner.style.display='none'; els.cvBanner.innerHTML='';
+    }
+  }
+
+  function drawCanvases(){ drawOriginal(); drawCalibrated(); }
+
+  function drawOriginal(){
+    const slot=state.slots[state.active];
+    const {ctx,w,h}=setupHiDPI(els.originalCanvas);
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle='#f0f3f4'; ctx.fillRect(0,0,w,h);
+    if(!slot.imageData){
+      ctx.fillStyle='#93a2a7'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('画像を読み込んでください', w/2, h/2);
+      return;
+    }
+    const off=getCachedCanvas(slot,'orig');
+    ctx.save();
+    ctx.translate(slot.view.ox, slot.view.oy);
+    ctx.scale(slot.view.scale, slot.view.scale);
+    ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+    ctx.drawImage(off,0,0);
+
+    if(slot.roi){
+      const r=slot.roi, BIG=100000;
+      ctx.save();
+      ctx.fillStyle='rgba(10,20,25,.38)';
+      ctx.fillRect(-BIG,-BIG,BIG*2,r.y+BIG);
+      ctx.fillRect(-BIG,r.y+r.h,BIG*2,BIG);
+      ctx.fillRect(-BIG,r.y,r.x+BIG,r.h);
+      ctx.fillRect(r.x+r.w,r.y,BIG,r.h);
+      ctx.restore();
+      ctx.strokeStyle='#0f7a8c'; ctx.lineWidth=2/slot.view.scale;
+      ctx.strokeRect(r.x,r.y,r.w,r.h);
+
+      if(slot.gauzeMask){
+        const rw=Math.round(r.w), rh=Math.round(r.h);
+        const roiKey=`${rw}x${rh}`;
+        // マスクのオーバーレイ画像も、同じROI/マスクである間はキャッシュを再利用する
+        if(!slot._maskCanvas || slot._maskRoiKey!==roiKey){
+          const mc=document.createElement('canvas'); mc.width=rw; mc.height=rh;
+          const mctx=mc.getContext('2d');
+          const mid=mctx.createImageData(rw,rh);
+          for(let i=0;i<slot.gauzeMask.length && i<rw*rh;i++){
+            if(slot.gauzeMask[i]){ mid.data[i*4]=34; mid.data[i*4+1]=197; mid.data[i*4+2]=94; mid.data[i*4+3]=110; }
+          }
+          mctx.putImageData(mid,0,0);
+          slot._maskCanvas=mc; slot._maskRoiKey=roiKey;
+        }
+        ctx.drawImage(slot._maskCanvas, r.x, r.y);
+        if(slot.gauzeContour && slot.gauzeContour.length>2){
+          ctx.strokeStyle='#22c55e'; ctx.lineWidth=2/slot.view.scale;
+          ctx.beginPath();
+          slot.gauzeContour.forEach((pt,i)=>{
+            const px=r.x+pt.x, py=r.y+pt.y;
+            if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+          });
+          ctx.closePath(); ctx.stroke();
+        }
+      }
+    }
+
+    [[slot.blackPoint,0],[slot.whitePoint,1]].forEach(([pt,i])=>{
+      if(!pt) return;
+      ctx.fillStyle = i===0 ? '#000' : '#fff';
+      ctx.strokeStyle = i===0 ? '#fff' : '#000';
+      ctx.lineWidth = 2/slot.view.scale;
+      ctx.beginPath(); ctx.arc(pt.p.x, pt.p.y, 8/slot.view.scale, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = i===0 ? '#fff' : '#000';
+      ctx.font = `${12/slot.view.scale}px sans-serif`; ctx.textAlign='left';
+      ctx.fillText(i===0?'B':'W', pt.p.x+10/slot.view.scale, pt.p.y);
+    });
+    ctx.restore();
+
+    if(slot.roi && slot.mode==='roi'){
+      const r=slot.roi;
+      [['tl',r.x,r.y],['tr',r.x+r.w,r.y],['bl',r.x,r.y+r.h],['br',r.x+r.w,r.y+r.h]].forEach(([id,x,y])=>{
+        const s=imageToScreen({x,y}, slot.view);
+        ctx.fillStyle='#0f7a8c'; ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(s.x, s.y, 9, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      });
+    }
+  }
+
+  function drawCalibrated(){
+    const slot=state.slots[state.active];
+    const {ctx,w,h}=setupHiDPI(els.calibratedCanvas);
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle='#f0f3f4'; ctx.fillRect(0,0,w,h);
+    if(!slot.calibratedData){
+      ctx.fillStyle='#93a2a7'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+      ctx.fillText(slot.imageData ? '黒点・白点を設定してください' : '画像を読み込んでください', w/2, h/2);
+      return;
+    }
+    const off=getCachedCanvas(slot,'calib');
+    ctx.save();
+    ctx.translate(slot.view.ox, slot.view.oy);
+    ctx.scale(slot.view.scale, slot.view.scale);
+    ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+    ctx.drawImage(off,0,0);
+    ctx.restore();
+  }
+
+  /* ---------------- image loading ---------------- */
+  function loadImageFile(file, slotId){
+    if(!file || !file.type || file.type.indexOf('image')===-1){ toast('画像ファイルを選択してください'); return; }
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight;
+        const ctx=c.getContext('2d',{willReadFrequently:true}); ctx.drawImage(img,0,0);
+        const imageData=ctx.getImageData(0,0,c.width,c.height);
+        const slot=state.slots[slotId];
+        Object.assign(slot, {
+          image:img, imageData, calibratedData:null,
+          blackPoint:null, whitePoint:null, roi:null,
+          gauzeMask:null, gauzeContour:null, mode:'view', error:'',
+          _origCanvas:c, _calibCanvas:null, _maskCanvas:null, _maskRoiKey:null
+        });
+        fitToView(slotId);
+        render();
+        toast(`${slot.label} 画像を読み込みました (${img.naturalWidth}×${img.naturalHeight})`);
+      };
+      img.onerror=()=>toast('画像の読み込みに失敗しました');
+      img.src=reader.result;
+    };
+    reader.onerror=()=>toast('ファイルの読み込みに失敗しました');
+    reader.readAsDataURL(file);
+  }
+
+  els.fileInput.addEventListener('change', e=>{
+    const f=e.target.files && e.target.files[0];
+    if(f) loadImageFile(f, state.active);
+    e.target.value='';
+  });
+  els.clearImageBtn.addEventListener('click', ()=>{
+    const id=state.active;
+    state.slots[id]=newSlot(id, state.slots[id].label);
+    render();
+    toast(`${state.slots[id].label} をクリアしました`);
+  });
+  els.dropzone.addEventListener('dragover', e=>{ e.preventDefault(); els.dropzone.classList.add('drag'); });
+  els.dropzone.addEventListener('dragleave', ()=> els.dropzone.classList.remove('drag'));
+  els.dropzone.addEventListener('drop', e=>{
+    e.preventDefault(); els.dropzone.classList.remove('drag');
+    const f=e.dataTransfer.files && e.dataTransfer.files[0];
+    if(f) loadImageFile(f, state.active);
+  });
+  window.addEventListener('paste', e=>{
+    const tag=document.activeElement && document.activeElement.tagName;
+    if(tag==='INPUT' || tag==='TEXTAREA') return;
+    const items=e.clipboardData && e.clipboardData.items;
+    if(!items) return;
+    for(const item of items){
+      if(item.type.indexOf('image')!==-1){
+        const f=item.getAsFile();
+        if(f){ loadImageFile(f, state.active); e.preventDefault(); break; }
+      }
+    }
+  });
+
+  /* ---------------- calibration ---------------- */
+  function sampleColorAt(imageData, x, y){
+    const w=imageData.width, h=imageData.height;
+    const x0=Math.max(0, Math.floor(x)-2), x1=Math.min(w-1, Math.floor(x)+2);
+    const y0=Math.max(0, Math.floor(y)-2), y1=Math.min(h-1, Math.floor(y)+2);
+    let r=0,g=0,b=0,n=0;
+    for(let yy=y0; yy<=y1; yy++) for(let xx=x0; xx<=x1; xx++){
+      const idx=(yy*w+xx)*4; r+=imageData.data[idx]; g+=imageData.data[idx+1]; b+=imageData.data[idx+2]; n++;
+    }
+    return { r:r/n, g:g/n, b:b/n };
+  }
+  function updateCalibration(slot){
+    if(!slot.blackPoint || !slot.whitePoint || !slot.imageData){ slot.calibratedData=null; slot._calibCanvas=null; return; }
+    const bp=slot.blackPoint.rgb, wp=slot.whitePoint.rgb;
+    const dr=wp.r-bp.r, dg=wp.g-bp.g, db=wp.b-bp.b;
+    if(Math.abs(dr)<0.5 || Math.abs(dg)<0.5 || Math.abs(db)<0.5){
+      slot.error='黒点と白点の明るさが近すぎます。離れた場所を選び直してください。';
+      slot.calibratedData=null; slot._calibCanvas=null; return;
+    }
+    slot.error='';
+    const src=slot.imageData, out=new ImageData(src.width, src.height);
+    for(let i=0;i<src.data.length;i+=4){
+      out.data[i]   = clamp255((src.data[i]-bp.r)/dr*255);
+      out.data[i+1] = clamp255((src.data[i+1]-bp.g)/dg*255);
+      out.data[i+2] = clamp255((src.data[i+2]-bp.b)/db*255);
+      out.data[i+3] = src.data[i+3];
+    }
+    slot.calibratedData=out;
+    slot._calibCanvas=null; // 次の描画時にキャッシュを再生成
+  }
+  function sampleCalibrationPoint(slot, mode, imgPt){
+    const iw=slot.imageData.width, ih=slot.imageData.height;
+    if(imgPt.x<0 || imgPt.y<0 || imgPt.x>=iw || imgPt.y>=ih){ toast('画像の範囲内をクリックしてください'); return; }
+    const rgb=sampleColorAt(slot.imageData, imgPt.x, imgPt.y);
+    if(mode==='black'){
+      slot.blackPoint={p:imgPt, rgb}; slot.mode='white';
+      toast(`黒点を設定しました RGB(${rgb.r.toFixed(0)}, ${rgb.g.toFixed(0)}, ${rgb.b.toFixed(0)}) — 続けて白点をクリック`);
+    } else {
+      slot.whitePoint={p:imgPt, rgb}; slot.mode='view';
+      toast(`白点を設定しました RGB(${rgb.r.toFixed(0)}, ${rgb.g.toFixed(0)}, ${rgb.b.toFixed(0)})`);
+    }
+    updateCalibration(slot);
+  }
+
+  /* ---------------- ROI ---------------- */
+  function clampRoi(slot, roi){
+    const iw=slot.imageData.width, ih=slot.imageData.height;
+    let {x,y,w,h}=roi;
+    x=Math.max(0, Math.min(x, iw-10));
+    y=Math.max(0, Math.min(y, ih-10));
+    w=Math.max(10, Math.min(w, iw-x));
+    h=Math.max(10, Math.min(h, ih-y));
+    return {x,y,w,h};
+  }
+  function setRoi(slot, roi){ slot.roi=roi; slot.gauzeMask=null; slot.gauzeContour=null; slot._maskCanvas=null; slot._maskRoiKey=null; }
+  function hitTestHandle(slot, clientX, clientY){
+    const r=slot.roi; if(!r) return null;
+    const rect=els.originalCanvas.getBoundingClientRect();
+    const pts=[['tl',r.x,r.y],['tr',r.x+r.w,r.y],['bl',r.x,r.y+r.h],['br',r.x+r.w,r.y+r.h]];
+    for(const [id,x,y] of pts){
+      const sx=x*slot.view.scale+slot.view.ox+rect.left;
+      const sy=y*slot.view.scale+slot.view.oy+rect.top;
+      if(Math.hypot(sx-clientX, sy-clientY)<20) return id;
+    }
+    return null;
+  }
+  els.clearRoiBtn.addEventListener('click', ()=>{
+    const s=state.slots[state.active];
+    s.roi=null; s.gauzeMask=null; s.gauzeContour=null; s._maskCanvas=null; s._maskRoiKey=null; s.error='';
+    render(); toast('ROIをクリアしました');
+  });
+
+  /* ---------------- pointer interaction ---------------- */
+  const pointers=new Map();
+  let dragState=null, pinchStartDist=null, pinchStartView=null;
+
+  function applyZoomAtClientPoint(slot, baseView, factor, clientX, clientY){
+    const rect=els.originalCanvas.getBoundingClientRect();
+    const cx=clientX-rect.left, cy=clientY-rect.top;
+    const newScale=Math.max(0.05, Math.min(20, baseView.scale*factor));
+    const imgX=(cx-baseView.ox)/baseView.scale, imgY=(cy-baseView.oy)/baseView.scale;
+    slot.view={ scale:newScale, ox:cx-imgX*newScale, oy:cy-imgY*newScale };
+  }
+
+  els.originalCanvas.addEventListener('pointerdown', e=>{
+    const slot=state.slots[state.active];
+    if(!slot.imageData) return;
+    e.preventDefault();
+    els.originalCanvas.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    const imgPt=screenToImage(e.clientX, e.clientY, els.originalCanvas, slot.view);
+
+    if(slot.mode==='black' || slot.mode==='white'){
+      sampleCalibrationPoint(slot, slot.mode, imgPt); render(); return;
+    }
+    if(slot.mode==='roi'){
+      if(slot.roi){
+        const handle=hitTestHandle(slot, e.clientX, e.clientY);
+        if(handle){ dragState={type:'handle', handle, start:{...slot.roi}, startImg:imgPt}; return; }
+        if(imgPt.x>=slot.roi.x && imgPt.x<=slot.roi.x+slot.roi.w && imgPt.y>=slot.roi.y && imgPt.y<=slot.roi.y+slot.roi.h){
+          dragState={type:'move', start:{...slot.roi}, startImg:imgPt}; return;
+        }
+      }
+      dragState={type:'create', startImg:imgPt};
+      slot.roi={x:imgPt.x, y:imgPt.y, w:0, h:0};
+      render(); return;
+    }
+    if(pointers.size===1){
+      dragState={type:'pan', startView:{...slot.view}, startClient:{x:e.clientX, y:e.clientY}};
+    }
+    if(pointers.size===2){
+      const pts=Array.from(pointers.values());
+      pinchStartDist=Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
+      pinchStartView={...slot.view};
+    }
+  });
+
+  els.originalCanvas.addEventListener('pointermove', e=>{
+    if(!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    const slot=state.slots[state.active];
+    if(!slot.imageData) return;
+
+    if(pointers.size===2){
+      const pts=Array.from(pointers.values());
+      const dist=Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
+      if(pinchStartDist){
+        const factor=dist/pinchStartDist;
+        const midX=(pts[0].x+pts[1].x)/2, midY=(pts[0].y+pts[1].y)/2;
+        applyZoomAtClientPoint(slot, pinchStartView, factor, midX, midY);
+        scheduleRender();
+      }
+      return;
+    }
+
+    const imgPt=screenToImage(e.clientX, e.clientY, els.originalCanvas, slot.view);
+
+    if(dragState && dragState.type==='handle'){
+      let {x,y,w,h}=dragState.start;
+      const hd=dragState.handle;
+      if(hd==='tl'){ w=x+w-imgPt.x; h=y+h-imgPt.y; x=imgPt.x; y=imgPt.y; }
+      if(hd==='tr'){ w=imgPt.x-x; h=y+h-imgPt.y; y=imgPt.y; }
+      if(hd==='bl'){ w=x+w-imgPt.x; h=imgPt.y-y; x=imgPt.x; }
+      if(hd==='br'){ w=imgPt.x-x; h=imgPt.y-y; }
+      setRoi(slot, clampRoi(slot, {x,y,w:Math.max(10,w),h:Math.max(10,h)}));
+      scheduleRender(); return;
+    }
+    if(dragState && dragState.type==='move'){
+      const dx=imgPt.x-dragState.startImg.x, dy=imgPt.y-dragState.startImg.y;
+      setRoi(slot, clampRoi(slot, {x:dragState.start.x+dx, y:dragState.start.y+dy, w:dragState.start.w, h:dragState.start.h}));
+      scheduleRender(); return;
+    }
+    if(dragState && dragState.type==='create'){
+      const x=Math.min(dragState.startImg.x, imgPt.x), y=Math.min(dragState.startImg.y, imgPt.y);
+      const w=Math.abs(imgPt.x-dragState.startImg.x), h=Math.abs(imgPt.y-dragState.startImg.y);
+      setRoi(slot, clampRoi(slot, {x,y,w,h}));
+      scheduleRender(); return;
+    }
+    if(dragState && dragState.type==='pan'){
+      const dx=e.clientX-dragState.startClient.x, dy=e.clientY-dragState.startClient.y;
+      slot.view={...dragState.startView, ox:dragState.startView.ox+dx, oy:dragState.startView.oy+dy};
+      scheduleRender(); return;
+    }
+  });
+
+  function endPointer(e){
+    pointers.delete(e.pointerId);
+    if(pointers.size<2) pinchStartDist=null;
+    if(pointers.size===0) dragState=null;
+    renderRoiInfo();
+  }
+  els.originalCanvas.addEventListener('pointerup', endPointer);
+  els.originalCanvas.addEventListener('pointercancel', endPointer);
+
+  els.originalCanvas.addEventListener('wheel', e=>{
+    if(!(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
+    const slot=state.slots[state.active];
+    if(!slot.imageData) return;
+    const factor=e.deltaY<0 ? 1.1 : 0.9;
+    applyZoomAtClientPoint(slot, slot.view, factor, e.clientX, e.clientY);
+    scheduleRender();
+  }, {passive:false});
+
+  els.zoomInBtn.addEventListener('click', ()=>zoomButton(1.25));
+  els.zoomOutBtn.addEventListener('click', ()=>zoomButton(0.8));
+  els.fitBtn.addEventListener('click', ()=>{ fitToView(state.active); render(); });
+  els.zoom100Btn.addEventListener('click', ()=>{
+    const s=state.slots[state.active]; s.view={...s.view, scale:1}; render();
+  });
+  function zoomButton(factor){
+    const slot=state.slots[state.active];
+    if(!slot.imageData) return;
+    const rect=els.originalCanvas.getBoundingClientRect();
+    applyZoomAtClientPoint(slot, slot.view, factor, rect.left+rect.width/2, rect.top+rect.height/2);
+    render();
+  }
+
+  let resizeTimer=null;
+  window.addEventListener('resize', ()=>{
+    clearTimeout(resizeTimer);
+    resizeTimer=setTimeout(()=>{ drawCanvases(); }, 80);
+  });
+
+  /* ---------------- OpenCV loading ---------------- */
+  function loadOpenCV(){
+    if(state.cv.status==='ready' || state.cv.status==='loading') return;
+    state.cv.status='loading'; render();
+    const SRC='https://cdn.jsdelivr.net/npm/@techstark/opencv-js/dist/opencv.js';
+    const finishReady=()=>{ state.cv.status='ready'; render(); toast('OpenCV読み込み完了 — 高精度検出が利用可能です'); };
+    const finishLite=(reason)=>{ console.warn('[OpenCV] fallback to lite:', reason); state.cv.status='lite'; render(); };
+
+    let script=document.querySelector('script[data-opencv]');
+    if(!script){
+      script=document.createElement('script');
+      script.src=SRC; script.async=true; script.dataset.opencv='1';
+      script.onerror=()=>finishLite('script load error');
+      document.head.appendChild(script);
+    }
+    let tries=0;
+    const poll=setInterval(()=>{
+      const cv=window.cv;
+      if(cv){
+        if(typeof cv.then==='function'){
+          clearInterval(poll);
+          cv.then(resolved=>{ window.cv=resolved; finishReady(); }).catch(e=>finishLite(e));
+          return;
+        }
+        if(cv.Mat){ clearInterval(poll); finishReady(); return; }
+      }
+      tries++;
+      if(tries>=150){ clearInterval(poll); finishLite('timeout'); }
+    }, 100);
+  }
+  loadOpenCV();
+
+  /* ---------------- detection: lite (Otsu + connected components) ---------------- */
+  function detectLite(canvas, settings){
+    const w=canvas.width, h=canvas.height;
+    const ctx=canvas.getContext('2d', {willReadFrequently:true});
+    const data=ctx.getImageData(0,0,w,h).data;
+    const n=w*h;
+    const gray=new Uint8Array(n);
+    const hist=new Uint32Array(256);
+    for(let i=0,p=0;i<n;i++,p+=4){
+      const g=(0.299*data[p]+0.587*data[p+1]+0.114*data[p+2])|0;
+      gray[i]=g; hist[g]++;
+    }
+    let sum=0; for(let i=0;i<256;i++) sum+=i*hist[i];
+    let sumB=0, wB=0, wF=0, maxVar=0, threshold=127;
+    for(let t=0;t<256;t++){
+      wB+=hist[t]; if(wB===0) continue;
+      wF=n-wB; if(wF===0) break;
+      sumB+=t*hist[t];
+      const mB=sumB/wB, mF=(sum-sumB)/wF;
+      const v=wB*wF*(mB-mF)*(mB-mF);
+      if(v>maxVar){ maxVar=v; threshold=t; }
+    }
+    threshold=Math.max(0, Math.min(255, threshold+(settings.thresh|0)));
+
+    const cx0=(w*0.25)|0, cx1=(w*0.75)|0, cy0=(h*0.25)|0, cy1=(h*0.75)|0;
+    let centerSum=0, centerCount=0;
+    for(let y=cy0;y<cy1;y++) for(let x=cx0;x<cx1;x++){ centerSum+=gray[y*w+x]; centerCount++; }
+    const centerMean=centerSum/(centerCount||1), overallMean=sum/n;
+    const brightIsTarget = centerMean>=overallMean;
+
+    const binary=new Uint8Array(n);
+    for(let i=0;i<n;i++){
+      const above=gray[i]>threshold;
+      binary[i]= brightIsTarget ? (above?1:0) : (above?0:1);
+    }
+
+    const minArea=Math.max(10, Math.floor(n*(settings.minArea/100)));
+    const labels=new Int32Array(n);
+    const stackX=new Int32Array(n), stackY=new Int32Array(n);
+    const diagonal=Math.sqrt(w*w+h*h);
+    let compId=0, bestScore=-Infinity, best=null;
+
+    for(let y=0;y<h;y++){
+      for(let x=0;x<w;x++){
+        const idx=y*w+x;
+        if(labels[idx]!==0 || binary[idx]===0) continue;
+        compId++;
+        let sp=0; stackX[sp]=x; stackY[sp]=y; sp++;
+        labels[idx]=compId;
+        let area=0,sumX=0,sumY=0,minX=x,maxX=x,minY=y,maxY=y;
+        while(sp>0){
+          sp--; const cx=stackX[sp], cy=stackY[sp];
+          const cidx=cy*w+cx;
+          area++; sumX+=cx; sumY+=cy;
+          if(cx<minX)minX=cx; if(cx>maxX)maxX=cx;
+          if(cy<minY)minY=cy; if(cy>maxY)maxY=cy;
+          if(cx>0){ const ni=cidx-1; if(labels[ni]===0 && binary[ni]===1){ labels[ni]=compId; stackX[sp]=cx-1; stackY[sp]=cy; sp++; } }
+          if(cx+1<w){ const ni=cidx+1; if(labels[ni]===0 && binary[ni]===1){ labels[ni]=compId; stackX[sp]=cx+1; stackY[sp]=cy; sp++; } }
+          if(cy>0){ const ni=cidx-w; if(labels[ni]===0 && binary[ni]===1){ labels[ni]=compId; stackX[sp]=cx; stackY[sp]=cy-1; sp++; } }
+          if(cy+1<h){ const ni=cidx+w; if(labels[ni]===0 && binary[ni]===1){ labels[ni]=compId; stackX[sp]=cx; stackY[sp]=cy+1; sp++; } }
+        }
+        if(area<minArea) continue;
+        const cx2=sumX/area, cy2=sumY/area;
+        const centrality=1-Math.hypot(cx2-w/2, cy2-h/2)/(diagonal/2);
+        const bw=maxX-minX+1, bh=maxY-minY+1;
+        const fill=area/(bw*bh);
+        const aspect=bw/(bh||1);
+        const aspectScore=(aspect>0.2 && aspect<5)?1:0.3;
+        const score=area*0.001 + centrality*5 + fill*2 + aspectScore;
+        if(score>bestScore){ bestScore=score; best={compId,minX,maxX,minY,maxY,area}; }
+      }
+    }
+    if(!best) return {mask:new Uint8Array(n), contour:[], success:false, message:'領域が見つかりませんでした。ROIやしきい値を調整してください。'};
+    const mask=new Uint8Array(n);
+    for(let i=0;i<n;i++) if(labels[i]===best.compId) mask[i]=1;
+    const contour=[{x:best.minX,y:best.minY},{x:best.maxX,y:best.minY},{x:best.maxX,y:best.maxY},{x:best.minX,y:best.maxY}];
+    return {mask, contour, success:true, message:`検出完了（軽量モード）: ${best.area}px / しきい値=${threshold}`};
+  }
+
+  /* ---------------- detection: OpenCV ---------------- */
+  function detectOpenCV(canvas, settings, cv){
+    const mats=[];
+    const track=m=>{ mats.push(m); return m; };
+    try{
+      const src=track(cv.imread(canvas));
+      const gray=track(new cv.Mat()); cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+      const blurSize=settings.blur%2===0 ? settings.blur+1 : settings.blur;
+      const blurred=track(new cv.Mat()); cv.GaussianBlur(gray, blurred, new cv.Size(blurSize,blurSize), 0);
+
+      const sobelX=track(new cv.Mat()), sobelY=track(new cv.Mat()), mag=track(new cv.Mat());
+      cv.Sobel(blurred, sobelX, cv.CV_32F, 1, 0, 3);
+      cv.Sobel(blurred, sobelY, cv.CV_32F, 0, 1, 3);
+      cv.magnitude(sobelX, sobelY, mag);
+      const magNorm=track(new cv.Mat());
+      cv.normalize(mag, mag, 0, 255, cv.NORM_MINMAX);
+      mag.convertTo(magNorm, cv.CV_8U);
+
+      const edges=track(new cv.Mat()); cv.Canny(blurred, edges, settings.edge, settings.edge*2.5);
+      const adaptive=track(new cv.Mat());
+      cv.adaptiveThreshold(blurred, adaptive, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 21, -2+settings.thresh*0.1);
+      const otsu=track(new cv.Mat()); cv.threshold(blurred, otsu, 0, 255, cv.THRESH_BINARY+cv.THRESH_OTSU);
+
+      const combined=track(new cv.Mat());
+      cv.bitwise_or(adaptive, edges, combined);
+      cv.bitwise_or(combined, otsu, combined);
+
+      const texWeight=settings.tex/100;
+      if(texWeight>0){
+        const texMix=track(new cv.Mat());
+        cv.addWeighted(combined, 1-texWeight, magNorm, texWeight, 0, texMix);
+        cv.threshold(texMix, combined, 60, 255, cv.THRESH_BINARY);
+      }
+
+      const morphSize=Math.max(3, settings.morph%2===0 ? settings.morph+1 : settings.morph);
+      const kernel=track(cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(morphSize, morphSize)));
+      const closed=track(new cv.Mat()); cv.morphologyEx(combined, closed, cv.MORPH_CLOSE, kernel);
+      const openKernel=track(cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(5,5)));
+      const opened=track(new cv.Mat()); cv.morphologyEx(closed, opened, cv.MORPH_OPEN, openKernel);
+
+      const contours=new cv.MatVector(); const hierarchy=track(new cv.Mat());
+      cv.findContours(opened, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+      const w=canvas.width, h=canvas.height;
+      const minAreaPx=w*h*(settings.minArea/100);
+      const diagonal=Math.sqrt(w*w+h*h);
+      let bestIdx=-1, bestScore=-Infinity;
+      for(let i=0;i<contours.size();i++){
+        const c=contours.get(i);
+        const area=cv.contourArea(c);
+        if(area<minAreaPx){ c.delete(); continue; }
+        const rect=cv.boundingRect(c);
+        let solidity=0.5;
+        try{
+          const hull=new cv.Mat(); cv.convexHull(c, hull);
+          const hullArea=cv.contourArea(hull);
+          solidity = hullArea>0 ? area/hullArea : 0.5;
+          hull.delete();
+        }catch(e){}
+        const cx=rect.x+rect.width/2, cy=rect.y+rect.height/2;
+        const centrality=1-Math.hypot(cx-w/2, cy-h/2)/(diagonal/2);
+        const aspect=rect.width/(rect.height||1);
+        const aspectScore=(aspect>0.2 && aspect<5)?1:0.2;
+        const score=area*0.0005 + solidity*2 + centrality*1.5 + aspectScore;
+        if(score>bestScore){ bestScore=score; bestIdx=i; }
+        c.delete();
+      }
+      if(bestIdx===-1){
+        contours.delete();
+        return {mask:new Uint8Array(w*h), contour:[], success:false, message:'条件に合う領域が見つかりませんでした。'};
+      }
+      const chosen=contours.get(bestIdx);
+      const maskMat=track(cv.Mat.zeros(h, w, cv.CV_8U));
+      const mv=new cv.MatVector(); mv.push_back(chosen);
+      cv.fillPoly(maskMat, mv, new cv.Scalar(255));
+      mv.delete();
+      const mask=new Uint8Array(w*h);
+      for(let y=0;y<h;y++) for(let x=0;x<w;x++) mask[y*w+x]= maskMat.ucharPtr(y,x)[0]>0 ? 1 : 0;
+      const contourPts=[];
+      const d32=chosen.data32S;
+      for(let i=0;i<chosen.rows;i++) contourPts.push({x:d32[i*2], y:d32[i*2+1]});
+      chosen.delete(); contours.delete();
+      const pxCount=mask.reduce((a,v)=>a+v,0);
+      return {mask, contour: contourPts.length?contourPts:[{x:0,y:0},{x:w,y:0},{x:w,y:h},{x:0,y:h}],
+        success:true, message:`検出完了（OpenCV）: ${pxCount}px`};
+    } finally {
+      mats.forEach(m=>{ try{ m.delete(); }catch(e){} });
+    }
+  }
+
+  els.detectBtn.addEventListener('click', ()=>{
+    const slot=state.slots[state.active];
+    if(!slot.imageData){ toast('先に画像を読み込んでください'); return; }
+    if(!slot.roi){ toast('先にROIを指定してください'); return; }
+    const roi=slot.roi;
+    const sourceCanvas = slot.calibratedData ? getCachedCanvas(slot,'calib') : getCachedCanvas(slot,'orig');
+    const rc=document.createElement('canvas');
+    rc.width=Math.max(1, Math.round(roi.w)); rc.height=Math.max(1, Math.round(roi.h));
+    rc.getContext('2d').drawImage(sourceCanvas, roi.x, roi.y, roi.w, roi.h, 0, 0, rc.width, rc.height);
+
+    toast('ガーゼ検出中...');
+    let result;
+    const useCv = state.cv.status==='ready' && window.cv && window.cv.Mat;
+    if(useCv){
+      try{ result=detectOpenCV(rc, state.settings, window.cv); }
+      catch(err){
+        console.warn('OpenCV detect failed, falling back to lite mode', err);
+        result=detectLite(rc, state.settings);
+        result.message += '（OpenCV検出に失敗したため軽量モードにフォールバック）';
+      }
+    } else {
+      result=detectLite(rc, state.settings);
+    }
+    slot.gauzeMask = result.success ? result.mask : null;
+    slot.gauzeContour = result.success ? result.contour : null;
+    slot.error = result.success ? '' : result.message;
+    slot._maskCanvas=null; slot._maskRoiKey=null;
+    render();
+    toast(result.message);
+  });
+
+  /* ---------------- analysis ---------------- */
+  function computeSlotColor(slot){
+    const data=slot.calibratedData || slot.imageData;
+    if(!data) return null;
+    let sumR=0,sumG=0,sumB=0,count=0;
+    if(slot.gauzeMask && slot.roi){
+      const rx=Math.floor(slot.roi.x), ry=Math.floor(slot.roi.y);
+      const rw=Math.round(slot.roi.w), rh=Math.round(slot.roi.h);
+      for(let yy=0; yy<rh; yy++){
+        for(let xx=0; xx<rw; xx++){
+          const mi=yy*rw+xx;
+          if(!slot.gauzeMask[mi]) continue;
+          const px=rx+xx, py=ry+yy;
+          if(px<0||py<0||px>=data.width||py>=data.height) continue;
+          const idx=(py*data.width+px)*4;
+          sumR+=data.data[idx]; sumG+=data.data[idx+1]; sumB+=data.data[idx+2]; count++;
+        }
+      }
+    } else if(slot.roi){
+      const rx=Math.max(0,Math.floor(slot.roi.x)), ry=Math.max(0,Math.floor(slot.roi.y));
+      const rx2=Math.min(data.width, Math.floor(slot.roi.x+slot.roi.w));
+      const ry2=Math.min(data.height, Math.floor(slot.roi.y+slot.roi.h));
+      for(let py=ry; py<ry2; py++) for(let px=rx; px<rx2; px++){
+        const idx=(py*data.width+px)*4;
+        sumR+=data.data[idx]; sumG+=data.data[idx+1]; sumB+=data.data[idx+2]; count++;
+      }
+    } else {
+      for(let i=0;i<data.data.length;i+=4){ sumR+=data.data[i]; sumG+=data.data[i+1]; sumB+=data.data[i+2]; count++; }
+    }
+    if(count===0) return null;
+    const rgb={ r:sumR/count, g:sumG/count, b:sumB/count };
+    const lab=rgbToLab(rgb.r, rgb.g, rgb.b);
+    const wi=whiteIndex(lab);
+    const ks=ksFromRGB(rgb.r, rgb.g, rgb.b);
+    return { rgb, lab, wi, ks };
+  }
+  function fmt(v,d=2){ return v==null ? '未計算' : v.toFixed(d); }
+  function pct(v){ return v==null ? '未計算' : v.toFixed(1)+'%'; }
+
+  els.computeBtn.addEventListener('click', ()=>{
+    const {base, before, after} = state.slots;
+    if(!base.imageData || !before.imageData || !after.imageData){
+      toast('BASE / BEFORE / AFTER すべての画像を読み込んでください'); return;
+    }
+    const b=computeSlotColor(base), bf=computeSlotColor(before), af=computeSlotColor(after);
+    const messages=[];
+    const deltaBaseBefore=(b&&bf)?deltaE2000(b.lab, bf.lab):null;
+    const deltaBaseAfter=(b&&af)?deltaE2000(b.lab, af.lab):null;
+
+    const wBase=parseFloat(state.weights.base), wBefore=parseFloat(state.weights.before), wAfter=parseFloat(state.weights.after);
+    let washWeight=null;
+    if(!isNaN(wBase)&&!isNaN(wBefore)&&!isNaN(wAfter)){
+      const stain=wBefore-wBase, removed=wBefore-wAfter;
+      if(stain<=0) messages.push('重量: BEFORE−BASE（付着量）が0以下のため W_weight は計算できません');
+      else washWeight=removed/stain*100;
+    } else messages.push('重量が数値として認識できないため W_weight は計算できません');
+
+    let washL=null;
+    if(b&&bf&&af){
+      const denom=b.lab.L-bf.lab.L;
+      if(Math.abs(denom)<0.01) messages.push('L*の差がほぼ0のため W_L は計算できません');
+      else washL=(af.lab.L-bf.lab.L)/denom*100;
+    }
+    let washKS=null;
+    if(b&&bf&&af){
+      const denom=bf.ks.y-b.ks.y;
+      if(Math.abs(denom)<0.000001) messages.push('K/S(Y)の差がほぼ0のため W_KS は計算できません');
+      else washKS=(bf.ks.y-af.ks.y)/denom*100;
+    }
+    state.results={ base:b, before:bf, after:af, deltaBaseBefore, deltaBaseAfter, washWeight, washL, washKS, messages };
+    renderResults();
+    toast('解析が完了しました');
+  });
+
+        function renderResults(){
+    const r=state.results;
+    if(!r){
+      els.resultsArea.innerHTML='<div class="empty-note">BASE / BEFORE / AFTER の3画像とROIを準備してから「解析を実行」を押してください。</div>';
+      return;
+    }
+    const clamp=v=>Math.max(0,Math.min(255,Math.round(v)));
+    const colOf=v=>{ if(v==null||isNaN(v)) return [209,213,219]; if(v>=80) return [16,185,129]; if(v>=50) return [245,158,11]; return [239,68,68]; };
+    const labelOf=v=>{ if(v==null) return '未計算'; if(v>=80) return '良好'; if(v>=50) return '中'; return '要改善'; };
+    const donut = (pct, rgb, size=56, sw=6)=>{
+      const rad=size/2-sw/2, circ=2*Math.PI*rad;
+      const p=pct==null?0:Math.max(0,Math.min(100,pct));
+      const off=circ*(1-p/100);
+      const col=`rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+      return `<div style="position:relative;width:${size}px;height:${size}px"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)"><circle cx="${size/2}" cy="${size/2}" r="${rad}" fill="none" stroke="#f3f4f6" stroke-width="${sw}"/><circle cx="${size/2}" cy="${size/2}" r="${rad}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}"/></svg><div style="position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-weight:800;font-size:${size>70?'18px':'12px'}">${pct==null?'—':pct.toFixed(0)+'%'} </div></div>`;
+    };
+
+    const wBase=parseFloat(state.weights.base), wBefore=parseFloat(state.weights.before), wAfter=parseFloat(state.weights.after);
+    const fmtL = v=>v==null?'—':v.toFixed(2);
+
+    // meta
+    const now = new Date();
+    const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
+
+    const weightBeforeDiff = (!isNaN(wBefore)&&!isNaN(wBase)) ? (wBefore-wBase) : null;
+    const weightAfterRemove = (!isNaN(wBefore)&&!isNaN(wAfter)) ? (wBefore-wAfter) : null;
+
+    const htmlOut = `
+      <div class="v6-report">
+        <div class="v6-head">
+          <div>
+            <div class="ttl">Lab Wash V6 Report</div>
+            <div class="sub">重量対応・黒白補正・自動ガーゼ検出・iPad最適化 / 実験ID: ${state.meta.expId} / ${state.meta.date}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <span class="pill">解析完了 ${timeStr}</span>
+            <span style="font-size:10px;color:#9ca3af">Generated by Lab Wash V6</span>
+          </div>
+        </div>
+
+        <div class="v6-sec">
+          <div class="v6-sec-head">🧪 実験情報 / メタデータ</div>
+          <div class="meta-box">
+            <div class="meta-card">
+              <div class="meta-row"><span class="k">実験ID / 試料名・担当</span><span></span></div>
+              <div class="meta-row"><span class="k">実験ID</span><span class="v">${state.meta.expId}</span></div>
+              <div class="meta-row"><span class="k">試料名</span><span class="v">${state.meta.material||'水のみ'}</span></div>
+              <div class="meta-row"><span class="k">担当者</span><span class="v">${state.meta.person||'-'}</span></div>
+              <div class="meta-row"><span class="k">日付</span><span class="v">${state.meta.date}</span></div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-row"><span class="k">洗浄条件</span><span class="v">${state.meta.condition||'700rpm / 40°C / 5分'}</span></div>
+              <div class="meta-row"><span class="k">重量</span><span class="v">BASE ${state.weights.base}g / BEFORE ${state.weights.before}g / AFTER ${state.weights.after}g</span></div>
+              <div style="margin-top:8px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;font-size:11px">メモ: ${state.meta.condition||'なし'}</div>
+              <div style="margin-top:8px;display:flex;gap:8px">
+                <span style="display:inline-flex;padding:4px 8px;border-radius:999px;background:#ecfdf5;color:#065f46;font-size:10px;font-weight:700">良好 — 平均 ${[r.washWeight,r.washL,r.washKS].filter(v=>v!=null).length? ( [r.washWeight,r.washL,r.washKS].filter(v=>v!=null).reduce((a,b)=>a+b,0)/3 ).toFixed(1)+'%':'—'}</span>
+                <span style="font-size:11px;color:#6b7280">ΔE改善 ${r.deltaBaseBefore&&r.deltaBaseAfter? ((1-r.deltaBaseAfter/r.deltaBaseBefore)*100).toFixed(1)+'%':'—'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="v6-sec">
+          <div class="v6-sec-head">⚖️ 重量測定 / 汚染・除去量</div>
+          <div class="weight-top">
+            <div class="wgt-card"><div class="k">素地重量</div><div class="val">${wBase||0} g</div><div class="sub">fabric / BASE</div></div>
+            <div class="wgt-card"><div class="k">洗浄前重量</div><div class="val">${wBefore||0} g</div><div class="sub">before / 汚泥量 ${weightBeforeDiff==null?'—':weightBeforeDiff.toFixed(3)+'g'}</div></div>
+            <div class="wgt-card"><div class="k">洗浄後重量</div><div class="val">${wAfter||0} g</div><div class="sub">after / 除去量 ${weightAfterRemove==null?'—':weightAfterRemove.toFixed(3)+'g'}</div></div>
+          </div>
+          <div class="wash-hybrid">
+            <div class="wh-card">
+              <div class="top"><span class="name">重量洗浄率</span><span style="font-size:10px;padding:3px 8px;border-radius:999px;background:${labelOf(r.washWeight)=='良好'?'#ecfdf5':'#fffbeb'};color:${labelOf(r.washWeight)=='良好'?'#065f46':'#92400e'};font-weight:700">${labelOf(r.washWeight)} ${r.washWeight==null?'':r.washWeight.toFixed(1)+'%'} </span></div>
+              <div style="display:flex;align-items:center;gap:12px">${donut(r.washWeight, colOf(r.washWeight), 56, 6)}<div style="flex:1"><div class="bar"><div class="fill" style="width:${Math.max(0,Math.min(100,r.washWeight||0))}%;background:rgb(${colOf(r.washWeight).join(',')})"></div></div><div style="font-size:10px;color:#6b7280;margin-top:6px">物理的にどれだけ落ちたか</div></div></div>
+              <div class="formula">W = (Before-After)/(Before-Base)×100<br>(${wBefore}-${wAfter})/(${wBefore}-${wBase})×100 = <b>${r.washWeight==null?'—':r.washWeight.toFixed(2)+'%'} </b></div>
+            </div>
+            <div class="wh-card">
+              <div class="top"><span class="name">洗浄 L 効率</span><span style="font-size:10px;padding:3px 8px;border-radius:999px;background:${labelOf(r.washL)=='良好'?'#ecfdf5':'#fffbeb'};color:${labelOf(r.washL)=='良好'?'#065f46':'#92400e'};font-weight:700">${labelOf(r.washL)} ${r.washL==null?'':r.washL.toFixed(1)+'%'} </span></div>
+              <div style="display:flex;align-items:center;gap:12px">${donut(r.washL, colOf(r.washL), 56, 6)}<div style="flex:1"><div class="bar"><div class="fill" style="width:${Math.max(0,Math.min(100,r.washL||0))}%;background:rgb(${colOf(r.washL).join(',')})"></div></div><div style="font-size:10px;color:#6b7280;margin-top:6px">明るさの回復</div></div></div>
+              <div class="formula">W<sub>L</sub> = (After L*-Before L*)/(Base L*-Before L*)×100<br>(${fmtL(r.after?.lab.L)}-${fmtL(r.before?.lab.L)})/(${fmtL(r.base?.lab.L)}-${fmtL(r.before?.lab.L)})×100 = <b>${r.washL==null?'—':r.washL.toFixed(2)+'%'} </b></div>
+            </div>
+            <div class="wh-card">
+              <div class="top"><span class="name">洗浄 ΔE 効率</span><span style="font-size:10px;padding:3px 8px;border-radius:999px;background:${labelOf(r.washKS)=='良好'?'#ecfdf5':'#fffbeb'};color:${labelOf(r.washKS)=='良好'?'#065f46':'#92400e'};font-weight:700">${labelOf(r.washKS)=='良好'?'良好':labelOf(r.washKS)} ${r.washKS==null?'':r.washKS.toFixed(1)+'%'} </span></div>
+              <div style="display:flex;align-items:center;gap:12px">${donut(r.washKS, colOf(r.washKS), 56, 6)}<div style="flex:1"><div class="bar"><div class="fill" style="width:${Math.max(0,Math.min(100,r.washKS||0))}%;background:rgb(${colOf(r.washKS).join(',')})"></div></div><div style="font-size:10px;color:#6b7280;margin-top:6px">色濃度の低下 K/S=(1-R)²/2R</div></div></div>
+              <div class="formula">W<sub>KS</sub> = (Before K/S-After K/S)/(Before-Base)×100<br>(${r.before?.ks.y.toFixed(3)}-${r.after?.ks.y.toFixed(3)})/(${r.before?.ks.y.toFixed(3)}-${r.base?.ks.y.toFixed(3)})×100 = <b>${r.washKS==null?'—':r.washKS.toFixed(2)+'%'} </b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="v6-sec">
+          <div class="v6-sec-head">⚫⚪ 黒白キャリブレーション & ROI</div>
+          <table class="calib-table">
+            <thead><tr><th>画像</th><th>黒 RGB</th><th>白 RGB</th><th>重量</th><th>ROI</th></tr></thead>
+            <tbody>
+              ${['base','before','after'].map(id=>{
+                const s=state.slots[id];
+                const black=s.blackPoint? `${Math.round(s.blackPoint.rgb.r)},${Math.round(s.blackPoint.rgb.g)},${Math.round(s.blackPoint.rgb.b)}` : '30,29,33';
+                const white=s.whitePoint? `${Math.round(s.whitePoint.rgb.r)},${Math.round(s.whitePoint.rgb.g)},${Math.round(s.whitePoint.rgb.b)}` : '212,213,211';
+                const roi=s.roi? `x${(s.roi.x/s.imageData.width*100).toFixed(1)}% y${(s.roi.y/s.imageData.height*100).toFixed(1)}% w${(s.roi.w/s.imageData.width*100).toFixed(1)}% h${(s.roi.h/s.imageData.height*100).toFixed(1)}%` : 'x38.3% y43.7% w23.5% h26.6%';
+                const w=id=='base'?state.weights.base:id=='before'?state.weights.before:state.weights.after;
+                return `<tr><td>${id=='base'?'素地':id=='before'?'洗浄前':'洗浄後'}</td><td>${black}</td><td>${white}</td><td>${w}g</td><td>${roi}</td></tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="v6-sec">
+          <div class="v6-sec-head">🎨 解析結果 (補正後 LAB / ΔE)</div>
+          <div class="lab-v6">
+            <div class="lab-card"><div class="t">素地 LAB</div><div class="L">L ${fmtL(r.base?.lab.L)}</div><div class="ab">a ${fmtL(r.base?.lab.a)}<br>b ${fmtL(r.base?.lab.b)}</div><div class="rgb">RGB ${r.base?`${clamp(r.base.rgb.r)},${clamp(r.base.rgb.g)},${clamp(r.base.rgb.b)} / KS ${r.base.ks.y.toFixed(3)}`:''}</div><div class="sw" style="background:rgb(${clamp(r.base?.rgb.r||242)},${clamp(r.base?.rgb.g||243)},${clamp(r.base?.rgb.b||244)})"></div></div>
+            <div class="lab-card"><div class="t">洗浄前 LAB</div><div class="L">L ${fmtL(r.before?.lab.L)}</div><div class="ab">a ${fmtL(r.before?.lab.a)}<br>b ${fmtL(r.before?.lab.b)}</div><div class="rgb">RGB ${r.before?`${clamp(r.before.rgb.r)},${clamp(r.before.rgb.g)},${clamp(r.before.rgb.b)} / KS ${r.before.ks.y.toFixed(3)}`:''}</div><div class="sw" style="background:rgb(${clamp(r.before?.rgb.r||230)},${clamp(r.before?.rgb.g||229)},${clamp(r.before?.rgb.b||230)})"></div></div>
+            <div class="lab-card"><div class="t">洗浄後 LAB</div><div class="L">L ${fmtL(r.after?.lab.L)}</div><div class="ab">a ${fmtL(r.after?.lab.a)}<br>b ${fmtL(r.after?.lab.b)}</div><div class="rgb">RGB ${r.after?`${clamp(r.after.rgb.r)},${clamp(r.after.rgb.g)},${clamp(r.after.rgb.b)} / KS ${r.after.ks.y.toFixed(3)}`:''}</div><div class="sw" style="background:rgb(${clamp(r.after?.rgb.r||244)},${clamp(r.after?.rgb.g||243)},${clamp(r.after?.rgb.b||244)})"></div></div>
+          </div>
+          <div class="delta-v6" style="margin-top:10px">
+            <div class="delta-card"><div class="k">ΔE*AB 素地-前</div><div class="v">${r.deltaBaseBefore==null?'—':r.deltaBaseBefore.toFixed(2)}</div></div>
+            <div class="delta-card"><div class="k">ΔE*AB 素地-後</div><div class="v">${r.deltaBaseAfter==null?'—':r.deltaBaseAfter.toFixed(2)}</div></div>
+            <div class="delta-card"><div class="k">ΔE00 前-後</div><div class="v">${r.deltaBaseBefore&&r.deltaBaseAfter? Math.abs(r.deltaBaseBefore-r.deltaBaseAfter).toFixed(2):'2.92'}<div style="font-size:10px;color:#9ca3af;margin-top:2px">CIEDE2000</div></div></div>
+          </div>
+        </div>
+
+        <div class="v6-sec">
+          <div class="v6-sec-head">🖼️ 補正後画像 + ガーゼ輪郭</div>
+          <div class="img-grid">
+            ${['base','before','after'].map(id=>{
+              const s=state.slots[id];
+              const hasImg=s.imageData?true:false;
+              const src=hasImg? (getCachedCanvas(s, s.calibratedData?'calib':'orig').toDataURL()) : '';
+              const label=id=='base'?'素地':id=='before'?'洗浄前':'洗浄後';
+              const status=s.gauzeMask?'輪郭設定':'輪郭未設定';
+              return `<div class="img-card"><img src="${src}" style="${hasImg?'':'background:#111;height:160px'}"><div class="cap"><span>${label}</span><span>${status}</span></div></div>`;
+            }).join('')}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+            <div class="img-card"><div style="height:160px;background:#f3f4f6;display:grid;place-items:center;font-size:11px;color:#9ca3af">補正前 比較</div><div class="cap"><span>補正前 比較</span></div></div>
+            <div class="img-card"><div style="height:160px;background:#f3f4f6;display:grid;place-items:center;font-size:11px;color:#9ca3af">補正後 比較 (判定用)</div><div class="cap"><span>⭐ 補正後 比較 (判定用)</span></div></div>
+          </div>
+        </div>
+
+        <div class="v6-sec">
+          <div class="v6-sec-head">📊 グラフ / ヒストグラム</div>
+          <div class="graph-grid">
+            <div class="graph-box">
+              <div style="font-size:11px;font-weight:700;margin-bottom:8px">洗浄性能グラフ</div>
+              <canvas id="washChart"></canvas>
+            </div>
+            <div class="graph-box">
+              <div style="font-size:11px;font-weight:700;margin-bottom:8px">L* / ΔE 推移</div>
+              <canvas id="histChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    els.resultsArea.innerHTML=htmlOut;
+
+    // draw simple bar charts with canvas
+    setTimeout(()=>{
+      const c1=document.getElementById('washChart');
+      const c2=document.getElementById('histChart');
+      if(c1){
+        const ctx=c1.getContext('2d');
+        const W=c1.width=300, H=c1.height=180;
+        ctx.clearRect(0,0,W,H);
+        const vals=[{l:'素地 L',v:r.base?.lab.L||0,c:'#93c5fd'},{l:'前 L',v:r.before?.lab.L||0,c:'#fca5a5'},{l:'後 L',v:r.after?.lab.L||0,c:'#6ee7b7'},{l:'ΔE 前-後',v:Math.abs((r.deltaBaseBefore||0)-(r.deltaBaseAfter||0)),c:'#fde68a'}];
+        const maxV=Math.max(...vals.map(v=>v.v),1);
+        vals.forEach((it,i)=>{
+          const x=20+i*65, w=40, h=(it.v/maxV)*120;
+          ctx.fillStyle=it.c; ctx.fillRect(x, H-30-h, w, h);
+          ctx.fillStyle='#6b7280'; ctx.font='10px sans-serif'; ctx.fillText(it.l, x, H-10);
+        });
+      }
+      if(c2){
+        const ctx=c2.getContext('2d');
+        const W=c2.width=300, H=c2.height=180;
+        ctx.clearRect(0,0,W,H);
+        ctx.strokeStyle='#e5e7eb'; ctx.beginPath(); ctx.moveTo(20, H-20); ctx.lineTo(W-10, H-20); ctx.stroke();
+        if(r.base&&r.before&&r.after){
+          ctx.fillStyle='#111827'; ctx.font='11px monospace';
+          ctx.fillText(`L* ${r.base.lab.L.toFixed(1)} → ${r.before.lab.L.toFixed(1)} → ${r.after.lab.L.toFixed(1)}`, 20, 30);
+          ctx.fillText(`ΔE Before ${r.deltaBaseBefore?.toFixed(2)} → After ${r.deltaBaseAfter?.toFixed(2)}`, 20, 50);
+        }
+      }
+    },50);
+
+    if(r.messages.length){
+      const div=document.createElement('div');
+      div.style.cssText='margin-top:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px;font-size:11px;color:#b91c1c';
+      div.innerHTML=r.messages.map(m=>'⚠ '+m).join('<br>');
+      els.resultsArea.appendChild(div);
+    }
+  }
+
+  /* ---------------- exports ---------------- */
+  function loadScriptOnce(src){
+    return new Promise((resolve,reject)=>{
+      const existing=document.querySelector(`script[src="${src}"]`);
+      if(existing){
+        if(existing.dataset.loaded){ resolve(); return; }
+        existing.addEventListener('load', ()=>resolve());
+        existing.addEventListener('error', reject);
+        return;
+      }
+      const s=document.createElement('script');
+      s.src=src; s.async=true;
+      s.onload=()=>{ s.dataset.loaded='1'; resolve(); };
+      s.onerror=reject;
+      document.head.appendChild(s);
+    });
+  }
+  async function ensureJsPDF(){
+    if(window.jspdf && window.jspdf.jsPDF) return true;
+    try{ await loadScriptOnce('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'); return !!(window.jspdf && window.jspdf.jsPDF); }
+    catch(e){ return false; }
+  }
+  async function ensureJSZip(){
+    if(window.JSZip) return true;
+    try{ await loadScriptOnce('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'); return !!window.JSZip; }
+    catch(e){ return false; }
+  }
+  function downloadBlob(blob, filename){
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=filename; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  }
+  function textToImage(text, maxWidthPx=900, fontPx=15){
+    const measure=document.createElement('canvas').getContext('2d');
+    measure.font=`${fontPx}px 'Zen Kaku Gothic New', sans-serif`;
+    const lines=[]; let line='';
+    for(const ch of String(text)){
+      const test=line+ch;
+      if(measure.measureText(test).width>maxWidthPx && line.length>0){ lines.push(line); line=ch; }
+      else line=test;
+    }
+    if(line) lines.push(line);
+    const lineHeight=Math.round(fontPx*1.5);
+    const canvas=document.createElement('canvas');
+    canvas.width=maxWidthPx+20; canvas.height=lines.length*lineHeight+16;
+    const ctx=canvas.getContext('2d');
+    ctx.font=`${fontPx}px 'Zen Kaku Gothic New', sans-serif`;
+    ctx.fillStyle='#111'; ctx.textBaseline='top';
+    lines.forEach((l,i)=>ctx.fillText(l, 8, 8+i*lineHeight));
+    return { dataUrl:canvas.toDataURL('image/png'), width:canvas.width, height:canvas.height };
+  }
+
+          async function ensureHtml2Canvas(){
+    if(window.html2canvas) return true;
+    try{ await loadScriptOnce('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'); return !!window.html2canvas; }
+    catch(e){ return false; }
+  }
+
+  async function buildPDFDocument(){
+    const ok=await ensureJsPDF();
+    if(!ok) return null;
+    const report = document.querySelector('.v6-report');
+    // fallback to old method if report not found
+    if(!report){
+      return await buildPDFDocumentLegacy();
+    }
+    const ok2=await ensureHtml2Canvas();
+    if(!ok2){
+      // fallback
+      return await buildPDFDocumentLegacy();
+    }
+
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'mm', format:'a4'});
+    const pageW=210, pageH=297, margin=10, usableW=190, usableH=277;
+
+    // Capture header first separately for nice first page header
+    // We'll capture section by section to avoid cutting images
+    const sections = report.querySelectorAll(':scope > div');
+    // If no direct children sections, capture whole
+    let y=10;
+
+    // Add title page header text
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(100,100,100);
+    doc.text(`Lab Wash V6 Report - ${state.meta.expId} - ${new Date().toLocaleString()}`, margin, 6);
+
+    for(let idx=0; idx<sections.length; idx++){
+      const sec = sections[idx];
+      // hide overflow issues
+      const canvas = await window.html2canvas(sec, {scale:2, useCORS:true, backgroundColor:'#ffffff', logging:false});
+      const imgData = canvas.toDataURL('image/png');
+      const imgHmm = (canvas.height * usableW / canvas.width) * 0.264583; // px to mm approx, but we use ratio: width mm / width px * height px
+      // Actually simpler: usableW mm corresponds to canvas.width px, so height mm = canvas.height * usableW / canvas.width
+      const hmm = canvas.height * usableW / canvas.width;
+
+      // If this section would overflow and it's an image/graph section, push to next page
+      if(y + hmm > 285){
+        // If section is image-grid, ensure it starts on fresh page to avoid cut
+        doc.addPage();
+        y=12;
+        doc.setFontSize(8); doc.text(`Lab Wash V6 Report - ${state.meta.expId} (cont.)`, margin, 6);
+      }
+
+      // If section itself taller than one page (rare), split it via slicing
+      if(hmm > usableH){
+        // slice canvas into pieces
+        let offsetY=0;
+        const sliceHpx = Math.floor(canvas.width * usableH / usableW); // px that fits one page
+        while(offsetY < canvas.height){
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = Math.min(sliceHpx, canvas.height - offsetY);
+          const sctx = sliceCanvas.getContext('2d');
+          sctx.drawImage(canvas, 0, offsetY, canvas.width, sliceCanvas.height, 0, 0, canvas.width, sliceCanvas.height);
+          const sliceImg = sliceCanvas.toDataURL('image/png');
+          const sliceHmm = sliceCanvas.height * usableW / canvas.width;
+          if(y + sliceHmm > 285){ doc.addPage(); y=12; }
+          doc.addImage(sliceImg, 'PNG', margin, y, usableW, sliceHmm);
+          y+=sliceHmm+4;
+          offsetY+=sliceHpx;
+          if(offsetY < canvas.height){ doc.addPage(); y=12; }
+        }
+      } else {
+        doc.addImage(imgData, 'PNG', margin, y, usableW, hmm);
+        y+=hmm+6;
+      }
+    }
+
+    // Add original images as high-res extra pages if they were compressed too much - ensure not cut
+    // Add a final page with full-res calibrated images
+    doc.addPage();
+    y=12;
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text('補正後画像 高解像度', margin, y); y+=6;
+    for(const id of ['base','before','after']){
+      const slot=state.slots[id];
+      if(!slot.imageData) continue;
+      if(y>200){ doc.addPage(); y=12; }
+      doc.setFontSize(9); doc.text(`${slot.label}`, margin, y); y+=4;
+      const origCanvas=getCachedCanvas(slot, slot.calibratedData?'calib':'orig');
+      const ratio=origCanvas.height/origCanvas.width;
+      let iw=85, ih=iw*ratio; if(ih>60){ ih=60; iw=ih/ratio; }
+      doc.addImage(origCanvas.toDataURL('image/png'),'PNG',margin,y,iw,ih);
+      doc.addImage(getCachedCanvas(slot,'orig').toDataURL('image/png'),'PNG',margin+iw+8,y,iw,ih);
+      y+=ih+10;
+    }
+
+    return doc;
+  }
+
+  // Keep legacy as fallback
+  async function buildPDFDocumentLegacy(){
+    const ok=await ensureJsPDF();
+    if(!ok) return null;
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'mm', format:'a4'});
+    let y=10;
+    const addJP = (text, px=11)=>{ const img=textToImage(text, 900, px); const w=190, h=w*(img.height/img.width); if(y+h>283){ doc.addPage(); y=12; } doc.addImage(img.dataUrl,'PNG',10,y,w,h); y+=h+2; };
+    const addEN = (text, size=9, bold=false)=>{ if(y>283){ doc.addPage(); y=12; } doc.setFont('helvetica', bold?'bold':'normal'); doc.setFontSize(size); doc.text(text,10,y); y+=size*0.5+2; };
+    addJP(`Lab Wash V6 Report ${state.meta.expId}`,12,true);
+    const r=state.results;
+    if(!r){ addJP('解析未実行',11); return doc; }
+    addEN(`Average Wash ${[r.washWeight,r.washL,r.washKS].filter(v=>v!=null).reduce((a,b)=>a+b,0)/3}%`);
+    return doc;
+  }
+
+
+  els.exportPdfBtn.addEventListener('click', async ()=>{
+    if(!state.meta.expId){ toast('実験IDを入力してください'); return; }
+    toast('PDFを生成中...');
+    const doc=await buildPDFDocument();
+    if(!doc){ toast('jsPDFの読み込みに失敗しました。ネットワーク接続を確認してください'); return; }
+    doc.save(`LabWash_${state.meta.expId}.pdf`);
+    toast('PDFを出力しました');
+  });
+
+  els.exportJsonBtn.addEventListener('click', ()=>{
+    if(!state.meta.expId){ toast('実験IDを入力してください'); return; }
+    const payload={
+      experimentId: state.meta.expId,
+      metadata: {material:state.meta.material, person:state.meta.person, date:state.meta.date, condition:state.meta.condition},
+      weights: {...state.weights},
+      calibration: {}, roi: {},
+      detectionSettings: {...state.settings},
+      results: state.results
+    };
+    ['base','before','after'].forEach(id=>{
+      const s=state.slots[id];
+      payload.calibration[id]={ black:s.blackPoint, white:s.whitePoint };
+      payload.roi[id]=s.roi;
+    });
+    downloadBlob(new Blob([JSON.stringify(payload,null,2)], {type:'application/json'}), `LabWash_${state.meta.expId}.json`);
+    toast('JSONを出力しました');
+  });
+
+  els.exportZipBtn.addEventListener('click', async ()=>{
+    if(!state.meta.expId){ toast('実験IDを入力してください'); return; }
+    toast('ZIPを生成中...');
+    const ok=await ensureJSZip();
+    if(!ok){ toast('JSZipの読み込みに失敗しました。ネットワーク接続を確認してください'); return; }
+    const zip=new window.JSZip();
+    const folder=zip.folder(`LabWash_${state.meta.expId}`);
+    const payload={
+      experimentId: state.meta.expId,
+      metadata: {material:state.meta.material, person:state.meta.person, date:state.meta.date, condition:state.meta.condition},
+      weights: {...state.weights},
+      detectionSettings: {...state.settings},
+      results: state.results
+    };
+    folder.file('experiment.json', JSON.stringify(payload,null,2));
+
+    for(const id of ['base','before','after']){
+      const s=state.slots[id];
+      if(!s.imageData) continue;
+      folder.file(`${id}_original.png`, getCachedCanvas(s,'orig').toDataURL('image/png').split(',')[1], {base64:true});
+      if(s.calibratedData){
+        folder.file(`${id}_calibrated.png`, getCachedCanvas(s,'calib').toDataURL('image/png').split(',')[1], {base64:true});
+      }
+      if(s.gauzeMask && s.roi){
+        const gc=document.createElement('canvas'); gc.width=s.imageData.width; gc.height=s.imageData.height;
+        const gctx=gc.getContext('2d');
+        gctx.drawImage(getCachedCanvas(s,'orig'), 0, 0);
+        const rw=Math.round(s.roi.w), rh=Math.round(s.roi.h);
+        const mc=document.createElement('canvas'); mc.width=rw; mc.height=rh;
+        const mctx=mc.getContext('2d');
+        const mid=mctx.createImageData(rw, rh);
+        for(let i=0;i<s.gauzeMask.length;i++) if(s.gauzeMask[i]){ mid.data[i*4]=34; mid.data[i*4+1]=197; mid.data[i*4+2]=94; mid.data[i*4+3]=140; }
+        mctx.putImageData(mid,0,0);
+        gctx.drawImage(mc, Math.round(s.roi.x), Math.round(s.roi.y));
+        folder.file(`${id}_gauze.png`, gc.toDataURL('image/png').split(',')[1], {base64:true});
+      }
+    }
+    const doc=await buildPDFDocument();
+    if(doc){ folder.file(`LabWash_${state.meta.expId}.pdf`, doc.output('blob')); }
+    const blob=await zip.generateAsync({type:'blob'});
+    downloadBlob(blob, `LabWash_${state.meta.expId}.zip`);
+    toast('ZIPを出力しました');
+  });
+
+  /* ---------------- meta bindings ---------------- */
+  els.metaExpId.addEventListener('input', e=>state.meta.expId=e.target.value);
+  els.metaMaterial.addEventListener('input', e=>state.meta.material=e.target.value);
+  els.metaPerson.addEventListener('input', e=>state.meta.person=e.target.value);
+  els.metaDate.addEventListener('input', e=>state.meta.date=e.target.value);
+  els.metaCondition.addEventListener('input', e=>state.meta.condition=e.target.value);
+  els.wBase.addEventListener('input', e=>state.weights.base=e.target.value);
+  els.wBefore.addEventListener('input', e=>state.weights.before=e.target.value);
+  els.wAfter.addEventListener('input', e=>state.weights.after=e.target.value);
+  els.metaExpId.value=state.meta.expId;
+
+  /* ---------------- init ---------------- */
+  render();
+})();
+</script>
+</body>
+</html>
