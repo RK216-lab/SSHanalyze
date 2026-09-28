@@ -356,6 +356,64 @@
   .graph-box{ border:1px solid #e5e7eb; border-radius:12px; padding:12px; background:#fff; }
   .graph-box canvas{ width:100% !important; height:180px !important; }
 
+  /* ---------------- やさしい解説アコーディオン ---------------- */
+  details.explain{
+    border:1px solid #cfe6ea; border-radius:var(--radius-md); overflow:hidden;
+    background:linear-gradient(180deg,#f3fbfc,#eef8f9); margin:10px 0 4px;
+  }
+  details.explain > summary{
+    list-style:none; cursor:pointer; padding:10px 14px; font-size:12.5px; font-weight:700;
+    display:flex; align-items:center; gap:8px; color:var(--accent);
+  }
+  details.explain > summary::-webkit-details-marker{display:none;}
+  details.explain > summary::before{
+    content:'💡'; font-size:14px; flex:none;
+  }
+  details.explain > summary .arrow-ico{
+    margin-left:auto; font-size:11px; color:var(--ink-soft); transition:transform .15s;
+  }
+  details.explain[open] > summary .arrow-ico{ transform:rotate(180deg); }
+  .explain-body{
+    padding:4px 16px 14px; font-size:12.5px; line-height:1.85; color:#2b3a3f; border-top:1px dashed #cfe6ea;
+    margin-top:2px; padding-top:10px;
+  }
+  .explain-body p{margin:0 0 8px;}
+  .explain-body ul{margin:0 0 8px; padding-left:1.2em;}
+  .explain-body li{margin-bottom:4px;}
+  .explain-formula{
+    font-family:var(--mono); font-size:11.5px; background:#fff; border:1px solid #d7e9ec; border-radius:8px;
+    padding:8px 10px; margin:6px 0; overflow-x:auto; white-space:pre; color:#0c5563;
+  }
+  .explain-note{
+    font-size:11px; color:var(--ink-soft); background:#fff; border:1px dashed #cfe6ea; border-radius:8px;
+    padding:7px 9px; margin-top:6px;
+  }
+  .explain-step{
+    display:flex; gap:8px; align-items:flex-start; margin-bottom:6px;
+  }
+  .explain-step .num{
+    flex:none; width:18px; height:18px; border-radius:50%; background:var(--accent); color:#fff;
+    font-size:10.5px; font-weight:700; display:grid; place-items:center; margin-top:1px;
+  }
+
+  /* ---------------- ガーゼ検出まわりのやさしいUI ---------------- */
+  .detect-help{
+    font-size:12px; color:var(--ink-soft); line-height:1.7; margin-top:4px;
+  }
+  .detect-quickguide{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:10px 0 4px;
+  }
+  @media(max-width:700px){ .detect-quickguide{ grid-template-columns:1fr; } }
+  .qg-card{
+    background:#fff; border:1px solid var(--line); border-radius:var(--radius-sm); padding:9px 10px;
+    display:flex; gap:8px; align-items:flex-start;
+  }
+  .qg-card .qg-num{
+    flex:none; width:20px; height:20px; border-radius:50%; background:var(--ink); color:#fff;
+    font-size:11px; font-weight:700; display:grid; place-items:center;
+  }
+  .qg-card .qg-text b{font-size:12px; display:block; margin-bottom:2px;}
+  .qg-card .qg-text span{font-size:10.5px; color:var(--ink-soft); line-height:1.5;}
 </style>
 </head>
 <body>
@@ -386,6 +444,18 @@
     <span class="step-chip">⑤ 解析を実行</span>
     <span class="step-chip">⑥ PDF / JSON / ZIP で出力</span>
   </div>
+
+  <details class="explain">
+    <summary>このツールは何をしているの？（全体の流れをやさしく解説）<span class="arrow-ico">▼</span></summary>
+    <div class="explain-body">
+      <p>写真に写った布の「色」を数値にして、洗浄でどれくらい汚れが落ちたかを客観的に比べるためのツールです。人の目では「なんとなくきれいになった」としか言えませんが、色を数値化すると <b>何%落ちたか</b> をはっきり示せます。</p>
+      <div class="explain-step"><span class="num">1</span><span>BASE（何もついていない布）・BEFORE（洗う前の汚れた布）・AFTER（洗った後の布）の3枚を撮影して読み込みます。</span></div>
+      <div class="explain-step"><span class="num">2</span><span>撮影ごとに照明が微妙に違うと色がズレるので、「黒点」と「白点」を指定して明るさを揃えます（キャリブレーション）。</span></div>
+      <div class="explain-step"><span class="num">3</span><span>比べたい範囲（ROI）を四角で囲み、その中の「シミ・ガーゼ」部分だけを自動で見つけます（ガーゼ検出）。</span></div>
+      <div class="explain-step"><span class="num">4</span><span>検出した範囲の色を L*a*b* という数値に変換し、3枚を比較して「洗浄率」を計算します。</span></div>
+      <p class="explain-note">各手順の下にある💡マークのアコーディオンを開くと、その処理の詳しい仕組みと計算式が見られます。レポートや考察を書くときの参考にしてください。</p>
+    </div>
+  </details>
 
   <div id="cvBanner" style="display:none"></div>
 
@@ -422,6 +492,16 @@
         <input id="wAfter" class="mono" type="number" step="0.001" value="1.10">
       </label>
     </div>
+
+    <details class="explain">
+      <summary>重量をなぜ測るの？（重量洗浄率の考え方）<span class="arrow-ico">▼</span></summary>
+      <div class="explain-body">
+        <p>色の変化だけでなく、「物理的にどれだけ汚れの重さが落ちたか」も指標になります。BEFORE（洗浄前）とBASE（きれいな布）の重さの差が「付着した汚れの量」、BEFOREとAFTERの差が「洗浄で落ちた量」です。</p>
+        <div class="explain-formula">重量洗浄率 W = (BEFORE − AFTER) ÷ (BEFORE − BASE) × 100 [%]</div>
+        <p>付着量（BEFORE−BASE）に対して、どれだけ除去できたか（BEFORE−AFTER）の割合なので、100%に近いほど汚れがよく落ちたことになります。</p>
+        <p class="explain-note">BEFORE−BASEが0以下（＝汚れが実質ついていない）の場合はこの指標は計算できません。</p>
+      </div>
+    </details>
   </section>
 
   <!-- タブ -->
@@ -469,19 +549,53 @@
       <div class="info-card"><div class="h">補正式</div><div class="v">calibrated = (pixel − black) / (white − black) × 255</div></div>
     </div>
 
+    <details class="explain">
+      <summary>黒点・白点キャリブレーションって何？<span class="arrow-ico">▼</span></summary>
+      <div class="explain-body">
+        <p>同じ布でも、撮影時の照明の明るさや色味が違うと、写真の色がズレてしまいます。そこで「絶対に黒いはずの場所（黒点）」と「絶対に白いはずの場所（白点）」を1点ずつクリックして指定し、その2点を基準に画像全体の明るさ・色味を補正します。</p>
+        <div class="explain-formula">補正後の値 = (元のピクセル値 − 黒点の値) ÷ (白点の値 − 黒点の値) × 255</div>
+        <p>これはRGBの各チャンネル（赤・緑・青）ごとに行われます。黒点が「0」、白点が「255」になるように引き伸ばすイメージです。</p>
+        <ul>
+          <li>黒点と白点は、同じ撮影条件で写っている「基準になる黒・白のカード」などを使うと安定します。</li>
+          <li>黒点と白点の明るさが近すぎる（同じような色）と正しく補正できないため、エラーが表示されます。</li>
+        </ul>
+      </div>
+    </details>
+
     <div class="roi-box">
       <div class="row">
         <div>
-          <b>ROI（測定範囲）とガーゼ検出</b>
-          <div class="desc">「ROI選択」モードで四角をドラッグして範囲を指定し、角のハンドルで調整できます。範囲内でシミ／ガーゼ領域を自動検出します。</div>
-          <div class="mono-line" id="roiInfo">ROI未設定</div>
+          <b>🔍 測定範囲を選んで、ガーゼ・シミを自動で見つける</b>
+          <div class="desc">下の3ステップの通りに操作するだけでOKです。うまく検出できないときは、パラメータやROIの範囲を調整してもう一度試してください。</div>
         </div>
+      </div>
+
+      <div class="detect-quickguide">
+        <div class="qg-card"><span class="qg-num">1</span><div class="qg-text"><b>「ROIを選択」モードにする</b><span>上の④「ROIを選択」ボタンを押します</span></div></div>
+        <div class="qg-card"><span class="qg-num">2</span><div class="qg-text"><b>四角で範囲を囲む</b><span>画像の上で指やマウスをドラッグして、比べたい布の部分を四角で囲みます</span></div></div>
+        <div class="qg-card"><span class="qg-num">3</span><div class="qg-text"><b>「ガーゼ検出を実行」を押す</b><span>四角の中からシミ・ガーゼの領域を自動で見つけます</span></div></div>
+      </div>
+
+      <div class="row" style="margin-top:6px">
+        <div class="mono-line" id="roiInfo" style="flex:1">ROI未設定</div>
         <div style="display:flex;gap:8px;">
-          <button class="btn btn-sm" id="clearRoiBtn">ROIをクリア</button>
-          <button class="btn btn-good" id="detectBtn">ガーゼ検出を実行</button>
+          <button class="btn btn-sm" id="clearRoiBtn">↺ ROIをやり直す</button>
+          <button class="btn btn-good" id="detectBtn">🔍 ガーゼ検出を実行</button>
         </div>
       </div>
       <div id="roiMsg"></div>
+
+      <details class="explain">
+        <summary>ガーゼ検出はどうやって領域を見つけているの？<span class="arrow-ico">▼</span></summary>
+        <div class="explain-body">
+          <p>コンピューターは「これがガーゼだ」と意味を理解しているわけではなく、<b>色や明るさの違い</b>を手がかりに、周りと違う領域を自動的に探しています。おおまかな流れは次のとおりです。</p>
+          <div class="explain-step"><span class="num">1</span><span>画像を白黒（グレースケール）にして、ノイズを減らすために少しぼかします。</span></div>
+          <div class="explain-step"><span class="num">2</span><span>「エッジ検出（Canny）」で輪郭のラインを探し、「大津の二値化（Otsu）」や「適応的二値化」で明るい部分／暗い部分に分けます。これらを組み合わせることで見落としを減らします。</span></div>
+          <div class="explain-step"><span class="num">3</span><span>モルフォロジー処理（膨張・収縮）で、小さなノイズを消したり、切れた領域をつなげたりします。</span></div>
+          <div class="explain-step"><span class="num">4</span><span>残った領域（輪郭）のうち、面積・形のまとまり具合（凸性）・中心に近いかどうかをスコアにして、一番それらしい領域を採用します。</span></div>
+          <p class="explain-note">高精度モード（OpenCV）が読み込まれていない場合は、大津の二値化と面積の一番大きい・中心に近い領域を選ぶだけの「軽量モード」で代用します。仕組みは簡易的になりますが、結果の見方は同じです。</p>
+        </div>
+      </details>
     </div>
 
     <details class="settings" id="settingsDetails">
@@ -494,8 +608,24 @@
   <section class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
       <h2 style="margin:0">解析結果</h2>
-      <button class="btn btn-dark" id="computeBtn">解析を実行</button>
+      <button class="btn btn-dark" id="computeBtn">📊 解析を実行</button>
     </div>
+
+    <details class="explain">
+      <summary>結果に出てくる用語・計算式の意味（考察を書くときのヒント）<span class="arrow-ico">▼</span></summary>
+      <div class="explain-body">
+        <p><b>L*a*b*（エルスター・エースター・ビースター）</b>：人の目が感じる色を数値化した国際的な表色系です。L*は明るさ（0=黒〜100=白）、a*は赤緑、b*は黄青の度合いを表します。</p>
+        <div class="explain-formula">白色度 = 100 − √((100−L*)² + a*² + b*²)</div>
+        <p><b>ΔE*ab / ΔE00（色差）</b>：2枚の写真の色がどれくらい違うかを1つの数値にしたものです。数値が大きいほど色の差が大きい（＝汚れが目立つ／落ちていない）ことを示します。ΔE00はCIEDE2000という、人の目の感じ方により近づけた改良版の計算式です。</p>
+        <p><b>K/S値（クベルカ・ムンク理論）</b>：染色や汚れの「濃さ」を表す指標で、反射率Rから次の式で求めます。値が大きいほど色が濃い（汚れている）ことを意味します。</p>
+        <div class="explain-formula">K/S = (1 − R)² ÷ (2R)</div>
+        <p>これらを使って、洗浄前後でどれだけ「明るさ（L*）」や「濃さ（K/S）」が基準（BASE）に近づいたかを、以下のように%で表しています。</p>
+        <div class="explain-formula">W_L  = (AFTERのL* − BEFOREのL*) ÷ (BASEのL* − BEFOREのL*) × 100
+W_KS = (BEFOREのK/S − AFTERのK/S) ÷ (BEFOREのK/S − BASEのK/S) × 100</div>
+        <p class="explain-note">3つの洗浄率（重量・L・K/S）はそれぞれ違う観点（重さ／明るさ／色の濃さ）から見た指標なので、値が多少ズレても間違いではありません。むしろ「どの指標が一番よく汚れの落ち具合を表しているか」を考察するのがこのツールの面白いところです。</p>
+      </div>
+    </details>
+
     <div id="resultsArea" style="margin-top:12px">
       <div class="empty-note">BASE / BEFORE / AFTER の3画像とROIを準備してから「解析を実行」を押してください。</div>
     </div>
@@ -542,10 +672,10 @@
   };
 
   const MODES = [
-    {id:'view',  t:'表示 / 移動',  d:'ドラッグで移動、ピンチ／Ctrl+ホイールで拡大縮小'},
-    {id:'black', t:'黒点を指定',   d:'画像内の最も暗い基準点をクリック（5×5px平均）'},
-    {id:'white', t:'白点を指定',   d:'画像内の最も明るい基準点をクリック（5×5px平均）'},
-    {id:'roi',   t:'ROIを選択',    d:'ドラッグして測定範囲を指定・角をつまんで調整'}
+    {id:'view',  t:'① 見る・動かす',  d:'ドラッグで画像を動かす／ピンチやCtrl+ホイールで拡大縮小'},
+    {id:'black', t:'② 黒い基準点',   d:'画像の中で一番暗い場所を1回クリック'},
+    {id:'white', t:'③ 白い基準点',   d:'画像の中で一番明るい場所を1回クリック'},
+    {id:'roi',   t:'④ ROIを選択',    d:'比べたい範囲を四角でドラッグして囲む（角をつまんで調整も可）'}
   ];
   const SETTINGS_DEF = [
     {k:'blur',   label:'ぼかし (Gaussian)',        min:1,  max:15,  step:2},
