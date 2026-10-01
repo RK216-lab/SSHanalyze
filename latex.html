@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LaTeX 画像変換ツール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<style>
+:root {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface-2: #fafafc;
+  --ink: #1a1a1a;
+  --muted: #6e6e73;
+  --accent: #0071e3;
+  --accent-hover: #0077ed;
+  --accent-weak: rgba(0,113,227,0.08);
+  --line: rgba(0,0,0,0.08);
+  --line-strong: rgba(0,0,0,0.15);
+  --success: #34c759;
+  --error: #ff3b30;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px -6px rgba(0,0,0,0.08);
+  --space: clamp(1rem, 0.8rem + 0.8vw, 1.5rem);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Inter", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  padding: 1rem var(--space);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+header h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+header .subtitle {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.1rem;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space);
+}
+
+@media (max-width: 800px) {
+  main { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.panel-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.panel-body {
+  padding: 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+textarea, input[type="text"], input[type="number"], select {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+textarea:focus, input:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-weak);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 140px;
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+.preview-wrap {
+  flex: 1;
+  min-height: 160px;
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  position: relative;
+  overflow: auto;
+}
+
+.preview-wrap.has-content {
+  border-style: solid;
+  border-color: var(--line);
+}
+
+.preview-placeholder {
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+#preview {
+  max-width: 100%;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.control-group.inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-group.inline label {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+input[type="color"] {
+  width: 100%;
+  height: 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  padding: 2px;
+}
+
+input[type="range"] {
+  width: 100%;
+  cursor: pointer;
+}
+
+.range-value {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: right;
+  min-width: 3em;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-2);
+  border-color: var(--muted);
+}
+
+.btn-success {
+  background: var(--success);
+  color: #fff;
+  border-color: var(--success);
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.samples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.sample-chip {
+  font-size: 0.78rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sample-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-weak);
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink);
+  color: #fff;
+  padding: 0.7rem 1.2rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.error {
+  background: var(--error);
+}
+
+.svg-code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  max-height: 140px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--muted);
+}
+
+.checkbox-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.checkbox-wrap input {
+  width: auto;
+  cursor: pointer;
+}
+
+.fullwidth { grid-column: 1 / -1; }
+
+kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75em;
+  padding: 0.1em 0.4em;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--surface-2);
+}
+
+footer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space) var(--space);
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <h1>LaTeX 画像変換ツール</h1>
+      <div class="subtitle">数式を PNG / SVG / JPG として書き出し</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="insertInline()">インライン挿入</button>
+      <button class="btn btn-secondary" onclick="insertDisplay()">ディスプレイ挿入</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">LaTeX 入力</div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="clearInput()">クリア</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div>
+        <label>数式コード</label>
+        <textarea id="latexInput" placeholder="例: E = mc^2 または \frac{1}{\sqrt{2\pi}} e^{-x^2/2}" spellcheck="false">E = mc^2</textarea>
+        <div style="margin-top:0.4rem;font-size:0.75rem;color:var(--muted);">
+          <kbd>Ctrl</kbd>+<kbd>Enter</kbd> でレンダリング &nbsp;|&nbsp; <kbd>Tab</kbd> でインデント
+        </div>
+      </div>
+
+      <div>
+        <label>サンプル（クリックで挿入）</label>
+        <div class="samples">
+          <span class="sample-chip" data-latex="E = mc^2">質量エネルギー</span>
+          <span class="sample-chip" data-latex="\frac{1}{\sqrt{2\pi}} e^{-x^2/2}">正規分布</span>
+          <span class="sample-chip" data-latex="\sum_{i=1}^{n} x_i = x_1 + x_2 + \dots + x_n">総和</span>
+          <span class="sample-chip" data-latex="\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}">ガウス積分</span>
+          <span class="sample-chip" data-latex="\begin{pmatrix} a & b \\ c & d \end{pmatrix}">行列</span>
+          <span class="sample-chip" data-latex="\frac{d}{dx} \left( \int_{a}^{x} f(t) dt \right) = f(x)">微分積分学</span>
+          <span class="sample-chip" data-latex="\lim_{n \to \infty} \left(1 + \frac{1}{n}\right)^n = e">極限</span>
+          <span class="sample-chip" data-latex="i\hbar\frac{\partial}{\partial t}\Psi(\mathbf{r},t) = \hat H\Psi(\mathbf{r},t)">シュレディンガー</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="control-group">
+          <label for="textColor">文字色</label>
+          <input type="color" id="textColor" value="#000000">
+        </div>
+        <div class="control-group">
+          <label for="bgColor">背景色</label>
+          <input type="color" id="bgColor" value="#ffffff">
+        </div>
+        <div class="control-group inline">
+          <input type="checkbox" id="transparentBg" checked>
+          <label for="transparentBg" style="margin-bottom:0;">背景を透明にする</label>
+        </div>
+        <div class="control-group">
+          <label for="scale">スケール <span class="range-value" id="scaleVal">2.0</span></label>
+          <input type="range" id="scale" min="0.5" max="5" step="0.1" value="2">
+        </div>
+        <div class="control-group">
+          <label for="dpi">PNG解像度 (DPI)</label>
+          <input type="number" id="dpi" value="300" min="72" max="600" step="10">
+        </div>
+        <div class="control-group">
+          <label for="format">書き出し形式</label>
+          <select id="format">
+            <option value="png">PNG</option>
+            <option value="svg">SVG</option>
+            <option value="jpg">JPG</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">プレビュー</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="render()">レンダリング</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="preview-wrap" id="previewWrap">
+        <div class="preview-placeholder" id="placeholder">左側LaTeXを入力してレンダリングしてください</div>
+        <div id="preview" style="display:none;padding:8px;"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="downloadImage()">画像をダウンロード</button>
+        <button class="btn btn-secondary" onclick="copySvgCode()">SVGコードをコピー</button>
+        <button class="btn btn-secondary" onclick="copyImage()">画像をコピー</button>
+        <button class="btn btn-secondary" onclick="copyLatex()">LaTeXをコピー</button>
+      </div>
+
+      <div id="svgCodeWrap" style="display:none;">
+        <label>SVGコード</label>
+        <pre class="svg-code" id="svgCode"></pre>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  KaTeX を使用してブラウザ内でレンダリグしています。外部サーバーへの送信は行っていません。
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let lastSvgUrl = null;
+let lastPngUrl = null;
+let lastJpgUrl = null;
+let lastSvgXml = '';
+let lastRenderedWidth = 0;
+let lastRenderedHeight = 0;
+
+const $ = id => document.getElementById(id);
+const latexInput = $('latexInput');
+const preview = $('preview');
+const previewWrap = $('previewWrap');
+const placeholder = $('placeholder');
+const toastEl = $('toast');
+const svgCodeWrap = $('svgCodeWrap');
+const svgCodeEl = $('svgCode');
+const scaleInput = $('scale');
+const scaleVal = $('scaleVal');
+const transparentBg = $('transparentBg');
+const bgColorInput = $('bgColor');
+const textColorInput = $('textColor');
+
+function showToast(msg, isError) {
+  toastEl.textContent = msg;
+  toastEl.classList.toggle('error', !!isError);
+  toastEl.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toastEl.classList.remove('show'), 2200);
+}
+
+function stripDelimiters(text) {
+  const val = text.trim();
+  if (val.startsWith('$$') && val.endsWith('$$')) return val.slice(2, -2).trim();
+  if (val.startsWith('$') && val.endsWith('$')) return val.slice(1, -1).trim();
+  return val;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function getKaTeXCss() {
+  let css = '';
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) {
+        if (rule.cssText && rule.cssText.includes('katex')) {
+          css += rule.cssText + '\n';
+        }
+      }
+    } catch (e) { /* cross-origin stylesheet, ignore */ }
+  }
+  return css;
+}
+
+function render() {
+  const raw = latexInput.value.trim();
+  if (!raw) {
+    preview.style.display = 'none';
+    placeholder.style.display = 'block';
+    previewWrap.classList.remove('has-content');
+    svgCodeWrap.style.display = 'none';
+    lastSvgUrl = lastPngUrl = lastJpgUrl = null;
+    lastSvgXml = '';
+    return;
+  }
+
+  const textColor = textColorInput.value;
+  const bg = transparentBg.checked ? 'transparent' : bgColorInput.value;
+
+  preview.style.display = 'block';
+  placeholder.style.display = 'none';
+  previewWrap.classList.add('has-content');
+  preview.style.color = textColor;
+  preview.style.background = bg;
+
+  const tex = stripDelimiters(raw);
+
+  try {
+    katex.render(tex, preview, {
+      throwOnError: true,
+      displayMode: true,
+      trust: true,
+      strict: false
+    });
+    generateOutputs();
+    showToast('レンダリング完了');
+  } catch (e) {
+    preview.innerHTML = '<span style="color:var(--error);font-size:0.9rem;">エラー: ' + escapeHtml(e.message) + '</span>';
+    svgCodeWrap.style.display = 'none';
+    lastSvgUrl = lastPngUrl = lastJpgUrl = null;
+    lastSvgXml = '';
+  }
+}
+
+function generateOutputs() {
+  // Force layout measurement
+  const rect = preview.getBoundingClientRect();
+  const width = Math.max(1, Math.ceil(rect.width));
+  const height = Math.max(1, Math.ceil(rect.height));
+  lastRenderedWidth = width;
+  lastRenderedHeight = height;
+
+  const textColor = textColorInput.value;
+  const bg = transparentBg.checked ? 'transparent' : bgColorInput.value;
+  const katexCss = getKaTeXCss();
+  const htmlContent = preview.innerHTML;
+
+  // Build SVG with foreignObject containing the rendered KaTeX HTML
+  const svgXml = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <defs>
+    <style>
+      .katex-export { font-family: KaTeX_Main, "Times New Roman", serif; }
+      ${katexCss}
+    </style>
+  </defs>
+  <rect width="100%" height="100%" fill="${bg}"/>
+  <foreignObject x="0" y="0" width="${width}" height="${height}">
+    <div xmlns="http://www.w3.org/1999/xhtml" class="katex-export" style="color:${textColor};padding:8px;width:${width}px;height:${height}px;box-sizing:border-box;">
+      ${htmlContent}
+    </div>
+  </foreignObject>
+</svg>`;
+
+  lastSvgXml = svgXml;
+  lastSvgUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgXml);
+  svgCodeEl.textContent = svgXml;
+  svgCodeWrap.style.display = 'block';
+
+  // Generate PNG and JPG from SVG via canvas
+  const img = new Image();
+  img.onload = function() {
+    const scale = parseFloat(scaleInput.value);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.ceil(width * scale));
+    canvas.height = Math.max(1, Math.ceil(height * scale));
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+
+    if (!transparentBg.checked) {
+      ctx.fillStyle = bgColorInput.value;
+      ctx.fillRect(0, 0, width, height);
+    }
+    ctx.drawImage(img, 0, 0, width, height);
+
+    lastPngUrl = canvas.toDataURL('image/png');
+    lastJpgUrl = canvas.toDataURL('image/jpeg', 0.95);
+  };
+  img.onerror = function() {
+    lastPngUrl = null;
+    lastJpgUrl = null;
+  };
+  img.src = lastSvgUrl;
+}
+
+function timestamp() {
+  const now = new Date();
+  return now.getFullYear() +
+    String(now.getMonth()+1).padStart(2,'0') +
+    String(now.getDate()).padStart(2,'0') + '_' +
+    String(now.getHours()).padStart(2,'0') +
+    String(now.getMinutes()).padStart(2,'0') +
+    String(now.getSeconds()).padStart(2,'0');
+}
+
+function downloadImage() {
+  const fmt = $('format').value;
+  let dataUrl = null;
+  let ext = fmt;
+  if (fmt === 'png') dataUrl = lastPngUrl;
+  else if (fmt === 'svg') dataUrl = lastSvgUrl;
+  else if (fmt === 'jpg') dataUrl = lastJpgUrl;
+
+  if (!dataUrl) {
+    showToast('先にレンダリングしてください', true);
+    return;
+  }
+
+  if (fmt === 'png') {
+    const dpi = parseInt($('dpi').value, 10) || 300;
+    adjustPngDpiAndDownload(dataUrl, dpi, 'latex_' + timestamp() + '.png');
+    return;
+  }
+
+  const link = document.createElement('a');
+  link.href = dataUrl;
+  link.download = 'latex_' + timestamp() + '.' + ext;
+  link.click();
+  showToast(fmt.toUpperCase() + ' をダウンロードしました');
+}
+
+function adjustPngDpiAndDownload(dataUrl, dpi, filename) {
+  const binary = atob(dataUrl.split(',')[1]);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+  const pHYsPixelsPerMeter = Math.round(dpi / 0.0254);
+  const pHYsData = new Uint8Array(9);
+  const view = new DataView(pHYsData.buffer);
+  view.setUint32(0, pHYsPixelsPerMeter, false);
+  view.setUint32(4, pHYsPixelsPerMeter, false);
+  pHYsData[8] = 1;
+
+  const crc = crc32(pHYsData);
+  const crcBytes = new Uint8Array(4);
+  new DataView(crcBytes.buffer).setUint32(0, crc, false);
+
+  const pHYsChunk = new Uint8Array(4 + 4 + 9 + 4);
+  const dv = new DataView(pHYsChunk.buffer);
+  dv.setUint32(0, 9, false);
+  pHYsChunk.set([0x70, 0x48, 0x59, 0x73], 4);
+  pHYsChunk.set(pHYsData, 8);
+  pHYsChunk.set(crcBytes, 17);
+
+  let pos = 8;
+  const ihdrLen = new DataView(bytes.buffer).getUint32(pos, false);
+  pos += 4 + 4 + ihdrLen + 4;
+
+  const before = bytes.slice(0, pos);
+  const after = bytes.slice(pos);
+
+  const out = new Uint8Array(before.length + pHYsChunk.length + after.length);
+  out.set(before, 0);
+  out.set(pHYsChunk, before.length);
+  out.set(after, before.length + pHYsChunk.length);
+
+  const blob = new Blob([out], { type: 'image/png' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+  showToast('PNG (' + dpi + ' DPI) をダウンロードしました');
+}
+
+function crc32(bytes) {
+  if (!crc32.table) {
+    crc32.table = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+      let c = i;
+      for (let k = 0; k < 8; k++) {
+        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      }
+      crc32.table[i] = c;
+    }
+  }
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) {
+    crc = crc32.table[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function copySvgCode() {
+  if (!lastSvgXml) { showToast('SVGコードがありません', true); return; }
+  navigator.clipboard.writeText(lastSvgXml).then(() => showToast('SVGコードをコピーしました'));
+}
+
+async function svgToPngBlob(svgUrl, bgColor) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, lastRenderedWidth);
+      canvas.height = Math.max(1, lastRenderedHeight);
+      const ctx = canvas.getContext('2d');
+      if (bgColor && bgColor !== 'transparent') {
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(blob => resolve(blob), 'image/png');
+    };
+    img.onerror = reject;
+    img.src = svgUrl;
+  });
+}
+
+async function copyImage() {
+  const fmt = $('format').value;
+
+  if (fmt === 'svg') {
+    if (!lastSvgUrl) { showToast('先にレンダリングしてください', true); return; }
+    // SVG image copy: try native SVG blob first, fallback to PNG conversion
+    try {
+      const svgBlob = new Blob([lastSvgXml], { type: 'image/svg+xml' });
+      const item = new ClipboardItem({ 'image/svg+xml': svgBlob });
+      await navigator.clipboard.write([item]);
+      showToast('SVG画像をコピーしました');
+    } catch (e) {
+      // Fallback: copy as PNG for broader compatibility
+      try {
+        const pngBlob = await svgToPngBlob(lastSvgUrl, transparentBg.checked ? null : bgColorInput.value);
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+        showToast('SVGをPNGとしてコピーしました（互換性のため）');
+      } catch (e2) {
+        showToast('コピーに失敗しました: ' + e2.message, true);
+      }
+    }
+    return;
+  }
+
+  let dataUrl = null;
+  let mime = '';
+  if (fmt === 'png') { dataUrl = lastPngUrl; mime = 'image/png'; }
+  else if (fmt === 'jpg') { dataUrl = lastJpgUrl; mime = 'image/jpeg'; }
+
+  if (!dataUrl) { showToast('先にレンダリングしてください', true); return; }
+
+  try {
+    const blob = await (await fetch(dataUrl)).blob();
+    await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
+    showToast(fmt.toUpperCase() + '画像をコピーしました');
+  } catch (e) {
+    showToast('コピーに失敗しました: ' + e.message, true);
+  }
+}
+
+function copyLatex() {
+  const text = latexInput.value;
+  if (!text) { showToast('入力が空です', true); return; }
+  navigator.clipboard.writeText(text).then(() => showToast('LaTeXをコピーしました'));
+}
+
+function clearInput() {
+  latexInput.value = '';
+  latexInput.focus();
+  render();
+}
+
+function insertInline() {
+  const s = latexInput.selectionStart, e = latexInput.selectionEnd;
+  const selected = latexInput.value.slice(s, e);
+  latexInput.setRangeText('$' + (selected || '') + '$', s, e, 'end');
+  latexInput.focus();
+  render();
+}
+
+function insertDisplay() {
+  const s = latexInput.selectionStart, e = latexInput.selectionEnd;
+  const selected = latexInput.value.slice(s, e);
+  latexInput.setRangeText('$$' + (selected || '') + '$$', s, e, 'end');
+  latexInput.focus();
+  render();
+}
+
+// Event listeners
+latexInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const start = this.selectionStart, end = this.selectionEnd;
+    this.setRangeText('  ', start, end, 'end');
+  }
+  if (e.key === 'Enter' && e.ctrlKey) {
+    e.preventDefault();
+    render();
+  }
+});
+
+latexInput.addEventListener('input', function() {
+  clearTimeout(window._renderTimer);
+  window._renderTimer = setTimeout(render, 400);
+});
+
+document.querySelectorAll('.sample-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    latexInput.value = chip.dataset.latex;
+    render();
+  });
+});
+
+scaleInput.addEventListener('input', () => {
+  scaleVal.textContent = parseFloat(scaleInput.value).toFixed(1);
+});
+
+textColorInput.addEventListener('input', render);
+bgColorInput.addEventListener('input', render);
+transparentBg.addEventListener('change', render);
+scaleInput.addEventListener('change', render);
+
+// Wait for KaTeX then initial render
+function waitForKaTeX() {
+  if (typeof katex !== 'undefined') {
+    render();
+  } else {
+    setTimeout(waitForKaTeX, 100);
+  }
+}
+waitForKaTeX();
+</script>
+
+</body>
+</html>
