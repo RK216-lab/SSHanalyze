@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LaTeX v4 - Taint修正</title>
+<title>LaTeX v5 - 数式画像ジェネレーター</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <style>
@@ -23,7 +23,7 @@ main{max-width:1180px;margin:0 auto;padding:var(--sp);display:grid;grid-template
 label{font-size:.78rem;font-weight:500;color:var(--mut);display:block;margin-bottom:.28rem}
 textarea,input,select{width:100%;font:inherit;font-size:.92rem;padding:.6rem .8rem;border:1px solid var(--line2);border-radius:var(--rs);background:var(--sf2);color:var(--ink);outline:none}
 textarea:focus,input:focus,select:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,113,227,.12)}
-textarea{resize:vertical;min-height:88px;line-height:1.5}
+textarea{resize:vertical;min-height:88px;line-height:1.5;font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
 .pw{flex:1;min-height:260px;border:2px dashed var(--line2);border-radius:var(--rs);display:flex;align-items:center;justify-content:center;padding:1.2rem;position:relative;overflow:auto;background:#fff}
 .pw.has{background:#fff repeating-conic-gradient(#f6f6f6 0 25%,#fff 0 50%) 0 / 20px 20px;border-style:solid;border-color:var(--line)}
 #preview{max-width:100%}
@@ -34,229 +34,523 @@ textarea{resize:vertical;min-height:88px;line-height:1.5}
 .cg.inline label{margin:0;white-space:nowrap}
 input[type=color]{width:100%;height:32px;border:1px solid var(--line2);border-radius:var(--rs);padding:2px}
 input[type=range]{width:100%}
-.rv{font-size:.74rem;color:var(--mut);text-align:right;min-width:3em}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.3rem;padding:.48rem .85rem;font-size:.8rem;font-weight:500;border-radius:var(--rs);border:1px solid transparent;cursor:pointer}
+input[type=checkbox]{width:auto}
+.rv{font-size:.74rem;color:var(--mut);text-align:right;min-width:3em;float:right}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.3rem;padding:.48rem .85rem;font-size:.8rem;font-weight:500;border-radius:var(--rs);border:1px solid transparent;cursor:pointer;font-family:inherit}
 .btn:disabled{opacity:.4;pointer-events:none}
 .btn-p{background:var(--acc);color:#fff;border-color:var(--acc)}
 .btn-s{background:var(--sf);color:var(--ink);border-color:var(--line2)}
-.br{display:flex;flex-wrap:wrap;gap:.45rem}
-.chip{font-size:.73rem;padding:.3rem .6rem;border-radius:999px;background:var(--sf2);border:1px solid var(--line);color:var(--mut);cursor:pointer}
+.br{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}
 .toast{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%) translateY(12px);background:#111;color:#fff;padding:.55rem .95rem;border-radius:8px;font-size:.8rem;opacity:0;pointer-events:none;transition:.22s;z-index:99}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.err{background:#ff3b30}
 .code{font-family:ui-monospace,Menlo,monospace;font-size:.72rem;background:var(--sf2);border:1px solid var(--line);border-radius:8px;padding:.55rem;max-height:110px;overflow:auto;white-space:pre-wrap;word-break:break-all;color:var(--mut)}
 .mode{display:flex;background:var(--sf2);border:1px solid var(--line);border-radius:999px;padding:3px;gap:3px;width:fit-content}
-.mbtn{padding:.34rem .85rem;border-radius:999px;border:0;background:transparent;font-size:.8rem;font-weight:500;cursor:pointer;color:var(--mut)}
+.mbtn{padding:.34rem .85rem;border-radius:999px;border:0;background:transparent;font-size:.8rem;font-weight:500;cursor:pointer;color:var(--mut);font-family:inherit}
 .mbtn.on{background:var(--sf);box-shadow:0 1px 4px rgba(0,0,0,.12);color:var(--ink);border:1px solid var(--line)}
-.figure-card{display:inline-block;text-align:left;line-height:1.2}
-.legend-item{display:flex;align-items:baseline;gap:.4em;margin:.16em 0}
 .div{height:1px;background:var(--line);margin:.15rem 0}
+.hint{font-size:.72rem;color:var(--mut)}
+.errbox{background:#fff0f0;border:1px solid #ffcccc;color:#c00;padding:.6rem;border-radius:8px;font-size:.78rem;white-space:pre-wrap;display:none}
+.tex-err{color:#ff3b30;font-family:ui-monospace,Menlo,monospace;font-size:.85em}
+/* 出力用 */
+.figure-card{display:inline-block;text-align:left;line-height:1.2}
+.figure-formula{line-height:1.28}
+.figure-legend{margin-top:.7em;line-height:1.55;display:grid;grid-template-columns:auto auto 1fr;column-gap:.4em;row-gap:.16em;align-items:baseline}
+.legend-full{grid-column:1/-1}
+.legend-colon{opacity:.6}
 </style>
 </head>
 <body>
-<header><div class="header-inner"><div><h1>LaTeX v4 <span style="font-weight:400;color:var(--mut);font-size:.75em">Taint修正・軽量</span></h1><div class="sub">上:式(大)/下:凡例(小) | 透過PNG | 余白トリム | SecurityError修正</div></div><div class="br"><span style="font-size:.7rem;color:var(--mut)" id="katexState">KaTeX読込中...</span></div></div></header>
-<main>
-<div class="panel">
-  <div class="ph"><div class="pt">入力</div><div class="mode"><button class="mbtn on" data-mode="single">単一式</button><button class="mbtn" data-mode="figure">式+凡例</button></div></div>
-  <div class="pb">
-    <div id="singlePane">
-      <div><label>LaTeX 数式</label><textarea id="latexInput">E = mc^2</textarea></div>
-      <div style="margin-top:.6rem"><label>サンプル</label><div class="br"><span class="chip" data-latex="E = mc^2">E=mc²</span><span class="chip" data-latex="\text{Rate} = \frac{W_{\text{before}}-W_{\text{after}}}{W_{\text{before}}-W_{\text{base}}}\times 100\ (%)">Rate式</span></div></div>
+<header>
+  <div class="header-inner">
+    <div>
+      <h1>LaTeX v5 <span style="font-weight:400;color:var(--mut);font-size:.75em">数式画像ジェネレーター</span></h1>
+      <div class="sub">式(大)＋凡例(小) | 透過PNG / SVG / JPG | 余白トリム | 設定は自動保存</div>
     </div>
-    <div id="figurePane" style="display:none">
-      <div><label>上の式（大きく）LaTeX</label><textarea id="formulaInput" style="min-height:78px">\text{Rate} = \frac{W_{\text{before}} - W_{\text{after}}}{W_{\text{before}} - W_{\text{base}}} \times 100\ (%)</textarea></div>
-      <div><label>下の凡例（1行1項目、コロン区切り）</label><textarea id="legendInput" style="min-height:108px">W_{\text{base}} : Base fabric weight
-W_{\text{before}} : Weight before washing
-W_{\text{after}} : Weight after washing</textarea></div>
-      <div class="controls" style="margin-top:.15rem">
-        <div class="cg"><label>式サイズ <span class="rv" id="fsVal">28px</span></label><input type="range" id="fs" min="16" max="52" step="1" value="28"></div>
-        <div class="cg"><label>凡例サイズ <span class="rv" id="lsVal">13px</span></label><input type="range" id="ls" min="9" max="22" step="1" value="13"></div>
+    <div class="br"><span style="font-size:.7rem;color:var(--mut)" id="katexState">KaTeX読込中...</span></div>
+  </div>
+</header>
+
+<main>
+  <!-- 入力パネル -->
+  <div class="panel">
+    <div class="ph">
+      <div class="pt">入力</div>
+      <div class="mode">
+        <button class="mbtn on" data-mode="single">単一式</button>
+        <button class="mbtn" data-mode="figure">式＋凡例</button>
       </div>
     </div>
-    <div class="div"></div>
-    <div class="controls">
-      <div class="cg"><label>文字色</label><input type="color" id="tc" value="#000000"></div>
-      <div class="cg"><label>背景色</label><input type="color" id="bg" value="#ffffff"></div>
-      <div class="cg inline" style="align-self:end"><input type="checkbox" id="tr" checked><label for="tr">背景透過</label></div>
-      <div class="cg inline" style="align-self:end"><input type="checkbox" id="trim" checked><label for="trim">余白トリム</label></div>
-      <div class="cg"><label>余白 <span class="rv" id="padVal">16px</span></label><input type="range" id="pad" min="0" max="48" step="2" value="16"></div>
-      <div class="cg"><label>拡大率 <span class="rv" id="scVal">2.0</span></label><input type="range" id="sc" min="1" max="4" step="0.25" value="2"></div>
-      <div class="cg"><label>DPI</label><input type="number" id="dpi" value="300" min="72" max="600" step="10"></div>
-      <div class="cg"><label>形式</label><select id="fmt"><option value="png">PNG透過</option><option value="svg">SVG</option><option value="jpg">JPG</option></select></div>
+    <div class="pb">
+      <div id="singlePane">
+        <label>LaTeX 数式</label>
+        <textarea id="latexInput" spellcheck="false">E = mc^2</textarea>
+      </div>
+
+      <div id="figurePane" style="display:none;flex-direction:column;gap:1rem">
+        <div>
+          <label>上の式（大きく）LaTeX</label>
+          <textarea id="formulaInput" style="min-height:78px" spellcheck="false"></textarea>
+        </div>
+        <div>
+          <label>下の凡例（1行1項目、「記号 : 説明」の形式）</label>
+          <textarea id="legendInput" style="min-height:108px" spellcheck="false"></textarea>
+          <div class="hint">記号部分はLaTeX可。コロンがない行は全幅で表示されます。</div>
+        </div>
+        <div class="controls">
+          <div class="cg"><label>式サイズ <span class="rv" id="fsVal"></span></label><input type="range" id="fs" min="16" max="52" step="1" value="28"></div>
+          <div class="cg"><label>凡例サイズ <span class="rv" id="lsVal"></span></label><input type="range" id="ls" min="9" max="22" step="1" value="13"></div>
+        </div>
+      </div>
+
+      <div>
+        <label>プリセット</label>
+        <div class="br">
+          <select id="preset" style="flex:1"></select>
+          <button class="btn btn-s" id="loadPresetBtn">読み込み</button>
+        </div>
+      </div>
+
+      <div class="div"></div>
+
+      <div class="controls">
+        <div class="cg"><label>文字色</label><input type="color" id="tc" value="#000000"></div>
+        <div class="cg"><label>背景色</label><input type="color" id="bg" value="#ffffff"></div>
+        <div class="cg inline" style="align-self:end"><input type="checkbox" id="tr" checked><label for="tr">背景透過</label></div>
+        <div class="cg inline" style="align-self:end"><input type="checkbox" id="trim" checked><label for="trim">余白トリム</label></div>
+        <div class="cg"><label>余白 <span class="rv" id="padVal"></span></label><input type="range" id="pad" min="0" max="48" step="2" value="16"></div>
+        <div class="cg"><label>拡大率 <span class="rv" id="scVal"></span></label><input type="range" id="sc" min="1" max="4" step="0.25" value="2"></div>
+        <div class="cg"><label>DPI（メタ情報）</label><input type="number" id="dpi" value="300" min="72" max="600" step="10"></div>
+        <div class="cg"><label>形式</label>
+          <select id="fmt"><option value="png">PNG（透過可）</option><option value="svg">SVG</option><option value="jpg">JPG</option></select>
+        </div>
+        <div class="cg" style="grid-column:1/-1"><label>ファイル名</label><input type="text" id="fname" value="latex"></div>
+      </div>
+
+      <div class="br">
+        <button class="btn btn-s" id="clearBtn">クリア</button>
+        <button class="btn btn-s" id="copyTexBtn">LaTeXをコピー</button>
+      </div>
     </div>
-    <div class="br"><button class="btn btn-s" id="clearBtn">クリア</button><button class="btn btn-s" id="exBtn">画像の例をセット</button></div>
   </div>
-</div>
-<div class="panel">
-  <div class="ph"><div class="pt">プレビュー <span id="status" style="font-weight:400;color:var(--mut);font-size:.76em;margin-left:.4em"></span></div><div class="br"><button class="btn btn-p" id="renderBtn">レンダリング</button></div></div>
-  <div class="pb">
-    <div class="pw" id="pw"><div class="phold" id="phold">レンダリングしてください</div><div id="preview" style="display:none"></div></div>
-    <div class="br"><button class="btn btn-p" id="dlBtn">画像DL</button><button class="btn btn-s" id="copyImgBtn">画像コピー</button><button class="btn btn-s" id="copySvgBtn">SVGコード</button></div>
-    <div id="svgWrap" style="display:none"><label>SVGコード</label><pre class="code" id="svgCode"></pre></div>
-    <div id="errBox" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;padding:.6rem;border-radius:8px;font-size:.78rem;white-space:pre-wrap"></div>
+
+  <!-- プレビューパネル -->
+  <div class="panel">
+    <div class="ph">
+      <div class="pt">プレビュー <span id="status" style="font-weight:400;color:var(--mut);font-size:.76em;margin-left:.4em"></span></div>
+      <div class="br"><button class="btn btn-p" id="renderBtn">レンダリング</button></div>
+    </div>
+    <div class="pb">
+      <div class="pw" id="pw">
+        <div class="phold" id="phold">LaTeXを入力すると自動でプレビューされます</div>
+        <div id="preview" style="display:none"></div>
+      </div>
+      <div class="br">
+        <button class="btn btn-p" id="dlBtn" disabled>ダウンロード</button>
+        <button class="btn btn-s" id="copyImgBtn" disabled>画像コピー</button>
+        <button class="btn btn-s" id="copySvgBtn" disabled>SVGコードコピー</button>
+      </div>
+      <div id="svgWrap" style="display:none"><label>SVGコード</label><pre class="code" id="svgCode"></pre></div>
+      <div id="errBox" class="errbox"></div>
+    </div>
   </div>
-</div>
 </main>
+
 <div class="toast" id="toast"></div>
+
 <script>
-let lastSvgXml='',lastSvgBlobUrl=null,lastPngUrl=null,lastJpgUrl=null;
-let katexCssFull='',katexCssLite='',mode='single',isRendering=false;
+/* ========= 状態 ========= */
+let lastSvgXml='', lastSvgBlobUrl=null, lastPngUrl=null, lastJpgUrl=null;
+let katexCssFull='', katexCssLite='';
+let mode='single', rendering=false, pending=false;
+const STORE_KEY='latex_v5_settings';
+
 const $=id=>document.getElementById(id);
-const latexInput=$('latexInput'),formulaInput=$('formulaInput'),legendInput=$('legendInput');
-const preview=$('preview'),pw=$('pw'),phold=$('phold');
-const toastEl=$('toast'),svgWrap=$('svgWrap'),svgCodeEl=$('svgCode'),errBox=$('errBox');
-const tc=$('tc'),bg=$('bg'),tr=$('tr'),trim=$('trim'),pad=$('pad'),sc=$('sc'),dpi=$('dpi'),fmt=$('fmt');
-const fs=$('fs'),ls=$('ls');
-const statusEl=$('status'),katexState=$('katexState'),dlBtn=$('dlBtn'),renderBtn=$('renderBtn');
-function toast(m,err){toastEl.textContent=m;toastEl.classList.toggle('err',!!err);toastEl.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toastEl.classList.remove('show'),2400);}
+const latexInput=$('latexInput'), formulaInput=$('formulaInput'), legendInput=$('legendInput');
+const preview=$('preview'), pw=$('pw'), phold=$('phold');
+const toastEl=$('toast'), svgWrap=$('svgWrap'), svgCodeEl=$('svgCode'), errBox=$('errBox');
+const tc=$('tc'), bg=$('bg'), tr=$('tr'), trim=$('trim'), pad=$('pad'), sc=$('sc'), dpi=$('dpi'), fmt=$('fmt'), fname=$('fname');
+const fs=$('fs'), ls=$('ls');
+const statusEl=$('status'), katexState=$('katexState');
+const dlBtn=$('dlBtn'), copyImgBtn=$('copyImgBtn'), copySvgBtn=$('copySvgBtn'), renderBtn=$('renderBtn');
+
+/* ========= プリセット（String.raw で \ をそのまま扱う） ========= */
+const PRESETS=[
+  {name:'E = mc²（単一式）', mode:'single', tex:String.raw`E = mc^2`},
+  {name:'二次方程式の解の公式', mode:'single', tex:String.raw`x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}`},
+  {name:'ガウス積分', mode:'single', tex:String.raw`\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}`},
+  {name:'Rate式（式＋凡例）', mode:'figure',
+    formula:String.raw`\text{Rate} = \frac{W_{\text{before}} - W_{\text{after}}}{W_{\text{before}} - W_{\text{base}}} \times 100\ (\%)`,
+    legend:'W_{\\text{base}} : Base fabric weight\nW_{\\text{before}} : Weight before washing\nW_{\\text{after}} : Weight after washing'},
+  {name:'ベイズの定理（式＋凡例）', mode:'figure',
+    formula:String.raw`P(A \mid B) = \frac{P(B \mid A)\,P(A)}{P(B)}`,
+    legend:'P(A \\mid B) : Posterior probability\nP(B \\mid A) : Likelihood\nP(A) : Prior probability\nP(B) : Marginal likelihood'}
+];
+
+/* ========= ユーティリティ ========= */
+function toast(m,err){toastEl.textContent=m;toastEl.classList.toggle('err',!!err);toastEl.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toastEl.classList.remove('show'),2200);}
+function escHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function strip(s){const v=s.trim();if(v.startsWith('$$')&&v.endsWith('$$'))return v.slice(2,-2).trim();if(v.startsWith('$')&&v.endsWith('$'))return v.slice(1,-1).trim();return v;}
+function ts(){const d=new Date();const p=n=>String(n).padStart(2,'0');return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());}
+function setOutputsEnabled(on){dlBtn.disabled=!on;copyImgBtn.disabled=!on;copySvgBtn.disabled=!on;}
+
+/* ========= KaTeX CSS 読み込み ========= */
 async function loadKatexCss(){
- try{
-  const r=await fetch('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css',{cache:'force-cache'});
-  if(r.ok){
-   let txt=await r.text();
-   txt=txt.replace(/url\(["']?fonts\//g,"url('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/fonts/");
-   katexCssFull=txt;
-   katexCssLite=txt.replace(/@font-face\s*{[^}]*}/g,'');
-   katexCssLite+=`.katex{font-family:"Times New Roman",Times,serif !important;}`;
-  }
- }catch(e){console.warn(e);}
- katexState.textContent=typeof katex!=='undefined'?'KaTeX OK':'KaTeX未読込';
+  try{
+    const r=await fetch('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css',{cache:'force-cache'});
+    if(r.ok){
+      let txt=await r.text();
+      txt=txt.replace(/url\(["']?fonts\//g,"url('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/fonts/");
+      katexCssFull=txt;
+      katexCssLite=txt.replace(/@font-face\s*{[^}]*}/g,'')+`.katex{font-family:"Times New Roman",Times,serif !important;}`;
+    }
+  }catch(e){console.warn(e);}
+  katexState.textContent=typeof katex!=='undefined'?'KaTeX OK':'KaTeX未読込';
 }
+
+/* ========= モード切替 ========= */
 function setMode(m){
- mode=m;
- document.querySelectorAll('.mbtn').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
- $('singlePane').style.display=m==='single'?'block':'none';
- $('figurePane').style.display=m==='figure'?'block':'none';
- render();
+  mode=m;
+  document.querySelectorAll('.mbtn').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
+  $('singlePane').style.display=m==='single'?'block':'none';
+  $('figurePane').style.display=m==='figure'?'flex':'none';
+  updatePresetOptions();
+  scheduleRender();
 }
-function parseLegend(txt){return txt.split('\n').map(s=>s.trim()).filter(Boolean).map(line=>{const mm=line.match(/^(.+?)\s*[:：]\s*(.+)$/);if(mm)return{sym:mm[1].trim(),desc:mm[2].trim()};return{sym:'',desc:line};});}
-function renderKatex(tex,el,display){try{katex.render(strip(tex),el,{throwOnError:false,displayMode:!!display,trust:true,strict:false});return true;}catch(e){el.innerHTML='<span style="color:#ff3b30">'+tex+'</span>';return false;}}
-async function render(){
- if(isRendering)return;
- if(typeof katex==='undefined'){katexState.textContent='KaTeX読込中...';setTimeout(render,120);return;}
- katexState.textContent='KaTeX OK';errBox.style.display='none';isRendering=true;renderBtn.disabled=true;statusEl.textContent='レンダリング中...';
- try{
-  const textColor=tc.value;const bgColor=tr.checked?'transparent':bg.value;const padV=parseInt(pad.value,10)||0;
-  preview.style.display='block';phold.style.display='none';pw.classList.add('has');
-  preview.style.color=textColor;preview.style.background=bgColor;preview.style.padding=padV+'px';preview.innerHTML='';
-  if(mode==='single'){
-   const raw=latexInput.value.trim();if(!raw){preview.style.display='none';phold.style.display='block';pw.classList.remove('has');statusEl.textContent='';isRendering=false;renderBtn.disabled=false;return;}
-   const inner=document.createElement('div');inner.style.display='inline-block';preview.appendChild(inner);renderKatex(raw,inner,true);
-  }else{
-   const fRaw=formulaInput.value.trim();const lRaw=legendInput.value.trim();
-   if(!fRaw&&!lRaw){preview.style.display='none';phold.style.display='block';statusEl.textContent='';isRendering=false;renderBtn.disabled=false;return;}
-   const card=document.createElement('div');card.className='figure-card';
-   const fDiv=document.createElement('div');fDiv.className='figure-formula';fDiv.style.fontSize=fs.value+'px';fDiv.style.color=textColor;
-   const fInner=document.createElement('div');fInner.style.display='inline-block';fDiv.appendChild(fInner);
-   if(fRaw)renderKatex(fRaw,fInner,true);card.appendChild(fDiv);
-   if(lRaw){
-    const legDiv=document.createElement('div');legDiv.className='figure-legend';legDiv.style.fontSize=ls.value+'px';legDiv.style.color=textColor;
-    parseLegend(lRaw).forEach(it=>{
-     const row=document.createElement('div');row.className='legend-item';
-     if(it.sym){const sym=document.createElement('span');if(/[_^\\{}]/.test(it.sym))renderKatex(it.sym,sym,false);else sym.textContent=it.sym;const col=document.createElement('span');col.textContent=' : ';col.style.opacity='.6';const desc=document.createElement('span');desc.textContent=it.desc;row.append(sym,col,desc);}else{row.textContent=it.desc;}
-     legDiv.appendChild(row);
-    });card.appendChild(legDiv);
-   }
-   preview.appendChild(card);
+function updatePresetOptions(){
+  const sel=$('preset');sel.innerHTML='';
+  PRESETS.forEach((p,i)=>{
+    if(p.mode!==mode)return;
+    const o=document.createElement('option');o.value=i;o.textContent=p.name;sel.appendChild(o);
+  });
+}
+
+/* ========= 凡例パース ========= */
+function parseLegend(txt){
+  return txt.split('\n').map(s=>s.trim()).filter(Boolean).map(line=>{
+    const mm=line.match(/^(.+?)\s*[:：]\s*(.+)$/);
+    return mm?{sym:mm[1].trim(),desc:mm[2].trim()}:{sym:'',desc:line};
+  });
+}
+
+/* ========= KaTeX描画（エラーは戻り値で返す） ========= */
+function renderKatex(tex,el,display){
+  try{
+    katex.render(strip(tex),el,{throwOnError:true,displayMode:!!display,trust:true,strict:'ignore'});
+    return null;
+  }catch(e){
+    el.innerHTML='';
+    const s=document.createElement('span');s.className='tex-err';s.textContent=tex;el.appendChild(s);
+    return e.message;
   }
-  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-  if(document.fonts?.ready){try{await document.fonts.ready;}catch(e){}}
-  await generateOutputs();toast('レンダリング完了');
- }catch(e){console.error(e);errBox.textContent='エラー: '+(e.stack||e.message);errBox.style.display='block';toast('失敗: '+e.message,true);statusEl.textContent='失敗';}
- finally{isRendering=false;renderBtn.disabled=false;}
 }
+
+/* ========= レンダリング（取りこぼしなし） ========= */
+function scheduleRender(){clearTimeout(scheduleRender._t);scheduleRender._t=setTimeout(render,300);}
+async function render(){
+  if(typeof katex==='undefined'){setTimeout(render,150);return;}
+  if(rendering){pending=true;return;}
+  rendering=true;
+  try{
+    do{pending=false;await doRender();}while(pending);
+  }finally{rendering=false;}
+}
+async function doRender(){
+  const textColor=tc.value, bgColor=tr.checked?'transparent':bg.value, padV=parseInt(pad.value,10)||0;
+  katexState.textContent='KaTeX OK';
+  renderBtn.disabled=true;
+  statusEl.textContent='レンダリング中...';
+  errBox.style.display='none';
+  const errors=[];
+  try{
+    preview.innerHTML='';
+    preview.style.color=textColor;
+    preview.style.background=bgColor;
+    preview.style.padding=padV+'px';
+
+    const hasContent=mode==='single'?latexInput.value.trim():(formulaInput.value.trim()||legendInput.value.trim());
+    if(!hasContent){
+      preview.style.display='none';phold.style.display='block';pw.classList.remove('has');
+      statusEl.textContent='';setOutputsEnabled(false);lastPngUrl=lastJpgUrl=null;
+      return;
+    }
+    preview.style.display='block';phold.style.display='none';pw.classList.add('has');
+
+    if(mode==='single'){
+      const inner=document.createElement('div');inner.style.display='inline-block';
+      preview.appendChild(inner);
+      const err=renderKatex(latexInput.value,inner,true);
+      if(err)errors.push('式: '+err);
+    }else{
+      const card=document.createElement('div');card.className='figure-card';
+      const fDiv=document.createElement('div');fDiv.className='figure-formula';
+      fDiv.style.fontSize=fs.value+'px';fDiv.style.color=textColor;
+      const fInner=document.createElement('div');fInner.style.display='inline-block';
+      fDiv.appendChild(fInner);
+      const fRaw=formulaInput.value.trim();
+      if(fRaw){const err=renderKatex(fRaw,fInner,true);if(err)errors.push('上の式: '+err);}
+      card.appendChild(fDiv);
+
+      const lRaw=legendInput.value.trim();
+      if(lRaw){
+        const legDiv=document.createElement('div');legDiv.className='figure-legend';
+        legDiv.style.fontSize=ls.value+'px';legDiv.style.color=textColor;
+        parseLegend(lRaw).forEach(it=>{
+          if(it.sym){
+            const sym=document.createElement('span');
+            if(/[_^\\{}]/.test(it.sym)){const err=renderKatex(it.sym,sym,false);if(err)errors.push('凡例: '+err);}
+            else sym.textContent=it.sym;
+            const col=document.createElement('span');col.textContent=':';col.className='legend-colon';
+            const desc=document.createElement('span');desc.textContent=it.desc;
+            legDiv.append(sym,col,desc);
+          }else{
+            const full=document.createElement('span');full.className='legend-full';full.textContent=it.desc;
+            legDiv.appendChild(full);
+          }
+        });
+        card.appendChild(legDiv);
+      }
+      preview.appendChild(card);
+    }
+
+    if(errors.length){errBox.textContent='LaTeXエラー（該当箇所を赤表示）\n'+errors.join('\n');errBox.style.display='block';}
+
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    if(document.fonts?.ready){try{await document.fonts.ready;}catch(e){}}
+    await generateOutputs();
+    saveSettings();
+  }catch(e){
+    console.error(e);
+    errBox.textContent='エラー: '+(e.stack||e.message);errBox.style.display='block';
+    statusEl.textContent='失敗';
+  }finally{
+    renderBtn.disabled=false;
+  }
+}
+
+/* ========= 出力生成（SVG/PNG/JPG） ========= */
 async function generateOutputs(){
- statusEl.textContent='画像生成中...';dlBtn.disabled=true;
- const w=Math.max(1,Math.ceil(preview.scrollWidth));const h=Math.max(1,Math.ceil(preview.scrollHeight));
- const textColor=tc.value;const bgColor=tr.checked?'transparent':bg.value;const padV=parseInt(pad.value,10)||0;
- const innerHtml=preview.innerHTML;
- const styleFull=katexCssFull||'';
- const svgDownload=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><style>${styleFull}.figure-card{display:inline-block;text-align:left}.figure-formula{line-height:1.28}.figure-legend{margin-top:.7em;line-height:1.55}.legend-item{display:flex;gap:.4em;align-items:baseline;margin:.16em 0}</style>${bgColor!=='transparent'?`<rect width="100%" height="100%" fill="${bgColor}"/>`:''}<foreignObject x="0" y="0" width="${w}" height="${h}"><div xmlns="http://www.w3.org/1999/xhtml" style="color:${textColor};padding:${padV}px;width:${w}px;height:${h}px;box-sizing:border-box;background:${bgColor};display:flex;align-items:center;justify-content:center"><div style="display:inline-block;max-width:100%">${innerHtml}</div></div></foreignObject></svg>`;
- const styleLite=katexCssLite||`.katex{font-family:"Times New Roman",Times,serif}`;
- const svgForPng=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><style>${styleLite}.figure-card{display:inline-block;text-align:left}.figure-formula{line-height:1.28}.figure-legend{margin-top:.7em;line-height:1.55}.legend-item{display:flex;gap:.4em;align-items:baseline;margin:.16em 0}</style>${bgColor!=='transparent'?`<rect width="100%" height="100%" fill="${bgColor}"/>`:''}<foreignObject x="0" y="0" width="${w}" height="${h}"><div xmlns="http://www.w3.org/1999/xhtml" style="color:${textColor};padding:${padV}px;width:${w}px;height:${h}px;box-sizing:border-box;background:${bgColor};display:flex;align-items:center;justify-content:center;font-family:'Times New Roman',Times,serif"><div style="display:inline-block;max-width:100%">${innerHtml}</div></div></foreignObject></svg>`;
- lastSvgXml=svgDownload;
- if(lastSvgBlobUrl)URL.revokeObjectURL(lastSvgBlobUrl);
- lastSvgBlobUrl=URL.createObjectURL(new Blob([svgDownload],{type:'image/svg+xml;charset=utf-8'}));
- svgCodeEl.textContent=svgDownload;svgWrap.style.display='block';
- try{
-  const pngBlobUrl=URL.createObjectURL(new Blob([svgForPng],{type:'image/svg+xml;charset=utf-8'}));
-  const res=await svgUrlToCanvas(pngBlobUrl,w,h,bgColor,parseFloat(sc.value),trim.checked);
-  URL.revokeObjectURL(pngBlobUrl);
-  lastPngUrl=res.png;lastJpgUrl=res.jpg;statusEl.textContent=`${w}x${h} → ${res.w}x${res.h} (PNG OK)`;
- }catch(e){console.error(e);lastPngUrl=null;lastJpgUrl=null;statusEl.textContent=`${w}x${h} (PNG失敗→SVG使用)`;errBox.textContent='PNG生成失敗: '+e.message+' → SVGはDL可能です。';errBox.style.display='block';}
- finally{dlBtn.disabled=false;}
+  statusEl.textContent='画像生成中...';
+  const w=Math.max(1,Math.ceil(preview.scrollWidth));
+  const h=Math.max(1,Math.ceil(preview.scrollHeight));
+  const textColor=tc.value, bgColor=tr.checked?'transparent':bg.value, padV=parseInt(pad.value,10)||0;
+  const innerHtml=preview.innerHTML;
+  const wrap=(styleCss,extraFont)=>`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><style>${styleCss}.figure-card{display:inline-block;text-align:left}.figure-formula{line-height:1.28}.figure-legend{margin-top:.7em;line-height:1.55;display:grid;grid-template-columns:auto auto 1fr;column-gap:.4em;row-gap:.16em;align-items:baseline}.legend-full{grid-column:1/-1}.legend-colon{opacity:.6}</style>${bgColor!=='transparent'?`<rect width="100%" height="100%" fill="${bgColor}"/>`:''}<foreignObject x="0" y="0" width="${w}" height="${h}"><div xmlns="http://www.w3.org/1999/xhtml" style="color:${textColor};padding:${padV}px;width:${w}px;height:${h}px;box-sizing:border-box;background:${bgColor};display:flex;align-items:center;justify-content:center;${extraFont}"><div style="display:inline-block;max-width:100%">${innerHtml}</div></div></foreignObject></svg>`;
+  const svgDownload=wrap(katexCssFull,'');
+  const svgForPng=wrap(katexCssLite||'',"font-family:'Times New Roman',Times,serif");
+
+  lastSvgXml=svgDownload;
+  if(lastSvgBlobUrl)URL.revokeObjectURL(lastSvgBlobUrl);
+  lastSvgBlobUrl=URL.createObjectURL(new Blob([svgDownload],{type:'image/svg+xml;charset=utf-8'}));
+  svgCodeEl.textContent=svgDownload;svgWrap.style.display='block';
+  copySvgBtn.disabled=false;
+
+  try{
+    const pngBlobUrl=URL.createObjectURL(new Blob([svgForPng],{type:'image/svg+xml;charset=utf-8'}));
+    const res=await svgUrlToCanvas(pngBlobUrl,w,h,bgColor,parseFloat(sc.value),trim.checked);
+    URL.revokeObjectURL(pngBlobUrl);
+    lastPngUrl=res.png;lastJpgUrl=res.jpg;
+    statusEl.textContent=`${w}×${h} → ${res.w}×${res.h}px`;
+    setOutputsEnabled(true);
+  }catch(e){
+    console.error(e);lastPngUrl=null;lastJpgUrl=null;
+    statusEl.textContent=`${w}×${h}（PNG失敗・SVGで出力可）`;
+    dlBtn.disabled=false;copyImgBtn.disabled=true;
+    errBox.textContent='PNG生成失敗: '+e.message+'\n→ 形式をSVGにするとダウンロードできます。';
+    errBox.style.display='block';
+  }
 }
-function svgUrlToCanvas(url,w,h,bg,scale,doTrim){
- return new Promise((resolve,reject)=>{
-  const img=new Image();
-  img.onload=()=>{
-   try{
-    let cw=Math.max(1,Math.ceil(w*scale));let ch=Math.max(1,Math.ceil(h*scale));
-    const canvas=document.createElement('canvas');canvas.width=cw;canvas.height=ch;
-    const ctx=canvas.getContext('2d',{willReadFrequently:true});
-    if(bg&&bg!=='transparent'){ctx.fillStyle=bg;ctx.fillRect(0,0,cw,ch);}else ctx.clearRect(0,0,cw,ch);
-    ctx.drawImage(img,0,0,cw,ch);
-    let finalCanvas=canvas;if(doTrim){finalCanvas=trimCanvas(canvas);}
-    const pngUrl=finalCanvas.toDataURL('image/png');
-    let jpgUrl;if(bg==='transparent'){const c2=document.createElement('canvas');c2.width=finalCanvas.width;c2.height=finalCanvas.height;const x=c2.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c2.width,c2.height);x.drawImage(finalCanvas,0,0);jpgUrl=c2.toDataURL('image/jpeg',0.92);}else{jpgUrl=finalCanvas.toDataURL('image/jpeg',0.92);}
-    resolve({png:pngUrl,jpg:jpgUrl,w:finalCanvas.width,h:finalCanvas.height});
-   }catch(e){reject(e);}
-  };
-  img.onerror=()=>reject(new Error('SVG画像の読み込み失敗'));
-  img.src=url;
- });
+
+function svgUrlToCanvas(url,w,h,bgc,scale,doTrim){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const cw=Math.max(1,Math.ceil(w*scale)), ch=Math.max(1,Math.ceil(h*scale));
+        const canvas=document.createElement('canvas');canvas.width=cw;canvas.height=ch;
+        const ctx=canvas.getContext('2d',{willReadFrequently:true});
+        if(bgc&&bgc!=='transparent'){ctx.fillStyle=bgc;ctx.fillRect(0,0,cw,ch);}else ctx.clearRect(0,0,cw,ch);
+        ctx.drawImage(img,0,0,cw,ch);
+        const finalCanvas=doTrim?trimCanvas(canvas):canvas;
+        const pngUrl=finalCanvas.toDataURL('image/png');
+        const c2=document.createElement('canvas');c2.width=finalCanvas.width;c2.height=finalCanvas.height;
+        const x=c2.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c2.width,c2.height);x.drawImage(finalCanvas,0,0);
+        resolve({png:pngUrl,jpg:c2.toDataURL('image/jpeg',0.92),w:finalCanvas.width,h:finalCanvas.height});
+      }catch(e){reject(e);}
+    };
+    img.onerror=()=>reject(new Error('SVG画像の読み込み失敗'));
+    img.src=url;
+  });
 }
+
 function trimCanvas(canvas){
- const ctx=canvas.getContext('2d',{willReadFrequently:true});const w=canvas.width,h=canvas.height;let data;try{data=ctx.getImageData(0,0,w,h).data;}catch(e){return canvas;}
- let top=h,left=w,right=-1,bottom=-1;for(let y=0;y<h;y++){for(let x=0;x<w;x++){const i=(y*w+x)*4+3;if(data[i]>10){if(x<left)left=x;if(x>right)right=x;if(y<top)top=y;if(y>bottom)bottom=y;}}}
- if(right<0)return canvas;const p=2;left=Math.max(0,left-p);top=Math.max(0,top-p);right=Math.min(w-1,right+p);bottom=Math.min(h-1,bottom+p);const tw=right-left+1,th=bottom-top+1;if(tw===w&&th===h)return canvas;const out=document.createElement('canvas');out.width=tw;out.height=th;out.getContext('2d').drawImage(canvas,left,top,tw,th,0,0,tw,th);return out;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  const w=canvas.width,h=canvas.height;let data;
+  try{data=ctx.getImageData(0,0,w,h).data;}catch(e){return canvas;}
+  let top=h,left=w,right=-1,bottom=-1;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    if(data[(y*w+x)*4+3]>10){if(x<left)left=x;if(x>right)right=x;if(y<top)top=y;if(y>bottom)bottom=y;}
+  }
+  if(right<0)return canvas;
+  const p=2;left=Math.max(0,left-p);top=Math.max(0,top-p);right=Math.min(w-1,right+p);bottom=Math.min(h-1,bottom+p);
+  const tw=right-left+1,th=bottom-top+1;
+  if(tw===w&&th===h)return canvas;
+  const out=document.createElement('canvas');out.width=tw;out.height=th;
+  out.getContext('2d').drawImage(canvas,left,top,tw,th,0,0,tw,th);
+  return out;
 }
-function ts(){const d=new Date();return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'_'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+String(d.getSeconds()).padStart(2,'0');}
+
+/* ========= ダウンロード / コピー ========= */
+function baseName(){return (fname.value.trim()||'latex').replace(/[\\/:*?"<>|]/g,'_')+'_'+ts();}
+function saveBlobUrl(url,name){const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();}
+
 function downloadImage(){
- const f=fmt.value;if(f==='svg'){if(!lastSvgBlobUrl){toast('先にレンダリング',true);return;}const a=document.createElement('a');a.href=lastSvgBlobUrl;a.download='latex_'+ts()+'.svg';a.click();toast('SVG DL');return;}
- let url=f==='png'?lastPngUrl:lastJpgUrl;if(!url){if(lastSvgBlobUrl){toast('PNG失敗→SVGで代替DL',true);const a=document.createElement('a');a.href=lastSvgBlobUrl;a.download='latex_'+ts()+'.svg';a.click();return;}toast('先にレンダリング',true);return;}
- if(f==='png'){const d=parseInt($('dpi').value,10)||300;dlWithDpi(url,d,'latex_'+ts()+'.png');return;}
- const a=document.createElement('a');a.href=url;a.download='latex_'+ts()+'.'+f;a.click();toast(f.toUpperCase()+' DL');
+  const f=fmt.value;
+  if(f==='svg'){
+    if(!lastSvgBlobUrl){toast('先にレンダリングしてください',true);return;}
+    saveBlobUrl(lastSvgBlobUrl,baseName()+'.svg');toast('SVGをダウンロード');return;
+  }
+  const url=f==='png'?lastPngUrl:lastJpgUrl;
+  if(!url){
+    if(lastSvgBlobUrl){toast('PNG失敗のためSVGで保存します',true);saveBlobUrl(lastSvgBlobUrl,baseName()+'.svg');return;}
+    toast('先にレンダリングしてください',true);return;
+  }
+  if(f==='png'){dlWithDpi(url,parseInt(dpi.value,10)||300,baseName()+'.png');return;}
+  saveBlobUrl(url,baseName()+'.jpg');toast('JPGをダウンロード');
 }
-function dlWithDpi(dataUrl,dpi,filename){
- try{
-  const bin=atob(dataUrl.split(',')[1]);const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-  const ppm=Math.round(dpi/0.0254);const pHYs=new Uint8Array(9);const dv=new DataView(pHYs.buffer);dv.setUint32(0,ppm,false);dv.setUint32(4,ppm,false);pHYs[8]=1;
-  const crc=crc32(pHYs);const crcB=new Uint8Array(4);new DataView(crcB.buffer).setUint32(0,crc,false);
-  const chunk=new Uint8Array(21);const dv2=new DataView(chunk.buffer);dv2.setUint32(0,9,false);chunk.set([0x70,0x48,0x59,0x73],4);chunk.set(pHYs,8);chunk.set(crcB,17);
-  let pos=8;const ihdrLen=new DataView(bytes.buffer).getUint32(pos,false);pos+=4+4+ihdrLen+4;
-  const before=bytes.slice(0,pos),after=bytes.slice(pos);
-  const out=new Uint8Array(before.length+chunk.length+after.length);out.set(before,0);out.set(chunk,before.length);out.set(after,before.length+chunk.length);
-  const blob=new Blob([out],{type:'image/png'});const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('PNG '+dpi+' DPI DL');
- }catch(e){const a=document.createElement('a');a.href=dataUrl;a.download=filename;a.click();}
+
+function dlWithDpi(dataUrl,dpiVal,filename){
+  try{
+    const bin=atob(dataUrl.split(',')[1]);
+    const bytes=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+    const ppm=Math.round(dpiVal/0.0254);
+    const pHYs=new Uint8Array(9);const dv=new DataView(pHYs.buffer);
+    dv.setUint32(0,ppm,false);dv.setUint32(4,ppm,false);pHYs[8]=1;
+    const crcB=new Uint8Array(4);new DataView(crcB.buffer).setUint32(0,crc32(pHYs),false);
+    const chunk=new Uint8Array(21);const dv2=new DataView(chunk.buffer);
+    dv2.setUint32(0,9,false);chunk.set([0x70,0x48,0x59,0x73],4);chunk.set(pHYs,8);chunk.set(crcB,17);
+    const ihdrLen=new DataView(bytes.buffer).getUint32(8,false);
+    const pos=8+4+4+ihdrLen+4;
+    const out=new Uint8Array(bytes.length+chunk.length);
+    out.set(bytes.slice(0,pos),0);out.set(chunk,pos);out.set(bytes.slice(pos),pos+chunk.length);
+    const url=URL.createObjectURL(new Blob([out],{type:'image/png'}));
+    saveBlobUrl(url,filename);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast('PNGをダウンロード（'+dpiVal+' DPI）');
+  }catch(e){saveBlobUrl(dataUrl,filename);}
 }
-function crc32(b){if(!crc32.table){crc32.table=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);crc32.table[i]=c;}}let crc=0xFFFFFFFF;for(let i=0;i<b.length;i++)crc=crc32.table[(crc^b[i])&0xFF]^(crc>>>8);return (crc^0xFFFFFFFF)>>>0;}
-async function copySvg(){if(!lastSvgXml){toast('SVGなし',true);return;}try{await navigator.clipboard.writeText(lastSvgXml);toast('SVGコピー');}catch(e){toast('コピー失敗',true);}}
+
+function crc32(b){
+  if(!crc32.table){crc32.table=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);crc32.table[i]=c;}}
+  let crc=0xFFFFFFFF;for(let i=0;i<b.length;i++)crc=crc32.table[(crc^b[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+
+async function copySvg(){
+  if(!lastSvgXml){toast('SVGがありません',true);return;}
+  try{await navigator.clipboard.writeText(lastSvgXml);toast('SVGコードをコピー');}
+  catch(e){toast('コピー失敗',true);}
+}
 async function copyImg(){
- const f=fmt.value;if(f==='svg'){try{const b=new Blob([lastSvgXml],{type:'image/svg+xml'});await navigator.clipboard.write([new ClipboardItem({'image/svg+xml':b})]);toast('SVGコピー');return;}catch(e){if(lastPngUrl){try{const b=await (await fetch(lastPngUrl)).blob();await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);toast('PNGでコピー');return;}catch(e2){}}toast('コピー失敗',true);return;}}
- let url=f==='png'?lastPngUrl:lastJpgUrl;if(!url){toast('先にレンダリング',true);return;}
- try{const b=await (await fetch(url)).blob();await navigator.clipboard.write([new ClipboardItem({[b.type]:b})]);toast(f.toUpperCase()+'コピー');}catch(e){toast('コピー失敗: '+e.message,true);}
+  const f=fmt.value;
+  try{
+    if(f==='svg'){
+      await navigator.clipboard.write([new ClipboardItem({'image/svg+xml':new Blob([lastSvgXml],{type:'image/svg+xml'})})]);
+      toast('SVGをコピー');return;
+    }
+    const url=f==='png'?lastPngUrl:lastJpgUrl;
+    if(!url){toast('先にレンダリングしてください',true);return;}
+    const b=await (await fetch(url)).blob();
+    await navigator.clipboard.write([new ClipboardItem({[b.type]:b})]);
+    toast(f.toUpperCase()+'をコピー');
+  }catch(e){toast('コピー失敗: '+e.message,true);}
 }
-$('renderBtn').addEventListener('click',render);
-$('clearBtn').addEventListener('click',()=>{if(mode==='single')latexInput.value='';else{formulaInput.value='';legendInput.value='';}render();});
-$('exBtn').addEventListener('click',()=>{setMode('figure');formulaInput.value='\\text{Rate} = \\(W_{\\text{before}} - W_{\\text{after}}}{W_{\\text{before}} - W_{\\text{base}}} \\times 100\\ (%);legendInput.value='W_{\\text{base}} : Base fabric weight\nW_{\\text{before}} : Weight before washing\nW_{\\text{after}} : Weight after washing';render();});
-[latexInput,formulaInput,legendInput].forEach(el=>el.addEventListener('input',()=>{clearTimeout(window._t);window._t=setTimeout(render,350);}));
-document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{if(mode==='single')latexInput.value=c.dataset.latex;else formulaInput.value=c.dataset.latex;render();}));
+async function copyTex(){
+  const t=mode==='single'?latexInput.value:(formulaInput.value+(legendInput.value?'\n\n'+legendInput.value:''));
+  try{await navigator.clipboard.writeText(t);toast('LaTeXをコピー');}catch(e){toast('コピー失敗',true);}
+}
+
+/* ========= 設定の保存・復元 ========= */
+function saveSettings(){
+  try{
+    localStorage.setItem(STORE_KEY,JSON.stringify({
+      mode,single:latexInput.value,formula:formulaInput.value,legend:legendInput.value,
+      fs:fs.value,ls:ls.value,tc:tc.value,bg:bg.value,tr:tr.checked,trim:trim.checked,
+      pad:pad.value,sc:sc.value,dpi:dpi.value,fmt:fmt.value,fname:fname.value
+    }));
+  }catch(e){}
+}
+function loadSettings(){
+  try{
+    const s=JSON.parse(localStorage.getItem(STORE_KEY)||'null');
+    if(!s)return false;
+    latexInput.value=s.single??latexInput.value;
+    formulaInput.value=s.formula??formulaInput.value;
+    legendInput.value=s.legend??legendInput.value;
+    fs.value=s.fs??fs.value;ls.value=s.ls??ls.value;
+    tc.value=s.tc??tc.value;bg.value=s.bg??bg.value;
+    tr.checked=s.tr??tr.checked;trim.checked=s.trim??trim.checked;
+    pad.value=s.pad??pad.value;sc.value=s.sc??sc.value;
+    dpi.value=s.dpi??dpi.value;fmt.value=s.fmt??fmt.value;fname.value=s.fname??fname.value;
+    return s.mode||false;
+  }catch(e){return false;}
+}
+function updateLabels(){
+  $('fsVal').textContent=fs.value+'px';
+  $('lsVal').textContent=ls.value+'px';
+  $('padVal').textContent=pad.value+'px';
+  $('scVal').textContent=parseFloat(sc.value).toFixed(2)+'×';
+}
+
+/* ========= イベント ========= */
+renderBtn.addEventListener('click',render);
+$('clearBtn').addEventListener('click',()=>{
+  if(mode==='single')latexInput.value='';else{formulaInput.value='';legendInput.value='';}
+  render();
+});
+$('loadPresetBtn').addEventListener('click',()=>{
+  const p=PRESETS[parseInt($('preset').value,10)];
+  if(!p)return;
+  if(p.mode==='single')latexInput.value=p.tex;
+  else{formulaInput.value=p.formula;legendInput.value=p.legend;}
+  render();toast('プリセットを読み込みました');
+});
+$('copyTexBtn').addEventListener('click',copyTex);
 document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
-sc.addEventListener('input',()=>$('scVal').textContent=parseFloat(sc.value).toFixed(2));
-pad.addEventListener('input',()=>{$('padVal').textContent=pad.value+'px';preview.style.padding=pad.value+'px';});
-fs.addEventListener('input',()=>$('fsVal').textContent=fs.value+'px');
-ls.addEventListener('input',()=>$('lsVal').textContent=ls.value+'px');
-[fs,ls,pad].forEach(e=>e.addEventListener('change',render));
-[tc,bg,tr,trim,sc,fmt].forEach(e=>e.addEventListener('change',render));
-$('copySvgBtn').addEventListener('click',copySvg);
-$('copyImgBtn').addEventListener('click',copyImg);
-$('dlBtn').addEventListener('click',downloadImage);
-latexInput.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const s=e.target.selectionStart,en=e.target.selectionEnd;e.target.setRangeText('  ',s,en,'end');}if(e.key==='Enter'&&e.ctrlKey){e.preventDefault();render();}});
+
+[latexInput,formulaInput,legendInput].forEach(el=>el.addEventListener('input',scheduleRender));
+
+[fs,ls,pad,sc].forEach(el=>el.addEventListener('input',updateLabels));
+[fs,ls,pad,sc,tc,bg,tr,trim,fmt,dpi].forEach(el=>el.addEventListener('change',scheduleRender));
+fname.addEventListener('input',saveSettings);
+
+copySvgBtn.addEventListener('click',copySvg);
+copyImgBtn.addEventListener('click',copyImg);
+dlBtn.addEventListener('click',downloadImage);
+
+// Tabでインデント、Ctrl+Enterで描画
+latexInput.addEventListener('keydown',e=>{
+  if(e.key==='Tab'){e.preventDefault();const s=e.target.selectionStart,en=e.target.selectionEnd;e.target.setRangeText('  ',s,en,'end');}
+});
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();render();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();if(!dlBtn.disabled)downloadImage();}
+});
 window.addEventListener('error',e=>{errBox.textContent='JSエラー: '+e.message;errBox.style.display='block';});
-(async()=>{$('scVal').textContent=parseFloat(sc.value).toFixed(1);$('padVal').textContent=pad.value+'px';$('fsVal').textContent=fs.value+'px';$('lsVal').textContent=ls.value+'px';await loadKatexCss();setMode('figure');$('exBtn').click();})();
+
+/* ========= 初期化 ========= */
+(async()=>{
+  const savedMode=loadSettings();
+  updateLabels();
+  await loadKatexCss();
+  if(!latexInput.value&&!formulaInput.value){
+    // 初回は式+凡例の例を表示
+    formulaInput.value=PRESETS[3].formula;legendInput.value=PRESETS[3].legend;
+  }
+  setMode(savedMode==='figure'||savedMode==='single'?savedMode:'figure');
+  render();
+})();
 </script>
 </body>
 </html>
