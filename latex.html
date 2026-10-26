@@ -2,593 +2,395 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LaTeX v5 - 数式画像ジェネレーター</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LaTeX v6 - 数式画像ジェネレーター</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <style>
-:root{--bg:#f5f5f7;--sf:#fff;--sf2:#fafafc;--ink:#111;--mut:#6e6e73;--acc:#0071e3;--line:rgba(0,0,0,.08);--line2:rgba(0,0,0,.15);--r:12px;--rs:8px;--sh:0 1px 3px rgba(0,0,0,.04),0 8px 24px -6px rgba(0,0,0,.08);--sp:clamp(1rem,.8rem + .8vw,1.4rem)}
+:root{--bg:#f5f5f7;--sf:#fff;--sf2:#fafafc;--ink:#1d1d1f;--mut:#6e6e73;--acc:#0071e3;--line:rgba(0,0,0,.08);--line2:rgba(0,0,0,.16);--r:12px;--rs:8px;--sp:clamp(.7rem,.4rem + 1vw,1.4rem)}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,system-ui,"Noto Sans JP",sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;min-height:100vh}
-header{background:var(--sf);border-bottom:1px solid var(--line);padding:.9rem var(--sp);position:sticky;top:0;z-index:10}
-.header-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-h1{font-size:1.1rem;font-weight:600}
-.sub{font-size:.78rem;color:var(--mut)}
-main{max-width:1180px;margin:0 auto;padding:var(--sp);display:grid;grid-template-columns:1fr 1fr;gap:var(--sp)}
-@media(max-width:860px){main{grid-template-columns:1fr}}
-.panel{background:var(--sf);border-radius:var(--r);border:1px solid var(--line);box-shadow:var(--sh);display:flex;flex-direction:column;overflow:hidden}
-.ph{padding:.9rem 1.1rem;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap}
+html{height:100%}
+body{font-family:Inter,system-ui,"Noto Sans JP","Hiragino Sans",sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;min-height:100%;-webkit-text-size-adjust:100%}
+header{background:var(--sf);border-bottom:1px solid var(--line);padding:.7rem var(--sp);position:sticky;top:0;z-index:10}
+.hi{display:flex;align-items:baseline;justify-content:space-between;gap:.8rem;flex-wrap:wrap}
+h1{font-size:1.05rem;font-weight:600}
+.sub,.hint{font-size:.74rem;color:var(--mut)}
+main{width:100%;max-width:1800px;margin:0 auto;padding:var(--sp);display:grid;grid-template-columns:minmax(300px,460px) minmax(0,1fr);gap:var(--sp);align-items:start}
+.pv{position:sticky;top:3.6rem}
+@media(max-width:760px){main{grid-template-columns:minmax(0,1fr)}.pv{position:static;order:-1}}
+.panel{background:var(--sf);border-radius:var(--r);border:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.ph{padding:.7rem 1rem;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap}
 .pt{font-size:.9rem;font-weight:600}
-.pb{padding:1.1rem;flex:1;display:flex;flex-direction:column;gap:1rem}
-label{font-size:.78rem;font-weight:500;color:var(--mut);display:block;margin-bottom:.28rem}
-textarea,input,select{width:100%;font:inherit;font-size:.92rem;padding:.6rem .8rem;border:1px solid var(--line2);border-radius:var(--rs);background:var(--sf2);color:var(--ink);outline:none}
-textarea:focus,input:focus,select:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,113,227,.12)}
-textarea{resize:vertical;min-height:88px;line-height:1.5;font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
-.pw{flex:1;min-height:260px;border:2px dashed var(--line2);border-radius:var(--rs);display:flex;align-items:center;justify-content:center;padding:1.2rem;position:relative;overflow:auto;background:#fff}
-.pw.has{background:#fff repeating-conic-gradient(#f6f6f6 0 25%,#fff 0 50%) 0 / 20px 20px;border-style:solid;border-color:var(--line)}
-#preview{max-width:100%}
-.phold{color:var(--mut);font-size:.88rem;text-align:center}
-.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:.65rem}
-.cg{display:flex;flex-direction:column;gap:.18rem}
-.cg.inline{flex-direction:row;align-items:center;gap:.38rem}
-.cg.inline label{margin:0;white-space:nowrap}
-input[type=color]{width:100%;height:32px;border:1px solid var(--line2);border-radius:var(--rs);padding:2px}
-input[type=range]{width:100%}
+.pb{padding:1rem;display:flex;flex-direction:column;gap:.9rem}
+label{font-size:.76rem;font-weight:500;color:var(--mut);display:block;margin-bottom:.25rem}
+textarea,input,select{width:100%;font:inherit;font-size:.92rem;padding:.55rem .75rem;border:1px solid var(--line2);border-radius:var(--rs);background:var(--sf2);color:var(--ink);outline:none;min-width:0}
+textarea:focus-visible,input:focus-visible,select:focus-visible,.btn:focus-visible,.mbtn:focus-visible{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,113,227,.2)}
+textarea{resize:vertical;min-height:90px;line-height:1.5;font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.6rem}
+.cg.in{display:flex;align-items:center;gap:.4rem;align-self:end;padding-bottom:.45rem}
+.cg.in label{margin:0}
+.cg.wide{grid-column:1/-1}
+input[type=color]{height:34px;padding:2px}
+input[type=range]{padding:0;height:26px}
 input[type=checkbox]{width:auto}
-.rv{font-size:.74rem;color:var(--mut);text-align:right;min-width:3em;float:right}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.3rem;padding:.48rem .85rem;font-size:.8rem;font-weight:500;border-radius:var(--rs);border:1px solid transparent;cursor:pointer;font-family:inherit}
+.rv{float:right;font-size:.72rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:.5rem .9rem;font-size:.82rem;font-weight:500;border-radius:var(--rs);border:1px solid var(--line2);cursor:pointer;font-family:inherit;background:var(--sf);color:var(--ink);min-height:36px}
+.btn.p{background:var(--acc);color:#fff;border-color:var(--acc)}
 .btn:disabled{opacity:.4;pointer-events:none}
-.btn-p{background:var(--acc);color:#fff;border-color:var(--acc)}
-.btn-s{background:var(--sf);color:var(--ink);border-color:var(--line2)}
 .br{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}
-.toast{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%) translateY(12px);background:#111;color:#fff;padding:.55rem .95rem;border-radius:8px;font-size:.8rem;opacity:0;pointer-events:none;transition:.22s;z-index:99}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.toast.err{background:#ff3b30}
-.code{font-family:ui-monospace,Menlo,monospace;font-size:.72rem;background:var(--sf2);border:1px solid var(--line);border-radius:8px;padding:.55rem;max-height:110px;overflow:auto;white-space:pre-wrap;word-break:break-all;color:var(--mut)}
-.mode{display:flex;background:var(--sf2);border:1px solid var(--line);border-radius:999px;padding:3px;gap:3px;width:fit-content}
-.mbtn{padding:.34rem .85rem;border-radius:999px;border:0;background:transparent;font-size:.8rem;font-weight:500;cursor:pointer;color:var(--mut);font-family:inherit}
-.mbtn.on{background:var(--sf);box-shadow:0 1px 4px rgba(0,0,0,.12);color:var(--ink);border:1px solid var(--line)}
-.div{height:1px;background:var(--line);margin:.15rem 0}
-.hint{font-size:.72rem;color:var(--mut)}
-.errbox{background:#fff0f0;border:1px solid #ffcccc;color:#c00;padding:.6rem;border-radius:8px;font-size:.78rem;white-space:pre-wrap;display:none}
+.mode{display:flex;background:var(--sf2);border:1px solid var(--line);border-radius:999px;padding:3px;gap:3px}
+.mbtn{padding:.3rem .85rem;border-radius:999px;border:1px solid transparent;background:transparent;font-size:.8rem;font-weight:500;cursor:pointer;color:var(--mut);font-family:inherit}
+.mbtn.on{background:var(--sf);box-shadow:0 1px 4px rgba(0,0,0,.12);color:var(--ink);border-color:var(--line)}
+hr{border:0;height:1px;background:var(--line)}
+.pw{min-height:min(52vh,460px);border:1px solid var(--line);border-radius:var(--rs);display:flex;padding:1rem;overflow:auto;background:#fff}
+.pw.check{background:#fff repeating-conic-gradient(#ececec 0 25%,#fff 0 50%) 0 / 20px 20px}
+.pw.white{background:#fff}.pw.dark{background:#222}
+#pimg{margin:auto;display:none;max-width:100%;height:auto;-webkit-touch-callout:default;user-select:auto}
+#ph{margin:auto;color:var(--mut);font-size:.88rem;text-align:center}
+.errbox{background:#fff0f0;border:1px solid #ffcccc;color:#b00;padding:.6rem;border-radius:8px;font-size:.78rem;white-space:pre-wrap;display:none}
+.warn{background:#fff8e6;border-color:#f0d58a;color:#7a5a00}
+.toast{position:fixed;bottom:calc(1.2rem + env(safe-area-inset-bottom,0px));left:50%;transform:translate(-50%,12px);background:#111;color:#fff;padding:.55rem .95rem;border-radius:8px;font-size:.8rem;opacity:0;pointer-events:none;transition:.2s;z-index:99;max-width:90vw}
+.toast.show{opacity:1;transform:translate(-50%,0)}.toast.err{background:#d62c20}
 .tex-err{color:#ff3b30;font-family:ui-monospace,Menlo,monospace;font-size:.85em}
-/* 出力用 */
-.figure-card{display:inline-block;text-align:left;line-height:1.2}
-.figure-formula{line-height:1.28}
-.figure-legend{margin-top:.7em;line-height:1.55;display:grid;grid-template-columns:auto auto 1fr;column-gap:.4em;row-gap:.16em;align-items:baseline}
-.legend-full{grid-column:1/-1}
-.legend-colon{opacity:.6}
+#stage{position:fixed;left:-20000px;top:0;width:max-content;pointer-events:none}
 </style>
 </head>
 <body>
-<header>
-  <div class="header-inner">
-    <div>
-      <h1>LaTeX v5 <span style="font-weight:400;color:var(--mut);font-size:.75em">数式画像ジェネレーター</span></h1>
-      <div class="sub">式(大)＋凡例(小) | 透過PNG / SVG / JPG | 余白トリム | 設定は自動保存</div>
-    </div>
-    <div class="br"><span style="font-size:.7rem;color:var(--mut)" id="katexState">KaTeX読込中...</span></div>
-  </div>
-</header>
+<header><div class="hi">
+  <h1>LaTeX v6 <span style="font-weight:400;color:var(--mut);font-size:.8em">数式画像ジェネレーター</span></h1>
+  <div class="sub">自動プレビュー ・ PNG/JPG/SVG ・ Ctrl+Enter 再描画 ・ Ctrl+S 保存 <span id="kstate"></span></div>
+</div></header>
 
 <main>
-  <!-- 入力パネル -->
-  <div class="panel">
-    <div class="ph">
-      <div class="pt">入力</div>
-      <div class="mode">
-        <button class="mbtn on" data-mode="single">単一式</button>
-        <button class="mbtn" data-mode="figure">式＋凡例</button>
-      </div>
+  <section class="panel">
+    <div class="ph"><div class="pt">入力</div>
+      <div class="mode"><button class="mbtn" data-mode="single">単一式</button><button class="mbtn" data-mode="figure">式＋凡例</button></div>
     </div>
     <div class="pb">
-      <div id="singlePane">
-        <label>LaTeX 数式</label>
-        <textarea id="latexInput" spellcheck="false">E = mc^2</textarea>
+      <div id="singlePane"><label for="latexInput">LaTeX 数式</label><textarea id="latexInput" spellcheck="false"></textarea></div>
+      <div id="figurePane" style="display:none;flex-direction:column;gap:.9rem">
+        <div><label for="formulaInput">上の式（大きく）</label><textarea id="formulaInput" style="min-height:76px" spellcheck="false"></textarea></div>
+        <div><label for="legendInput">下の凡例（1行1項目「記号 : 説明」）</label><textarea id="legendInput" style="min-height:104px" spellcheck="false"></textarea>
+          <div class="hint">記号はLaTeX可（日本語を含むと文字扱い）。説明中は $…$ で数式可。コロンなしの行は全幅表示。</div></div>
       </div>
-
-      <div id="figurePane" style="display:none;flex-direction:column;gap:1rem">
-        <div>
-          <label>上の式（大きく）LaTeX</label>
-          <textarea id="formulaInput" style="min-height:78px" spellcheck="false"></textarea>
-        </div>
-        <div>
-          <label>下の凡例（1行1項目、「記号 : 説明」の形式）</label>
-          <textarea id="legendInput" style="min-height:108px" spellcheck="false"></textarea>
-          <div class="hint">記号部分はLaTeX可。コロンがない行は全幅で表示されます。</div>
-        </div>
-        <div class="controls">
-          <div class="cg"><label>式サイズ <span class="rv" id="fsVal"></span></label><input type="range" id="fs" min="16" max="52" step="1" value="28"></div>
-          <div class="cg"><label>凡例サイズ <span class="rv" id="lsVal"></span></label><input type="range" id="ls" min="9" max="22" step="1" value="13"></div>
-        </div>
-      </div>
-
-      <div>
-        <label>プリセット</label>
-        <div class="br">
-          <select id="preset" style="flex:1"></select>
-          <button class="btn btn-s" id="loadPresetBtn">読み込み</button>
-        </div>
-      </div>
-
-      <div class="div"></div>
-
-      <div class="controls">
+      <div><label for="preset">プリセット</label>
+        <div class="br"><select id="preset" style="flex:1"></select><button class="btn" id="loadPresetBtn">読み込み</button></div></div>
+      <hr>
+      <div class="ctl">
+        <div class="cg"><label>式サイズ <span class="rv" id="fsVal"></span></label><input type="range" id="fs" min="14" max="64" value="28"></div>
+        <div class="cg figOnly"><label>凡例サイズ <span class="rv" id="lsVal"></span></label><input type="range" id="ls" min="8" max="28" value="14"></div>
+        <div class="cg"><label>余白 <span class="rv" id="padVal"></span></label><input type="range" id="pad" min="0" max="64" step="2" value="16"></div>
+        <div class="cg"><label>拡大率 <span class="rv" id="scVal"></span></label><input type="range" id="sc" min="1" max="6" step="0.5" value="3"></div>
         <div class="cg"><label>文字色</label><input type="color" id="tc" value="#000000"></div>
         <div class="cg"><label>背景色</label><input type="color" id="bg" value="#ffffff"></div>
-        <div class="cg inline" style="align-self:end"><input type="checkbox" id="tr" checked><label for="tr">背景透過</label></div>
-        <div class="cg inline" style="align-self:end"><input type="checkbox" id="trim" checked><label for="trim">余白トリム</label></div>
-        <div class="cg"><label>余白 <span class="rv" id="padVal"></span></label><input type="range" id="pad" min="0" max="48" step="2" value="16"></div>
-        <div class="cg"><label>拡大率 <span class="rv" id="scVal"></span></label><input type="range" id="sc" min="1" max="4" step="0.25" value="2"></div>
-        <div class="cg"><label>DPI（メタ情報）</label><input type="number" id="dpi" value="300" min="72" max="600" step="10"></div>
-        <div class="cg"><label>形式</label>
-          <select id="fmt"><option value="png">PNG（透過可）</option><option value="svg">SVG</option><option value="jpg">JPG</option></select>
-        </div>
-        <div class="cg" style="grid-column:1/-1"><label>ファイル名</label><input type="text" id="fname" value="latex"></div>
+        <div class="cg in"><input type="checkbox" id="tr" checked><label for="tr">背景透過</label></div>
+        <div class="cg in"><input type="checkbox" id="trim" checked><label for="trim">余白トリム</label></div>
+        <div class="cg"><label for="ff">テキスト書体</label><select id="ff"><option value="serif">明朝・Times</option><option value="sans">ゴシック</option></select></div>
+        <div class="cg figOnly"><label for="al">式の配置</label><select id="al"><option value="left">左</option><option value="center">中央</option></select></div>
+        <div class="cg"><label for="fmt">保存形式</label><select id="fmt"><option value="png">PNG（透過可）</option><option value="jpg">JPG</option><option value="svg">SVG</option></select></div>
+        <div class="cg"><label for="dpi">DPI（PNGメタ情報）</label><input type="number" id="dpi" value="300" min="72" max="600" step="10"></div>
+        <div class="cg wide"><label for="fname">ファイル名</label><input type="text" id="fname" value="latex"></div>
       </div>
-
       <div class="br">
-        <button class="btn btn-s" id="clearBtn">クリア</button>
-        <button class="btn btn-s" id="copyTexBtn">LaTeXをコピー</button>
+        <button class="btn" id="clearBtn">クリア</button>
+        <button class="btn" id="copyTexBtn">LaTeXをコピー</button>
+        <button class="btn" id="resetBtn">設定を初期化</button>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- プレビューパネル -->
-  <div class="panel">
-    <div class="ph">
-      <div class="pt">プレビュー <span id="status" style="font-weight:400;color:var(--mut);font-size:.76em;margin-left:.4em"></span></div>
-      <div class="br"><button class="btn btn-p" id="renderBtn">レンダリング</button></div>
-    </div>
+  <section class="panel pv">
+    <div class="ph"><div class="pt">プレビュー <span id="status" class="sub" style="margin-left:.4em"></span></div>
+      <div class="br"><select id="pvbg" style="width:auto;padding:.3rem .5rem;font-size:.78rem" aria-label="プレビュー背景"><option value="check">市松</option><option value="white">白</option><option value="dark">黒</option></select>
+      <button class="btn p" id="renderBtn">再描画</button></div></div>
     <div class="pb">
-      <div class="pw" id="pw">
-        <div class="phold" id="phold">LaTeXを入力すると自動でプレビューされます</div>
-        <div id="preview" style="display:none"></div>
-      </div>
+      <div class="pw check" id="pw"><div id="ph">LaTeXを入力すると自動でプレビューされます</div><img id="pimg" alt="生成された数式画像"></div>
       <div class="br">
-        <button class="btn btn-p" id="dlBtn" disabled>ダウンロード</button>
-        <button class="btn btn-s" id="copyImgBtn" disabled>画像コピー</button>
-        <button class="btn btn-s" id="copySvgBtn" disabled>SVGコードコピー</button>
+        <button class="btn p" id="dlBtn" disabled>ダウンロード</button>
+        <button class="btn" id="openBtn" disabled>新しいタブで開く</button>
+        <button class="btn" id="shareBtn" disabled hidden>共有／保存</button>
+        <button class="btn" id="copyImgBtn" disabled>画像コピー</button>
+        <button class="btn" id="copySvgBtn" disabled>SVGコード</button>
       </div>
-      <div id="svgWrap" style="display:none"><label>SVGコード</label><pre class="code" id="svgCode"></pre></div>
+      <div class="hint">保存できない環境では、プレビュー画像を右クリック／長押しして保存できます。SVGは foreignObject 方式のため Illustrator・Inkscape では表示されません（ブラウザ・Word等はPNG推奨）。</div>
       <div id="errBox" class="errbox"></div>
     </div>
-  </div>
+  </section>
 </main>
-
 <div class="toast" id="toast"></div>
+<div id="stage" aria-hidden="true"></div>
 
 <script>
-/* ========= 状態 ========= */
-let lastSvgXml='', lastSvgBlobUrl=null, lastPngUrl=null, lastJpgUrl=null;
-let katexCssFull='', katexCssLite='';
-let mode='single', rendering=false, pending=false;
-const STORE_KEY='latex_v5_settings';
+const $=id=>document.getElementById(id), RAW=String.raw;
+const CDN='https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/', STORE='latex_v6_settings';
+const FONTS={serif:'"Times New Roman",Times,"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif',sans:'"Helvetica Neue",Arial,"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif'};
+/* SVG内にも入れる自前CSS */
+const OWN_CSS='.katex-display{margin:0!important;text-align:inherit!important}.katex-display>.katex{text-align:inherit!important}.figure-formula{line-height:1.28}.figure-legend{margin-top:.7em;line-height:1.55;display:grid;grid-template-columns:auto auto 1fr;column-gap:.4em;row-gap:.16em;align-items:baseline}.legend-full{grid-column:1/-1}.legend-colon{opacity:.6}.tex-err{color:#ff3b30}';
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:OWN_CSS}));
 
-const $=id=>document.getElementById(id);
-const latexInput=$('latexInput'), formulaInput=$('formulaInput'), legendInput=$('legendInput');
-const preview=$('preview'), pw=$('pw'), phold=$('phold');
-const toastEl=$('toast'), svgWrap=$('svgWrap'), svgCodeEl=$('svgCode'), errBox=$('errBox');
-const tc=$('tc'), bg=$('bg'), tr=$('tr'), trim=$('trim'), pad=$('pad'), sc=$('sc'), dpi=$('dpi'), fmt=$('fmt'), fname=$('fname');
-const fs=$('fs'), ls=$('ls');
-const statusEl=$('status'), katexState=$('katexState');
-const dlBtn=$('dlBtn'), copyImgBtn=$('copyImgBtn'), copySvgBtn=$('copySvgBtn'), renderBtn=$('renderBtn');
-const presetSel=$('preset');
-const presetSelection={single:null,figure:null};
-
-/* ========= プリセット（String.raw で \ をそのまま扱う） ========= */
-const RAW=String.raw;
 const PRESETS=[
-  {name:'E = mc²（単一式）', mode:'single', tex:RAW`E = mc^2`},
-  {name:'二次方程式の解の公式', mode:'single', tex:RAW`x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}`},
-  {name:'ガウス積分', mode:'single', tex:RAW`\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}`},
-  {name:'Rate式（式＋凡例）', mode:'figure',
-    formula:RAW`\text{Rate} = \frac{W_{\text{before}} - W_{\text{after}}}{W_{\text{before}} - W_{\text{base}}} \times 100\ (\%)`,
-    legend:RAW`W_{\text{base}} : Base fabric weight
+ {name:'E = mc²',mode:'single',tex:RAW`E = mc^2`},
+ {name:'二次方程式の解の公式',mode:'single',tex:RAW`x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}`},
+ {name:'ガウス積分',mode:'single',tex:RAW`\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}`},
+ {name:'Rate式（式＋凡例）',mode:'figure',formula:RAW`\text{Rate} = \frac{W_{\text{before}} - W_{\text{after}}}{W_{\text{before}} - W_{\text{base}}} \times 100\ (\%)`,
+  legend:RAW`W_{\text{base}} : Base fabric weight
 W_{\text{before}} : Weight before washing
 W_{\text{after}} : Weight after washing`},
-  {name:'ベイズの定理（式＋凡例）', mode:'figure',
-    formula:RAW`P(A \mid B) = \frac{P(B \mid A)\,P(A)}{P(B)}`,
-    legend:RAW`P(A \mid B) : Posterior probability
+ {name:'ベイズの定理（式＋凡例）',mode:'figure',formula:RAW`P(A \mid B) = \frac{P(B \mid A)\,P(A)}{P(B)}`,
+  legend:RAW`P(A \mid B) : Posterior probability
 P(B \mid A) : Likelihood
 P(A) : Prior probability
 P(B) : Marginal likelihood`}
 ];
 
-/* ========= ユーティリティ ========= */
-function toast(m,err){toastEl.textContent=m;toastEl.classList.toggle('err',!!err);toastEl.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toastEl.classList.remove('show'),2200);}
-function escHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function strip(s){const v=s.trim();if(v.startsWith('$$')&&v.endsWith('$$'))return v.slice(2,-2).trim();if(v.startsWith('$')&&v.endsWith('$'))return v.slice(1,-1).trim();return v;}
-function ts(){const d=new Date();const p=n=>String(n).padStart(2,'0');return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());}
-function setOutputsEnabled(on){if(!on){dlBtn.disabled=true;copyImgBtn.disabled=true;copySvgBtn.disabled=true;return;}syncOutputButtons();}
-function syncOutputButtons(){
-  const hasSvg=!!lastSvgXml, hasPng=!!lastPngUrl, hasJpg=!!lastJpgUrl;
-  copySvgBtn.disabled=!hasSvg;
-  if(fmt.value==='svg'){dlBtn.disabled=!hasSvg;copyImgBtn.disabled=!hasSvg;return;}
-  if(fmt.value==='png'){dlBtn.disabled=!(hasPng||hasSvg);copyImgBtn.disabled=!hasPng;return;}
-  dlBtn.disabled=!(hasJpg||hasSvg);copyImgBtn.disabled=!hasJpg;
-}
+let mode='figure',out=null,running=false,again=false,faces=[],baseCss='',cssOk=false;
+const fontCache=new Map();
+const ids=['fs','ls','pad','sc','dpi','fmt','fname','tc','bg','ff','al','pvbg'], cks=['tr','trim'], tas=['latexInput','formulaInput','legendInput'];
+const [latexInput,formulaInput,legendInput]=tas.map($);
+const toastEl=$('toast'),errBox=$('errBox'),statusEl=$('status'),pimg=$('pimg'),ph=$('ph'),pw=$('pw'),stage=$('stage');
 
-/* ========= KaTeX CSS 読み込み ========= */
-async function loadKatexCss(){
+/* ===== ユーティリティ ===== */
+function toast(m,err){toastEl.textContent=m;toastEl.classList.toggle('err',!!err);toastEl.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toastEl.classList.remove('show'),2600);}
+function showErr(m,warn){errBox.textContent=m;errBox.classList.toggle('warn',!!warn);errBox.style.display=m?'block':'none';}
+function strip(s){const v=s.trim();if(v.startsWith('$$')&&v.endsWith('$$')&&v.length>3)return v.slice(2,-2).trim();if(v.startsWith('$')&&v.endsWith('$')&&v.length>1)return v.slice(1,-1).trim();return v;}
+function ts(){const d=new Date(),p=n=>String(n).padStart(2,'0');return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());}
+function kb(n){return n>1048576?(n/1048576).toFixed(1)+'MB':Math.max(1,Math.round(n/1024))+'KB';}
+function labels(){[['fs','px'],['ls','px'],['pad','px'],['sc','×']].forEach(([i,u])=>$(i+'Val').textContent=$(i).value+u);}
+function setBtns(on){['dlBtn','openBtn','shareBtn','copyImgBtn','copySvgBtn'].forEach(i=>$(i).disabled=!on);}
+
+/* ===== KaTeX CSS + フォント（SVG/PNGへ埋め込むため取得） ===== */
+async function loadCss(){
   try{
-    const r=await fetch('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css',{cache:'force-cache'});
-    if(r.ok){
-      let txt=await r.text();
-      txt=txt.replace(/url\(["']?fonts\//g,"url('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/fonts/");
-      katexCssFull=txt;
-      katexCssLite=txt.replace(/@font-face\s*{[^}]*}/g,'')+`.katex{font-family:"Times New Roman",Times,serif !important;}`;
+    const r=await fetch(CDN+'katex.min.css');if(!r.ok)throw 0;
+    const t=await r.text();
+    faces=[...t.matchAll(/@font-face\s*{[^}]*}/g)].map(m=>({family:((m[0].match(/font-family:\s*([^;}]+)/)||[])[1]||'').replace(/["'\s]/g,''),block:m[0]}));
+    baseCss=t.replace(/@font-face\s*{[^}]*}/g,'');cssOk=true;
+  }catch(e){cssOk=false;}
+  $('kstate').textContent=(typeof katex==='undefined')?'｜KaTeX未読込':(cssOk?'':'｜CSS取得失敗');
+}
+async function faceCss(f){
+  try{
+    const m=f.block.match(/url\(["']?([^)"']*?\.woff2)["']?\)/);if(!m)return '';
+    const u=CDN+m[1];
+    if(!fontCache.has(u)){
+      const a=new Uint8Array(await (await fetch(u)).arrayBuffer());let s='';
+      for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000));
+      fontCache.set(u,'data:font/woff2;base64,'+btoa(s));
     }
-  }catch(e){console.warn(e);}
-  katexState.textContent=typeof katex!=='undefined'?'KaTeX OK':'KaTeX未読込';
+    return f.block.replace(/src:[^}]*/,`src:url(${fontCache.get(u)}) format("woff2")`);
+  }catch(e){return '';}
+}
+function usedFamilies(root){
+  const s=new Set();
+  [root,...root.querySelectorAll('*')].forEach(e=>{const f=getComputedStyle(e).fontFamily;if(f)s.add(f.split(',')[0].replace(/["'\s]/g,''));});
+  return s;
 }
 
-/* ========= モード切替 ========= */
+/* ===== 内容生成（画面外のstageで組版→正確に計測） ===== */
+function kx(tex,el,display,errs,label){
+  try{katex.render(strip(tex),el,{throwOnError:true,displayMode:!!display,trust:false,strict:'ignore'});}
+  catch(e){el.textContent='';const s=document.createElement('span');s.className='tex-err';s.textContent=tex;el.appendChild(s);errs.push(label+': '+e.message);}
+}
+function parseLegend(txt){
+  return txt.split('\n').map(s=>s.trim()).filter(Boolean).map(line=>{
+    const m=line.match(/^(.+?)\s*[:：]\s*(.+)$/);
+    return m?{sym:m[1].trim(),desc:m[2].trim()}:{sym:'',desc:line};
+  });
+}
+function fillDesc(el,txt,errs){
+  txt.split(/(\$[^$]+\$)/).forEach(p=>{
+    if(!p)return;
+    if(p.length>2&&p[0]==='$'&&p.endsWith('$')){const s=document.createElement('span');kx(p,s,false,errs,'凡例説明');el.appendChild(s);}
+    else el.appendChild(document.createTextNode(p));
+  });
+}
+function buildContent(){
+  const errs=[],root=document.createElement('div');
+  root.style.cssText=`display:inline-block;font-size:${fs.value}px;color:${tc.value};font-family:${FONTS[ff.value]};line-height:1.3;text-align:${mode==='single'?'center':al.value}`;
+  if(mode==='single'){
+    const t=latexInput.value.trim();if(!t)return {};
+    const d=document.createElement('div');kx(t,d,true,errs,'式');root.appendChild(d);
+  }else{
+    const f=formulaInput.value.trim(),l=legendInput.value.trim();if(!f&&!l)return {};
+    const card=document.createElement('div');card.className='figure-card';
+    if(f){const fd=document.createElement('div');fd.className='figure-formula';kx(f,fd,true,errs,'上の式');card.appendChild(fd);}
+    if(l){
+      const g=document.createElement('div');g.className='figure-legend';g.style.fontSize=ls.value+'px';
+      parseLegend(l).forEach(it=>{
+        if(it.sym){
+          const s=document.createElement('span');
+          if(/[\u3000-\u9fff\uff00-\uffef]/.test(it.sym))s.textContent=it.sym;else kx(it.sym,s,false,errs,'凡例記号');
+          const c=document.createElement('span');c.className='legend-colon';c.textContent=':';
+          const d=document.createElement('span');fillDesc(d,it.desc,errs);
+          g.append(s,c,d);
+        }else{const d=document.createElement('span');d.className='legend-full';fillDesc(d,it.desc,errs);g.appendChild(d);}
+      });
+      card.appendChild(g);
+    }
+    root.appendChild(card);
+  }
+  return {root,errs};
+}
+
+/* ===== 画像生成 ===== */
+function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('SVG画像の読み込みに失敗しました'));i.src=src;});}
+function toBlob(c,type,q){return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('canvasからの書き出しに失敗')),type,q));}
+function inkBounds(c){
+  const w=c.width,h=c.height,d=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,h).data;
+  let t=h,l=w,r=-1,b=-1;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(d[(y*w+x)*4+3]>8){if(x<l)l=x;if(x>r)r=x;if(y<t)t=y;if(y>b)b=y;}
+  return r<0?{x:0,y:0,w,h}:{x:l,y:t,w:r-l+1,h:b-t+1};
+}
+function crc32(b){
+  if(!crc32.t){crc32.t=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;crc32.t[i]=c;}}
+  let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=crc32.t[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;
+}
+async function pngDpi(blob,dpi){
+  try{
+    const b=new Uint8Array(await blob.arrayBuffer()),ppm=Math.round(dpi/0.0254);
+    const ch=new Uint8Array(21),dv=new DataView(ch.buffer);
+    dv.setUint32(0,9);ch.set([0x70,0x48,0x59,0x73],4);dv.setUint32(8,ppm);dv.setUint32(12,ppm);ch[16]=1;
+    dv.setUint32(17,crc32(ch.subarray(4,17)));
+    const pos=33,o=new Uint8Array(b.length+21);
+    o.set(b.subarray(0,pos));o.set(ch,pos);o.set(b.subarray(pos),pos+21);
+    return new Blob([o],{type:'image/png'});
+  }catch(e){return blob;}
+}
+
+async function generate(){
+  if(typeof katex==='undefined'){showErr('KaTeXを読み込めませんでした。ネットワークを確認して再読み込みしてください。');statusEl.textContent='失敗';return;}
+  const {root,errs}=buildContent();
+  if(!root){
+    stage.textContent='';pimg.style.display='none';ph.style.display='';out=null;setBtns(false);statusEl.textContent='';showErr('');return;
+  }
+  statusEl.textContent='生成中…';
+  stage.replaceChildren(root);
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  try{await document.fonts.ready;}catch(e){}
+  const rc=root.getBoundingClientRect(),w=Math.ceil(rc.width)+2,h=Math.ceil(rc.height)+2;
+  const xhtml=new XMLSerializer().serializeToString(root);  // ★ XML準拠で出力（innerHTMLだとPNG化に失敗する原因）
+  let ff2='';const fam=usedFamilies(root);
+  for(const f of faces)if(fam.has(f.family))ff2+=await faceCss(f);
+  const css=ff2+baseCss+OWN_CSS;
+  const mk=(p,bgc)=>`<svg xmlns="http://www.w3.org/2000/svg" width="${w+2*p}" height="${h+2*p}" viewBox="0 0 ${w+2*p} ${h+2*p}"><style><![CDATA[${css}]]></style>${bgc?`<rect width="100%" height="100%" fill="${bgc}"/>`:''}<foreignObject x="${p}" y="${p}" width="${w}" height="${h}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${w}px;height:${h}px">${xhtml}</div></foreignObject></svg>`;
+  const padV=parseInt(pad.value,10)||0,scale=parseFloat(sc.value)||2,transparent=tr.checked;
+  const svg=mk(padV,transparent?null:bg.value);
+
+  const img=await loadImg('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(mk(0,null)));
+  try{await img.decode();}catch(e){}
+  const c=document.createElement('canvas');c.width=Math.ceil(w*scale);c.height=Math.ceil(h*scale);
+  const g=c.getContext('2d',{willReadFrequently:true});
+  for(let i=0;i<2;i++){g.clearRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);} // Safari対策で2回描画
+  const ink=trim.checked?inkBounds(c):{x:0,y:0,w:c.width,h:c.height};
+  const P=Math.round(padV*scale);
+  const compose=fill=>{
+    const f=document.createElement('canvas');f.width=ink.w+2*P;f.height=ink.h+2*P;
+    const x=f.getContext('2d');if(fill){x.fillStyle=fill;x.fillRect(0,0,f.width,f.height);}
+    x.drawImage(c,ink.x,ink.y,ink.w,ink.h,P,P,ink.w,ink.h);return f;
+  };
+  const pc=compose(transparent?null:bg.value);
+  const png=await pngDpi(await toBlob(pc,'image/png'),parseInt(dpi.value,10)||300);
+  const jpg=await toBlob(compose(transparent?'#ffffff':bg.value),'image/jpeg',0.95);
+  if(out&&out.url)URL.revokeObjectURL(out.url);
+  out={svg,png,jpg,url:URL.createObjectURL(png)};
+  pimg.src=out.url;pimg.style.width=(pc.width/scale)+'px';pimg.style.display='block';ph.style.display='none';
+  statusEl.textContent=`${pc.width}×${pc.height}px ・ PNG ${kb(png.size)}`;
+  setBtns(true);
+  if(!cssOk)showErr('KaTeXのCSS/フォントを取得できなかったため、数式の見た目が崩れる可能性があります。ネット接続のあるブラウザでファイルを直接開いてください。',true);
+  else showErr(errs.length?'LaTeXエラー（該当箇所を赤表示）\n'+errs.join('\n'):'');
+}
+async function render(){
+  if(running){again=true;return;}
+  running=true;$('renderBtn').disabled=true;
+  try{do{again=false;await generate();}while(again);}
+  catch(e){console.error(e);statusEl.textContent='失敗';showErr('生成に失敗しました: '+e.message);}
+  finally{running=false;$('renderBtn').disabled=false;saveSettings();}
+}
+function schedule(){clearTimeout(schedule._t);schedule._t=setTimeout(render,250);}
+
+/* ===== 保存 / コピー ===== */
+const EXT={png:'png',jpg:'jpg',svg:'svg'},MIME={png:'image/png',jpg:'image/jpeg',svg:'image/svg+xml'};
+function curBlob(){const f=fmt.value;return f==='svg'?new Blob([out.svg],{type:MIME.svg}):out[f];}
+function fileName(){return (fname.value.trim()||'latex').replace(/[\\/:*?"<>|]/g,'_')+'_'+ts()+'.'+EXT[fmt.value];}
+function download(){
+  if(!out){toast('先に描画してください',true);return;}
+  try{
+    const u=URL.createObjectURL(curBlob()),a=document.createElement('a');
+    a.href=u;a.download=fileName();document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(u),10000);toast('ダウンロードしました');
+  }catch(e){toast('保存に失敗。「新しいタブで開く」か画像の長押しをお試しください',true);}
+}
+function openTab(){if(!out)return;const u=URL.createObjectURL(curBlob());if(!window.open(u,'_blank'))toast('ポップアップがブロックされました',true);setTimeout(()=>URL.revokeObjectURL(u),60000);}
+async function share(){
+  if(!out)return;
+  try{const f=new File([curBlob()],fileName(),{type:MIME[fmt.value]});
+    if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f]});else toast('この端末は共有に対応していません',true);
+  }catch(e){if(e.name!=='AbortError')toast('共有に失敗: '+e.message,true);}
+}
+async function copyImg(){
+  if(!out)return;
+  try{await navigator.clipboard.write([new ClipboardItem({'image/png':Promise.resolve(out.png)})]);toast('PNG画像をコピーしました');}
+  catch(e){toast('コピー不可（非対応/非HTTPS）。画像を右クリック/長押しで保存してください',true);}
+}
+async function copyText(t,m){try{await navigator.clipboard.writeText(t);toast(m);}catch(e){toast('コピーに失敗しました',true);}}
+
+/* ===== 設定 ===== */
+function saveSettings(){
+  try{const s={mode};ids.forEach(i=>s[i]=$(i).value);cks.forEach(i=>s[i]=$(i).checked);tas.forEach(i=>s[i]=$(i).value);localStorage.setItem(STORE,JSON.stringify(s));}catch(e){}
+}
+function loadSettings(){
+  try{
+    const s=JSON.parse(localStorage.getItem(STORE)||'null');if(!s)return null;
+    ids.forEach(i=>{if(s[i]!=null)$(i).value=s[i];});cks.forEach(i=>{if(s[i]!=null)$(i).checked=s[i];});tas.forEach(i=>{if(s[i]!=null)$(i).value=s[i];});
+    return s;
+  }catch(e){return null;}
+}
 function setMode(m){
   mode=m;
   document.querySelectorAll('.mbtn').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
   $('singlePane').style.display=m==='single'?'block':'none';
   $('figurePane').style.display=m==='figure'?'flex':'none';
-  updatePresetOptions();
-  scheduleRender();
-}
-function updatePresetOptions(){
-  const current=parseInt(presetSel.value,10);
-  if(Number.isInteger(current)&&PRESETS[current]?.mode===mode)presetSelection[mode]=current;
-  presetSel.innerHTML='';
-  let first=null;
-  PRESETS.forEach((p,i)=>{
-    if(p.mode!==mode)return;
-    if(first===null)first=i;
-    const o=document.createElement('option');o.value=i;o.textContent=p.name;presetSel.appendChild(o);
-  });
-  const preferred=(Number.isInteger(presetSelection[mode])&&PRESETS[presetSelection[mode]]?.mode===mode)?presetSelection[mode]:first;
-  if(preferred!==null){presetSel.value=String(preferred);presetSelection[mode]=preferred;}
+  document.querySelectorAll('.figOnly').forEach(e=>e.style.display=m==='figure'?'':'none');
+  const sel=$('preset');sel.innerHTML='';
+  PRESETS.forEach((p,i)=>{if(p.mode===m)sel.add(new Option(p.name,i));});
+  schedule();
 }
 
-/* ========= 凡例パース ========= */
-function parseLegend(txt){
-  return txt.split('\n').map(s=>s.trim()).filter(Boolean).map(line=>{
-    const mm=line.match(/^(.+?)\s*[:：]\s*(.+)$/);
-    return mm?{sym:mm[1].trim(),desc:mm[2].trim()}:{sym:'',desc:line};
-  });
-}
-
-/* ========= KaTeX描画（エラーは戻り値で返す） ========= */
-function renderKatex(tex,el,display){
-  try{
-    katex.render(strip(tex),el,{throwOnError:true,displayMode:!!display,trust:false,strict:'ignore'});
-    return null;
-  }catch(e){
-    el.innerHTML='';
-    const s=document.createElement('span');s.className='tex-err';s.textContent=tex;el.appendChild(s);
-    return e.message;
-  }
-}
-
-/* ========= レンダリング（取りこぼしなし） ========= */
-function scheduleRender(){clearTimeout(scheduleRender._t);scheduleRender._t=setTimeout(render,300);}
-async function render(){
-  if(typeof katex==='undefined'){
-    katexState.textContent='KaTeX未読込';
-    statusEl.textContent='失敗';
-    errBox.textContent='KaTeXの読み込みに失敗しました。ページを再読み込みしてください。';
-    errBox.style.display='block';
-    setOutputsEnabled(false);
-    return;
-  }
-  if(rendering){pending=true;return;}
-  rendering=true;
-  try{
-    do{pending=false;await doRender();}while(pending);
-  }finally{rendering=false;}
-}
-async function doRender(){
-  const textColor=tc.value, bgColor=tr.checked?'transparent':bg.value, padV=parseInt(pad.value,10)||0;
-  katexState.textContent='KaTeX OK';
-  renderBtn.disabled=true;
-  statusEl.textContent='レンダリング中...';
-  errBox.style.display='none';
-  const errors=[];
-  try{
-    preview.innerHTML='';
-    preview.style.color=textColor;
-    preview.style.background=bgColor;
-    preview.style.padding=padV+'px';
-
-    const hasContent=mode==='single'?latexInput.value.trim():(formulaInput.value.trim()||legendInput.value.trim());
-    if(!hasContent){
-      preview.style.display='none';phold.style.display='block';pw.classList.remove('has');
-      statusEl.textContent='';setOutputsEnabled(false);
-      lastSvgXml='';lastPngUrl=lastJpgUrl=null;
-      if(lastSvgBlobUrl){URL.revokeObjectURL(lastSvgBlobUrl);lastSvgBlobUrl=null;}
-      svgCodeEl.textContent='';svgWrap.style.display='none';
-      return;
-    }
-    preview.style.display='block';phold.style.display='none';pw.classList.add('has');
-
-    if(mode==='single'){
-      const inner=document.createElement('div');inner.style.display='inline-block';
-      preview.appendChild(inner);
-      const err=renderKatex(latexInput.value,inner,true);
-      if(err)errors.push('式: '+err);
-    }else{
-      const card=document.createElement('div');card.className='figure-card';
-      const fDiv=document.createElement('div');fDiv.className='figure-formula';
-      fDiv.style.fontSize=fs.value+'px';fDiv.style.color=textColor;
-      const fInner=document.createElement('div');fInner.style.display='inline-block';
-      fDiv.appendChild(fInner);
-      const fRaw=formulaInput.value.trim();
-      if(fRaw){const err=renderKatex(fRaw,fInner,true);if(err)errors.push('上の式: '+err);}
-      card.appendChild(fDiv);
-
-      const lRaw=legendInput.value.trim();
-      if(lRaw){
-        const legDiv=document.createElement('div');legDiv.className='figure-legend';
-        legDiv.style.fontSize=ls.value+'px';legDiv.style.color=textColor;
-        parseLegend(lRaw).forEach(it=>{
-          if(it.sym){
-            const sym=document.createElement('span');
-            if(/[_^\\{}]/.test(it.sym)){const err=renderKatex(it.sym,sym,false);if(err)errors.push('凡例: '+err);}
-            else sym.textContent=it.sym;
-            const col=document.createElement('span');col.textContent=':';col.className='legend-colon';
-            const desc=document.createElement('span');desc.textContent=it.desc;
-            legDiv.append(sym,col,desc);
-          }else{
-            const full=document.createElement('span');full.className='legend-full';full.textContent=it.desc;
-            legDiv.appendChild(full);
-          }
-        });
-        card.appendChild(legDiv);
-      }
-      preview.appendChild(card);
-    }
-
-    if(errors.length){errBox.textContent='LaTeXエラー（該当箇所を赤表示）\n'+errors.join('\n');errBox.style.display='block';}
-
-    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-    if(document.fonts?.ready){try{await document.fonts.ready;}catch(e){}}
-    await generateOutputs();
-    saveSettings();
-  }catch(e){
-    console.error(e);
-    errBox.textContent='エラー: '+(e.stack||e.message);errBox.style.display='block';
-    statusEl.textContent='失敗';
-  }finally{
-    renderBtn.disabled=false;
-  }
-}
-
-/* ========= 出力生成（SVG/PNG/JPG） ========= */
-async function generateOutputs(){
-  statusEl.textContent='画像生成中...';
-  const w=Math.max(1,Math.ceil(preview.scrollWidth));
-  const h=Math.max(1,Math.ceil(preview.scrollHeight));
-  const textColor=tc.value, bgColor=tr.checked?'transparent':bg.value, padV=parseInt(pad.value,10)||0;
-  const innerHtml=preview.innerHTML;
-  const wrap=(styleCss,extraFont)=>`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><style>${styleCss}.figure-card{display:inline-block;text-align:left}.figure-formula{line-height:1.28}.figure-legend{margin-top:.7em;line-height:1.55;display:grid;grid-template-columns:auto auto 1fr;column-gap:.4em;row-gap:.16em;align-items:baseline}.legend-full{grid-column:1/-1}.legend-colon{opacity:.6}</style>${bgColor!=='transparent'?`<rect width="100%" height="100%" fill="${bgColor}"/>`:''}<foreignObject x="0" y="0" width="${w}" height="${h}"><div xmlns="http://www.w3.org/1999/xhtml" style="color:${textColor};padding:${padV}px;width:${w}px;height:${h}px;box-sizing:border-box;background:${bgColor};display:flex;align-items:center;justify-content:center;${extraFont}"><div style="display:inline-block;max-width:100%">${innerHtml}</div></div></foreignObject></svg>`;
-  const svgDownload=wrap(katexCssFull,'');
-  const svgForPng=wrap(katexCssLite||'',"font-family:'Times New Roman',Times,serif");
-
-  lastSvgXml=svgDownload;
-  if(lastSvgBlobUrl)URL.revokeObjectURL(lastSvgBlobUrl);
-  lastSvgBlobUrl=URL.createObjectURL(new Blob([svgDownload],{type:'image/svg+xml;charset=utf-8'}));
-  svgCodeEl.textContent=svgDownload;svgWrap.style.display='block';
-  copySvgBtn.disabled=false;
-
-  try{
-    const pngBlobUrl=URL.createObjectURL(new Blob([svgForPng],{type:'image/svg+xml;charset=utf-8'}));
-    const res=await svgUrlToCanvas(pngBlobUrl,w,h,bgColor,parseFloat(sc.value),trim.checked);
-    URL.revokeObjectURL(pngBlobUrl);
-    lastPngUrl=res.png;lastJpgUrl=res.jpg;
-    statusEl.textContent=`${w}×${h} → ${res.w}×${res.h}px`;
-    setOutputsEnabled(true);
-  }catch(e){
-    console.error(e);lastPngUrl=null;lastJpgUrl=null;
-    statusEl.textContent=`${w}×${h}（PNG失敗・SVGで出力可）`;
-    syncOutputButtons();
-    errBox.textContent='PNG生成失敗: '+e.message+'\n→ 形式をSVGにするとダウンロードできます。';
-    errBox.style.display='block';
-  }
-}
-
-function svgUrlToCanvas(url,w,h,bgc,scale,doTrim){
-  return new Promise((resolve,reject)=>{
-    const img=new Image();
-    img.onload=()=>{
-      try{
-        const cw=Math.max(1,Math.ceil(w*scale)), ch=Math.max(1,Math.ceil(h*scale));
-        const canvas=document.createElement('canvas');canvas.width=cw;canvas.height=ch;
-        const ctx=canvas.getContext('2d',{willReadFrequently:true});
-        if(bgc&&bgc!=='transparent'){ctx.fillStyle=bgc;ctx.fillRect(0,0,cw,ch);}else ctx.clearRect(0,0,cw,ch);
-        ctx.drawImage(img,0,0,cw,ch);
-        const finalCanvas=doTrim?trimCanvas(canvas):canvas;
-        const pngUrl=finalCanvas.toDataURL('image/png');
-        const c2=document.createElement('canvas');c2.width=finalCanvas.width;c2.height=finalCanvas.height;
-        const x=c2.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c2.width,c2.height);x.drawImage(finalCanvas,0,0);
-        resolve({png:pngUrl,jpg:c2.toDataURL('image/jpeg',0.92),w:finalCanvas.width,h:finalCanvas.height});
-      }catch(e){reject(e);}
-    };
-    img.onerror=()=>reject(new Error('SVG画像の読み込み失敗'));
-    img.src=url;
-  });
-}
-
-function trimCanvas(canvas){
-  const ctx=canvas.getContext('2d',{willReadFrequently:true});
-  const w=canvas.width,h=canvas.height;let data;
-  try{data=ctx.getImageData(0,0,w,h).data;}catch(e){return canvas;}
-  let top=h,left=w,right=-1,bottom=-1;
-  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-    if(data[(y*w+x)*4+3]>10){if(x<left)left=x;if(x>right)right=x;if(y<top)top=y;if(y>bottom)bottom=y;}
-  }
-  if(right<0)return canvas;
-  const p=2;left=Math.max(0,left-p);top=Math.max(0,top-p);right=Math.min(w-1,right+p);bottom=Math.min(h-1,bottom+p);
-  const tw=right-left+1,th=bottom-top+1;
-  if(tw===w&&th===h)return canvas;
-  const out=document.createElement('canvas');out.width=tw;out.height=th;
-  out.getContext('2d').drawImage(canvas,left,top,tw,th,0,0,tw,th);
-  return out;
-}
-
-/* ========= ダウンロード / コピー ========= */
-function baseName(){return (fname.value.trim()||'latex').replace(/[\\/:*?"<>|]/g,'_')+'_'+ts();}
-function saveBlobUrl(url,name){const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();}
-
-function downloadImage(){
-  const f=fmt.value;
-  if(f==='svg'){
-    if(!lastSvgBlobUrl){toast('先にレンダリングしてください',true);return;}
-    saveBlobUrl(lastSvgBlobUrl,baseName()+'.svg');toast('SVGをダウンロード');return;
-  }
-  const url=f==='png'?lastPngUrl:lastJpgUrl;
-  if(!url){
-    if(lastSvgBlobUrl){toast('PNG失敗のためSVGで保存します',true);saveBlobUrl(lastSvgBlobUrl,baseName()+'.svg');return;}
-    toast('先にレンダリングしてください',true);return;
-  }
-  if(f==='png'){dlWithDpi(url,parseInt(dpi.value,10)||300,baseName()+'.png');return;}
-  saveBlobUrl(url,baseName()+'.jpg');toast('JPGをダウンロード');
-}
-
-function dlWithDpi(dataUrl,dpiVal,filename){
-  try{
-    const bin=atob(dataUrl.split(',')[1]);
-    const bytes=new Uint8Array(bin.length);
-    for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-    const ppm=Math.round(dpiVal/0.0254);
-    const pHYs=new Uint8Array(9);const dv=new DataView(pHYs.buffer);
-    dv.setUint32(0,ppm,false);dv.setUint32(4,ppm,false);pHYs[8]=1;
-    const type=new Uint8Array([0x70,0x48,0x59,0x73]);
-    const crcSrc=new Uint8Array(type.length+pHYs.length);crcSrc.set(type,0);crcSrc.set(pHYs,type.length);
-    const chunk=new Uint8Array(21);const dv2=new DataView(chunk.buffer);
-    dv2.setUint32(0,9,false);chunk.set(type,4);chunk.set(pHYs,8);dv2.setUint32(17,crc32(crcSrc),false);
-    const ihdrLen=new DataView(bytes.buffer).getUint32(8,false);
-    const pos=8+4+4+ihdrLen+4;
-    const out=new Uint8Array(bytes.length+chunk.length);
-    out.set(bytes.slice(0,pos),0);out.set(chunk,pos);out.set(bytes.slice(pos),pos+chunk.length);
-    const url=URL.createObjectURL(new Blob([out],{type:'image/png'}));
-    saveBlobUrl(url,filename);
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-    toast('PNGをダウンロード（'+dpiVal+' DPI）');
-  }catch(e){saveBlobUrl(dataUrl,filename);}
-}
-
-function crc32(b){
-  if(!crc32.table){crc32.table=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);crc32.table[i]=c;}}
-  let crc=0xFFFFFFFF;for(let i=0;i<b.length;i++)crc=crc32.table[(crc^b[i])&0xFF]^(crc>>>8);
-  return (crc^0xFFFFFFFF)>>>0;
-}
-
-async function copySvg(){
-  if(!lastSvgXml){toast('SVGがありません',true);return;}
-  try{await navigator.clipboard.writeText(lastSvgXml);toast('SVGコードをコピー');}
-  catch(e){toast('コピー失敗',true);}
-}
-async function copyImg(){
-  const f=fmt.value;
-  try{
-    if(f==='svg'){
-      await navigator.clipboard.write([new ClipboardItem({'image/svg+xml':new Blob([lastSvgXml],{type:'image/svg+xml'})})]);
-      toast('SVGをコピー');return;
-    }
-    const url=f==='png'?lastPngUrl:lastJpgUrl;
-    if(!url){toast('先にレンダリングしてください',true);return;}
-    const b=await (await fetch(url)).blob();
-    await navigator.clipboard.write([new ClipboardItem({[b.type]:b})]);
-    toast(f.toUpperCase()+'をコピー');
-  }catch(e){toast('コピー失敗: '+e.message,true);}
-}
-async function copyTex(){
-  const t=mode==='single'?latexInput.value:(formulaInput.value+(legendInput.value?'\n\n'+legendInput.value:''));
-  try{await navigator.clipboard.writeText(t);toast('LaTeXをコピー');}catch(e){toast('コピー失敗',true);}
-}
-
-/* ========= 設定の保存・復元 ========= */
-function saveSettings(){
-  try{
-    localStorage.setItem(STORE_KEY,JSON.stringify({
-      mode,single:latexInput.value,formula:formulaInput.value,legend:legendInput.value,
-      presetSingle:presetSelection.single,presetFigure:presetSelection.figure,
-      fs:fs.value,ls:ls.value,tc:tc.value,bg:bg.value,tr:tr.checked,trim:trim.checked,
-      pad:pad.value,sc:sc.value,dpi:dpi.value,fmt:fmt.value,fname:fname.value
-    }));
-  }catch(e){}
-}
-function loadSettings(){
-  try{
-    const s=JSON.parse(localStorage.getItem(STORE_KEY)||'null');
-    if(!s)return false;
-    latexInput.value=s.single??latexInput.value;
-    formulaInput.value=s.formula??formulaInput.value;
-    legendInput.value=s.legend??legendInput.value;
-    fs.value=s.fs??fs.value;ls.value=s.ls??ls.value;
-    tc.value=s.tc??tc.value;bg.value=s.bg??bg.value;
-    tr.checked=s.tr??tr.checked;trim.checked=s.trim??trim.checked;
-    pad.value=s.pad??pad.value;sc.value=s.sc??sc.value;
-    dpi.value=s.dpi??dpi.value;fmt.value=s.fmt??fmt.value;fname.value=s.fname??fname.value;
-    const ps=parseInt(s.presetSingle,10), pf=parseInt(s.presetFigure,10);
-    if(Number.isInteger(ps)&&PRESETS[ps]?.mode==='single')presetSelection.single=ps;
-    if(Number.isInteger(pf)&&PRESETS[pf]?.mode==='figure')presetSelection.figure=pf;
-    return s.mode||false;
-  }catch(e){return false;}
-}
-function updateLabels(){
-  $('fsVal').textContent=fs.value+'px';
-  $('lsVal').textContent=ls.value+'px';
-  $('padVal').textContent=pad.value+'px';
-  $('scVal').textContent=parseFloat(sc.value).toFixed(2)+'×';
-}
-
-/* ========= イベント ========= */
-renderBtn.addEventListener('click',render);
-$('clearBtn').addEventListener('click',()=>{
-  if(mode==='single')latexInput.value='';else{formulaInput.value='';legendInput.value='';}
-  render();
-});
+/* ===== イベント ===== */
+document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
 $('loadPresetBtn').addEventListener('click',()=>{
-  const p=PRESETS[parseInt(presetSel.value,10)];
-  if(!p)return;
-  presetSelection[mode]=parseInt(presetSel.value,10);
-  if(p.mode==='single')latexInput.value=p.tex;
-  else{formulaInput.value=p.formula;legendInput.value=p.legend;}
+  const p=PRESETS[parseInt($('preset').value,10)];if(!p)return;
+  if(p.mode==='single')latexInput.value=p.tex;else{formulaInput.value=p.formula;legendInput.value=p.legend;}
   render();toast('プリセットを読み込みました');
 });
-$('copyTexBtn').addEventListener('click',copyTex);
-document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
-
-[latexInput,formulaInput,legendInput].forEach(el=>el.addEventListener('input',scheduleRender));
-
-[fs,ls,pad,sc].forEach(el=>el.addEventListener('input',updateLabels));
-[fs,ls,pad,sc,tc,bg,tr,trim,fmt,dpi].forEach(el=>el.addEventListener('change',scheduleRender));
-fmt.addEventListener('change',syncOutputButtons);
-presetSel.addEventListener('change',()=>{const idx=parseInt(presetSel.value,10);if(Number.isInteger(idx)&&PRESETS[idx]?.mode===mode){presetSelection[mode]=idx;saveSettings();}});
-fname.addEventListener('input',saveSettings);
-
-copySvgBtn.addEventListener('click',copySvg);
-copyImgBtn.addEventListener('click',copyImg);
-dlBtn.addEventListener('click',downloadImage);
-
-// Tabでインデント、Ctrl+Enterで描画
-latexInput.addEventListener('keydown',e=>{
-  if(e.key==='Tab'){e.preventDefault();const s=e.target.selectionStart,en=e.target.selectionEnd;e.target.setRangeText('  ',s,en,'end');}
+$('clearBtn').addEventListener('click',()=>{if(mode==='single')latexInput.value='';else{formulaInput.value='';legendInput.value='';}render();});
+$('copyTexBtn').addEventListener('click',()=>copyText(mode==='single'?latexInput.value:formulaInput.value+(legendInput.value?'\n\n'+legendInput.value:''),'LaTeXをコピーしました'));
+$('resetBtn').addEventListener('click',()=>{if(confirm('設定と入力内容を初期化しますか？')){try{localStorage.removeItem(STORE);}catch(e){}location.reload();}});
+$('renderBtn').addEventListener('click',render);
+$('dlBtn').addEventListener('click',download);$('openBtn').addEventListener('click',openTab);$('shareBtn').addEventListener('click',share);
+$('copyImgBtn').addEventListener('click',copyImg);$('copySvgBtn').addEventListener('click',()=>out&&copyText(out.svg,'SVGコードをコピーしました'));
+document.querySelectorAll('textarea,input,select').forEach(el=>{
+  if(el.id==='preset'||el.id==='pvbg')return;
+  el.addEventListener('input',()=>{labels();if(el.id==='fname')saveSettings();else schedule();});
+  el.addEventListener('change',()=>{labels();if(el.id!=='fname')schedule();});
 });
+$('pvbg').addEventListener('change',()=>{pw.className='pw '+$('pvbg').value;saveSettings();});
+tas.forEach(i=>$(i).addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();e.target.setRangeText('  ',e.target.selectionStart,e.target.selectionEnd,'end');schedule();}}));
 document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();render();}
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();if(!dlBtn.disabled)downloadImage();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();if(out)download();}
 });
-window.addEventListener('error',e=>{errBox.textContent='JSエラー: '+e.message;errBox.style.display='block';});
+window.addEventListener('error',e=>showErr('JSエラー: '+e.message));
+if(navigator.canShare)$('shareBtn').hidden=false;
 
-/* ========= 初期化 ========= */
+/* ===== 初期化 ===== */
 (async()=>{
-  const savedMode=loadSettings();
-  updateLabels();
-  await loadKatexCss();
-  if(!latexInput.value&&!formulaInput.value){
-    // 初回は式+凡例の例を表示
-    formulaInput.value=PRESETS[3].formula;legendInput.value=PRESETS[3].legend;
-  }
-  setMode(savedMode==='figure'||savedMode==='single'?savedMode:'figure');
-  render();
+  const s=loadSettings();labels();
+  await loadCss();
+  if(!latexInput.value.trim())latexInput.value=PRESETS[0].tex;
+  if(!formulaInput.value.trim()&&!legendInput.value.trim()){formulaInput.value=PRESETS[3].formula;legendInput.value=PRESETS[3].legend;}
+  pw.className='pw '+$('pvbg').value;
+  setMode(s&&(s.mode==='single'||s.mode==='figure')?s.mode:'figure');
 })();
 </script>
 </body>
