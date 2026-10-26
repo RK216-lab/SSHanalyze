@@ -173,18 +173,26 @@ const tc=$('tc'), bg=$('bg'), tr=$('tr'), trim=$('trim'), pad=$('pad'), sc=$('sc
 const fs=$('fs'), ls=$('ls');
 const statusEl=$('status'), katexState=$('katexState');
 const dlBtn=$('dlBtn'), copyImgBtn=$('copyImgBtn'), copySvgBtn=$('copySvgBtn'), renderBtn=$('renderBtn');
+const presetSel=$('preset');
+const presetSelection={single:null,figure:null};
 
 /* ========= プリセット（String.raw で \ をそのまま扱う） ========= */
+const RAW=String.raw;
 const PRESETS=[
-  {name:'E = mc²（単一式）', mode:'single', tex:String.raw`E = mc^2`},
-  {name:'二次方程式の解の公式', mode:'single', tex:String.raw`x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}`},
-  {name:'ガウス積分', mode:'single', tex:String.raw`\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}`},
+  {name:'E = mc²（単一式）', mode:'single', tex:RAW`E = mc^2`},
+  {name:'二次方程式の解の公式', mode:'single', tex:RAW`x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}`},
+  {name:'ガウス積分', mode:'single', tex:RAW`\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}`},
   {name:'Rate式（式＋凡例）', mode:'figure',
-    formula:String.raw`\text{Rate} = \frac{W_{\text{before}} - W_{\text{after}}}{W_{\text{before}} - W_{\text{base}}} \times 100\ (\%)`,
-    legend:'W_{\\text{base}} : Base fabric weight\nW_{\\text{before}} : Weight before washing\nW_{\\text{after}} : Weight after washing'},
+    formula:RAW`\text{Rate} = \frac{W_{\text{before}} - W_{\text{after}}}{W_{\text{before}} - W_{\text{base}}} \times 100\ (\%)`,
+    legend:RAW`W_{\text{base}} : Base fabric weight
+W_{\text{before}} : Weight before washing
+W_{\text{after}} : Weight after washing`},
   {name:'ベイズの定理（式＋凡例）', mode:'figure',
-    formula:String.raw`P(A \mid B) = \frac{P(B \mid A)\,P(A)}{P(B)}`,
-    legend:'P(A \\mid B) : Posterior probability\nP(B \\mid A) : Likelihood\nP(A) : Prior probability\nP(B) : Marginal likelihood'}
+    formula:RAW`P(A \mid B) = \frac{P(B \mid A)\,P(A)}{P(B)}`,
+    legend:RAW`P(A \mid B) : Posterior probability
+P(B \mid A) : Likelihood
+P(A) : Prior probability
+P(B) : Marginal likelihood`}
 ];
 
 /* ========= ユーティリティ ========= */
@@ -192,7 +200,14 @@ function toast(m,err){toastEl.textContent=m;toastEl.classList.toggle('err',!!err
 function escHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function strip(s){const v=s.trim();if(v.startsWith('$$')&&v.endsWith('$$'))return v.slice(2,-2).trim();if(v.startsWith('$')&&v.endsWith('$'))return v.slice(1,-1).trim();return v;}
 function ts(){const d=new Date();const p=n=>String(n).padStart(2,'0');return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());}
-function setOutputsEnabled(on){dlBtn.disabled=!on;copyImgBtn.disabled=!on;copySvgBtn.disabled=!on;}
+function setOutputsEnabled(on){if(!on){dlBtn.disabled=true;copyImgBtn.disabled=true;copySvgBtn.disabled=true;return;}syncOutputButtons();}
+function syncOutputButtons(){
+  const hasSvg=!!lastSvgXml, hasPng=!!lastPngUrl, hasJpg=!!lastJpgUrl;
+  copySvgBtn.disabled=!hasSvg;
+  if(fmt.value==='svg'){dlBtn.disabled=!hasSvg;copyImgBtn.disabled=!hasSvg;return;}
+  if(fmt.value==='png'){dlBtn.disabled=!(hasPng||hasSvg);copyImgBtn.disabled=!hasPng;return;}
+  dlBtn.disabled=!(hasJpg||hasSvg);copyImgBtn.disabled=!hasJpg;
+}
 
 /* ========= KaTeX CSS 読み込み ========= */
 async function loadKatexCss(){
@@ -218,11 +233,17 @@ function setMode(m){
   scheduleRender();
 }
 function updatePresetOptions(){
-  const sel=$('preset');sel.innerHTML='';
+  const current=parseInt(presetSel.value,10);
+  if(Number.isInteger(current)&&PRESETS[current]?.mode===mode)presetSelection[mode]=current;
+  presetSel.innerHTML='';
+  let first=null;
   PRESETS.forEach((p,i)=>{
     if(p.mode!==mode)return;
-    const o=document.createElement('option');o.value=i;o.textContent=p.name;sel.appendChild(o);
+    if(first===null)first=i;
+    const o=document.createElement('option');o.value=i;o.textContent=p.name;presetSel.appendChild(o);
   });
+  const preferred=(Number.isInteger(presetSelection[mode])&&PRESETS[presetSelection[mode]]?.mode===mode)?presetSelection[mode]:first;
+  if(preferred!==null){presetSel.value=String(preferred);presetSelection[mode]=preferred;}
 }
 
 /* ========= 凡例パース ========= */
@@ -236,7 +257,7 @@ function parseLegend(txt){
 /* ========= KaTeX描画（エラーは戻り値で返す） ========= */
 function renderKatex(tex,el,display){
   try{
-    katex.render(strip(tex),el,{throwOnError:true,displayMode:!!display,trust:true,strict:'ignore'});
+    katex.render(strip(tex),el,{throwOnError:true,displayMode:!!display,trust:false,strict:'ignore'});
     return null;
   }catch(e){
     el.innerHTML='';
@@ -248,7 +269,14 @@ function renderKatex(tex,el,display){
 /* ========= レンダリング（取りこぼしなし） ========= */
 function scheduleRender(){clearTimeout(scheduleRender._t);scheduleRender._t=setTimeout(render,300);}
 async function render(){
-  if(typeof katex==='undefined'){setTimeout(render,150);return;}
+  if(typeof katex==='undefined'){
+    katexState.textContent='KaTeX未読込';
+    statusEl.textContent='失敗';
+    errBox.textContent='KaTeXの読み込みに失敗しました。ページを再読み込みしてください。';
+    errBox.style.display='block';
+    setOutputsEnabled(false);
+    return;
+  }
   if(rendering){pending=true;return;}
   rendering=true;
   try{
@@ -271,7 +299,10 @@ async function doRender(){
     const hasContent=mode==='single'?latexInput.value.trim():(formulaInput.value.trim()||legendInput.value.trim());
     if(!hasContent){
       preview.style.display='none';phold.style.display='block';pw.classList.remove('has');
-      statusEl.textContent='';setOutputsEnabled(false);lastPngUrl=lastJpgUrl=null;
+      statusEl.textContent='';setOutputsEnabled(false);
+      lastSvgXml='';lastPngUrl=lastJpgUrl=null;
+      if(lastSvgBlobUrl){URL.revokeObjectURL(lastSvgBlobUrl);lastSvgBlobUrl=null;}
+      svgCodeEl.textContent='';svgWrap.style.display='none';
       return;
     }
     preview.style.display='block';phold.style.display='none';pw.classList.add('has');
@@ -355,7 +386,7 @@ async function generateOutputs(){
   }catch(e){
     console.error(e);lastPngUrl=null;lastJpgUrl=null;
     statusEl.textContent=`${w}×${h}（PNG失敗・SVGで出力可）`;
-    dlBtn.disabled=false;copyImgBtn.disabled=true;
+    syncOutputButtons();
     errBox.textContent='PNG生成失敗: '+e.message+'\n→ 形式をSVGにするとダウンロードできます。';
     errBox.style.display='block';
   }
@@ -427,9 +458,10 @@ function dlWithDpi(dataUrl,dpiVal,filename){
     const ppm=Math.round(dpiVal/0.0254);
     const pHYs=new Uint8Array(9);const dv=new DataView(pHYs.buffer);
     dv.setUint32(0,ppm,false);dv.setUint32(4,ppm,false);pHYs[8]=1;
-    const crcB=new Uint8Array(4);new DataView(crcB.buffer).setUint32(0,crc32(pHYs),false);
+    const type=new Uint8Array([0x70,0x48,0x59,0x73]);
+    const crcSrc=new Uint8Array(type.length+pHYs.length);crcSrc.set(type,0);crcSrc.set(pHYs,type.length);
     const chunk=new Uint8Array(21);const dv2=new DataView(chunk.buffer);
-    dv2.setUint32(0,9,false);chunk.set([0x70,0x48,0x59,0x73],4);chunk.set(pHYs,8);chunk.set(crcB,17);
+    dv2.setUint32(0,9,false);chunk.set(type,4);chunk.set(pHYs,8);dv2.setUint32(17,crc32(crcSrc),false);
     const ihdrLen=new DataView(bytes.buffer).getUint32(8,false);
     const pos=8+4+4+ihdrLen+4;
     const out=new Uint8Array(bytes.length+chunk.length);
@@ -476,6 +508,7 @@ function saveSettings(){
   try{
     localStorage.setItem(STORE_KEY,JSON.stringify({
       mode,single:latexInput.value,formula:formulaInput.value,legend:legendInput.value,
+      presetSingle:presetSelection.single,presetFigure:presetSelection.figure,
       fs:fs.value,ls:ls.value,tc:tc.value,bg:bg.value,tr:tr.checked,trim:trim.checked,
       pad:pad.value,sc:sc.value,dpi:dpi.value,fmt:fmt.value,fname:fname.value
     }));
@@ -493,6 +526,9 @@ function loadSettings(){
     tr.checked=s.tr??tr.checked;trim.checked=s.trim??trim.checked;
     pad.value=s.pad??pad.value;sc.value=s.sc??sc.value;
     dpi.value=s.dpi??dpi.value;fmt.value=s.fmt??fmt.value;fname.value=s.fname??fname.value;
+    const ps=parseInt(s.presetSingle,10), pf=parseInt(s.presetFigure,10);
+    if(Number.isInteger(ps)&&PRESETS[ps]?.mode==='single')presetSelection.single=ps;
+    if(Number.isInteger(pf)&&PRESETS[pf]?.mode==='figure')presetSelection.figure=pf;
     return s.mode||false;
   }catch(e){return false;}
 }
@@ -510,8 +546,9 @@ $('clearBtn').addEventListener('click',()=>{
   render();
 });
 $('loadPresetBtn').addEventListener('click',()=>{
-  const p=PRESETS[parseInt($('preset').value,10)];
+  const p=PRESETS[parseInt(presetSel.value,10)];
   if(!p)return;
+  presetSelection[mode]=parseInt(presetSel.value,10);
   if(p.mode==='single')latexInput.value=p.tex;
   else{formulaInput.value=p.formula;legendInput.value=p.legend;}
   render();toast('プリセットを読み込みました');
@@ -523,6 +560,8 @@ document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>set
 
 [fs,ls,pad,sc].forEach(el=>el.addEventListener('input',updateLabels));
 [fs,ls,pad,sc,tc,bg,tr,trim,fmt,dpi].forEach(el=>el.addEventListener('change',scheduleRender));
+fmt.addEventListener('change',syncOutputButtons);
+presetSel.addEventListener('change',()=>{const idx=parseInt(presetSel.value,10);if(Number.isInteger(idx)&&PRESETS[idx]?.mode===mode){presetSelection[mode]=idx;saveSettings();}});
 fname.addEventListener('input',saveSettings);
 
 copySvgBtn.addEventListener('click',copySvg);
